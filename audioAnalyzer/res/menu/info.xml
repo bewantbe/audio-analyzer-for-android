@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/info"
+     android:title="User Manual" android:titleCondensed="info"
+     android:icon="@android:drawable/ic_menu_info_details"
+     android:menuCategory="container" android:enabled="true"
+    />
+    <item android:id="@+id/settings"
+     android:title="Application Preferences" android:titleCondensed="settings"
+     android:icon="@android:drawable/ic_menu_manage"
+     android:menuCategory="container" android:enabled="true"
+    />
+</menu>

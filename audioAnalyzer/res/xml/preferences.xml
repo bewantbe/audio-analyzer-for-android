@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+     android:title="Graph style"
+     android:key="showLines"
+     android:defaultValue="false"
+     android:summary="Use lines instead of bars for spectrogram"
+    />
+    <ListPreference
+      android:title="Refresh Rate"
+      android:key="refreshRate"
+      android:entries="@array/fps_names"
+      android:entryValues="@array/fps_names"
+      android:defaultValue="5"
+      android:summary="screen refresh rate (frames/sec)"
+    />
+</PreferenceScreen>

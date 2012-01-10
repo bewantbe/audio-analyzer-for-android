@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Audio Spectrum Analyzer 0.1</string>
+    <string name="instructions_text">
+      &lt;h2&gt;Select button operation&lt;/h2&gt;
+      Click on a button to cycle through a set of possible values.  The buttons are:
+      &lt;p/&gt;
+      &lt;font color=&quot;red&quot;&gt;Sampling Rate&lt;/font&gt;
+      &lt;br/&gt;Selects the sampling rate, in samples/second
+      &lt;p/&gt;
+      &lt;font color=&quot;red&quot;&gt;Sample Resolution&lt;/font&gt;
+      &lt;br/&gt;Selects the number of frequency bins. More bins provides better resolution, but
+      takes more compute power.
+      &lt;p/&gt;
+      &lt;font color=&quot;red&quot;&gt;Magnitude Scale&lt;/font&gt;
+      &lt;br/&gt;Selects minimum value displayed (in db)
+      &lt;p/&gt;
+      &lt;font color=&quot;red&quot;&gt;View/scale&lt;/font&gt;
+      &lt;br/&gt;In &lt;b&gt;view&lt;/b&gt; mode, touching the plot area moves the cursor
+      &lt;br/&gt;In &lt;b&gt;scale&lt;/b&gt; mode, moving or &quot;pinching&quot; scales and zooms the x axis.
+      &lt;p/&gt;
+      &lt;font color=&quot;red&quot;&gt;run/stop&lt;/font&gt;
+      &lt;br/&gt;&lt;b&gt;stop&lt;/b&gt; freezes the display, making it easier to inspect the waveform.
+      &lt;br/&gt;&lt;b&gt;run&lt;/b&gt; resumes analyzing samples.
+      &lt;p/&gt;
+      &lt;font color=&quot;red&quot;&gt;on/test&lt;/font&gt;
+      &lt;br/&gt;&lt;b&gt;test&lt;/b&gt; mode displays an algoritmically generated waveform.
+      &lt;br/&gt;&lt;b&gt;on&lt;/b&gt; analyzes the microphone input signal.
+      &lt;p/&gt;
+      &lt;h2&gt;Other Features&lt;/h2&gt;
+      &lt;font color=&quot;red&quot;&gt;Instrument tuner&lt;/font&gt;
+      &lt;br/&gt;(removed from this version)
+      &lt;p/&gt;
+      &lt;font color="red"&gt;Set Test Frequencies&lt;/font&gt;
+      &lt;br/&gt;(removed from this version)
+      &lt;p&gt;
+      by S A Uhler
+      &lt;/p&gt;
+    </string>
+    <string name="instructions_title">
+      Instructions
+    </string>
+    <string name="dismiss">
+      Dismiss
+    </string>
+</resources>

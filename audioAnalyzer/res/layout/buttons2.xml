@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+ xmlns:android="http://schemas.android.com/apk/res/android"
+ xmlns:custom="http://schemas.android.com/apk/res/com.google.corp.productivity.specialprojects.android.samples.fft"
+>
+  <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+   android:text="view" android:id="@+id/mode"
+   android:layout_width="wrap_content" android:layout_height="wrap_content"
+   android:tag="select"
+   android:textSize="25sp"
+   custom:items="view scale"
+  />
+  <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+   android:text="run" android:id="@+id/run"
+   android:layout_width="wrap_content" android:layout_height="wrap_content"
+   android:tag="select"
+   android:textSize="25sp"
+   custom:items="run stop"
+  />
+  <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+   android:text="on" android:id="@+id/test"
+   android:layout_width="wrap_content" android:layout_height="wrap_content"
+   android:tag="select"
+   android:textSize="25sp"
+   custom:items="on test"
+  />
+</merge>

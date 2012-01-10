@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <declare-styleable name="SelectorText">
+    <attr name="items" format="string" />
+    <attr name="itemDelim" format="string" />
+  </declare-styleable>   
+  <declare-styleable name="AnalyzeView">
+   <attr name="sampleRate" format="integer" /> 
+   <attr name="cutoffDb" format="integer" /> 
+  </declare-styleable>   
+</resources>
