@@ -106,7 +106,15 @@ public class AnalyzeView extends View {
   }
   
   // return position of grid lines, there are roughly gridDensity lines for the bigger grid
-  private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity) {
+  private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity, int scale_mode) {
+    if (startValue == endValue) {
+      Log.e(AnalyzeActivity.TAG, "genLinearGridPoints()");
+    }
+    if (startValue > endValue) {
+      double t = endValue;
+      endValue = startValue;
+      startValue = t;
+    }
     double intervalValue = endValue - startValue;
     double gridIntervalGuess = intervalValue / gridDensity;
     double gridIntervalBig;
@@ -114,33 +122,51 @@ public class AnalyzeView extends View {
     double gridIntervalSmall;
     double gridStartValueSmall;
     
-    double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
-    double fraction = gridIntervalGuess / exponent;
-    
-    // grid interval is 1, 2, 5, 10, ...
-    if (fraction < Math.sqrt(1*2)) {
-      gridIntervalBig   = 1;
-      gridIntervalSmall = 0.2;
-    } else if (fraction < Math.sqrt(2*5)) {
-      gridIntervalBig   = 2;
-      gridIntervalSmall = 1.0;
-    } else if (fraction < Math.sqrt(5*10)) {
-      gridIntervalBig   = 5;
-      gridIntervalSmall = 1;
-    } else {
-      gridIntervalBig   = 10;
-      gridIntervalSmall = 2;
+    if (scale_mode == 0 || intervalValue <= 1) {  // Linear scale (Hz)
+      double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
+      double fraction = gridIntervalGuess / exponent;
+      // grid interval is 1, 2, 5, 10, ...
+      if (fraction < Math.sqrt(1*2)) {
+        gridIntervalBig   = 1;
+        gridIntervalSmall = 0.2;
+      } else if (fraction < Math.sqrt(2*5)) {
+        gridIntervalBig   = 2;
+        gridIntervalSmall = 1.0;
+      } else if (fraction < Math.sqrt(5*10)) {
+        gridIntervalBig   = 5;
+        gridIntervalSmall = 1;
+      } else {
+        gridIntervalBig   = 10;
+        gridIntervalSmall = 2;
+      }
+      gridIntervalBig   *= exponent;
+      gridIntervalSmall *= exponent;
+    } else {  // dB scale
+      if (intervalValue > 36) {
+        gridIntervalBig   = 36;
+        gridIntervalSmall = 12;
+      } else if (intervalValue > 12) {
+        gridIntervalBig   = 12;
+        gridIntervalSmall = 2;
+      } else if (intervalValue > 6) {
+        gridIntervalBig   = 6;
+        gridIntervalSmall = 1;
+      } else if (intervalValue > 3) {
+        gridIntervalBig   = 3;
+        gridIntervalSmall = 1;
+      } else {
+        gridIntervalBig   = 1;
+        gridIntervalSmall = 1.0/6;
+      }
     }
-    gridIntervalBig   *= exponent;
     gridStartValueBig   = Math.ceil(startValue / gridIntervalBig)   * gridIntervalBig;    
-
+    
     int nGrid = (int)Math.floor(intervalValue / gridIntervalBig) + 1;
     double[] bigGridPoints = new double[nGrid];
     for (int i = 0; i < nGrid; i++) {
       bigGridPoints[i] = gridStartValueBig + i*gridIntervalBig;
     }
     
-    gridIntervalSmall *= exponent;
     gridStartValueSmall = Math.ceil(startValue / gridIntervalSmall) * gridIntervalSmall;
     
     nGrid = (int)Math.floor(intervalValue / gridIntervalSmall) + 1;
@@ -153,6 +179,14 @@ public class AnalyzeView extends View {
     gridPoints2[0] = bigGridPoints;
     gridPoints2[1] = smallGridPoints;
     return gridPoints2;
+  }
+  
+  private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity) {
+    return genLinearGridPoints(startValue, endValue, gridDensity, 0);
+  }
+  
+  private double[][] genDBGridPoints(double startValue, double endValue, double gridDensity) {
+    return genLinearGridPoints(startValue, endValue, gridDensity, 1);
   }
   
   private double clamp(double value) {
@@ -319,7 +353,7 @@ public class AnalyzeView extends View {
   protected void onDraw(Canvas c) {
     isBusy = true;
     c.concat(matrix);
-    drawGridLines(c, 10, 10);
+    drawGridLines(c, 5, 5);
     c.drawPath(path, linePaint);
     if (cursorX > 0) {
       c.drawLine(cursorX, 0, cursorX, canvasHeight, cursorPaint); 
@@ -415,21 +449,24 @@ public class AnalyzeView extends View {
   }
 
   private void drawGridLines(Canvas c, int nx, int ny) {
-    double xMin = getMin();
-    double xMax = getMax();
-    double[][] gridPoints2 = genLinearGridPoints(xMin, xMax, 5);
+    double[][] gridPoints2 = genLinearGridPoints(getMin(), getMax(), nx);
     for(int i = 0; i < gridPoints2[0].length; i++) {
-      //float pos = (float) ((gridPoints2[0][i] - xMin) / (xMax - xMin) * (canvasWidth-1) / scale);
-      float pos = (float) (gridPoints2[0][i] / 8000.0 * canvasWidth);
+      float pos = (float) (gridPoints2[0][i] / axisBounds.right * canvasWidth);
       c.drawLine(pos, 0, pos, canvasHeight, gridPaint);
     }
-//    for(int i=0; i<=nx; i++) {
-//      float pos = i * (canvasWidth-1) / nx;
-//      c.drawLine(pos, 0, pos, canvasHeight, gridPaint);
-//    }
-    for(int i=0; i<=ny; i++) {
-      float pos = i * (canvasHeight-1) / ny;
+    for(int i = 0; i < gridPoints2[1].length; i++) {
+      float pos = (float) (gridPoints2[1][i] / axisBounds.right * canvasWidth);
+      c.drawLine(pos, 0, pos, 0.03f * canvasHeight, gridPaint);
+    }
+    double[][] gridPoints2dB = genDBGridPoints(axisBounds.bottom, axisBounds.top, ny);
+    for(int i = 0; i < gridPoints2dB[0].length; i++) {
+      float pos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
+//      Log.i(AnalyzeActivity.TAG, " y pos: " + Double.toString(gridPoints2dB[0][i]));
       c.drawLine(0, pos, canvasWidth, pos, gridPaint);
+    }
+    for(int i = 0; i < gridPoints2dB[1].length; i++) {
+      float pos = (float) (gridPoints2dB[1][i] / axisBounds.bottom * canvasHeight);
+      c.drawLine(0, pos, 0.02f * canvasWidth / scale, pos, gridPaint);
     }
   }
 }
