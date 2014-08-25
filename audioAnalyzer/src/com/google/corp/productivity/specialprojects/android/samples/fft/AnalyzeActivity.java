@@ -241,6 +241,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   final private static float INIT = Float.MIN_VALUE;
   private boolean isPinching = false;
   private float start = INIT;
+  float x0;
   private float initScale;
 
   private void scaleEvent(MotionEvent event) {
@@ -268,10 +269,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       case 1:
         float x = event.getX(0);
         if (isPinching || start == INIT) {
-          start = x + graphView.getXlate();
+          start = graphView.getXlate();
+          x0 = x;
           // Log.i(TAG, "Setting xlate point: " + start);
         } else {
-          graphView.setXlate(start - x);
+          graphView.setXlate(start + (x0 - x) / graphView.getScale());
           updateAllLabels();
         }
         isPinching = false;

@@ -36,11 +36,11 @@ import android.view.View;
 
 public class AnalyzeView extends View {
   private float cursorX, cursorY; // cursor location
-  private float scale;    // horizontal scaling
-  private float xlate;    // horizontal translation
+  private float xZoom;    // horizontal scaling
+  private float xShift;    // horizontal translation
   private float mark;
   private RectF axisBounds;
-  private Ready readyCallback = null;   // callback to caller when rendering is complete
+  private Ready readyCallback = null;      // callback to caller when rendering is complete
   
   private int canvasWidth, canvasHeight;   // size of my canvas
   private Paint linePaint;
@@ -91,8 +91,8 @@ public class AnalyzeView extends View {
     gridPaint.setColor(Color.DKGRAY);
     
     cursorX = cursorY = 0f;
-    scale=1f;
-    xlate=0f;
+    xZoom=1f;
+    xShift=0f;
     canvasWidth = canvasHeight = 0;
     axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -90.0f);
   }
@@ -232,14 +232,14 @@ public class AnalyzeView extends View {
     if (intersects(x, y)) {
       // Log.i(AnalyzeActivity.TAG, x + "," + y);
       float current = getXlate();
-      if (x <= 3 && xlate > 0f) {
+      if (x <= 3 && xShift > 0f) {
         setXlate(current - 10f) ;
       } else if (x >=  canvasWidth - 3) {
         setXlate(current + 10f);
       } else {
         cursorX = x + myLocation[0];
         cursorY = y - myLocation[1];
-        cursorX = cursorX/scale + xlate; // ??
+        cursorX = cursorX/xZoom + xShift; // ??
       }
       return true;
     } else {
@@ -251,7 +251,7 @@ public class AnalyzeView extends View {
   
   public void setMark(double hz) {
     float x = (float) (hz / axisBounds.width() * canvasWidth);
-    mark = (x + myLocation[0]) / scale + xlate; 
+    mark = (x + myLocation[0]) / xZoom + xShift; 
     // Log.i(AnalyzeActivity.TAG, "mark=" + mark);
   }
   
@@ -266,7 +266,7 @@ public class AnalyzeView extends View {
    */
   public double xlateX(float x) {
     getLocationOnScreen(myLocation);
-    double tmp =  (x + myLocation[0]) / scale + xlate;
+    double tmp =  (x + myLocation[0]) / xZoom + xShift;
     return canvasWidth == 0 ? 0.0 : axisBounds.width() * tmp / canvasWidth;
   }
   
@@ -275,13 +275,13 @@ public class AnalyzeView extends View {
   }
   
   public double getMin() {
-    double min =  canvasWidth == 0 ? 0 : axisBounds.width() * xlate * scale / (canvasWidth * scale);
+    double min =  canvasWidth == 0 ? 0 : axisBounds.width() * xShift * xZoom / (canvasWidth * xZoom);
     // Log.i(AnalyzeActivity.TAG, "min=" + min);
     return min;
   }
   
   public double getMax() {
-    double max =  canvasWidth == 0 ? 0 : axisBounds.width() * (xlate * scale + canvasWidth) / (canvasWidth * scale);
+    double max =  canvasWidth == 0 ? 0 : axisBounds.width() * (xShift * xZoom + canvasWidth) / (canvasWidth * xZoom);
     // Log.i(AnalyzeActivity.TAG, "max=" + max);
     return max;
   }
@@ -293,14 +293,14 @@ public class AnalyzeView extends View {
   }
   
   public void setScale(float f) {
-    scale = Math.max(f, 1f); 
-    xlate = between(0f, xlate,  (scale - 1f) * canvasWidth );
+    xZoom = Math.max(f, 1f); 
+    xShift = between(0f, xShift,  (xZoom - 1f) * canvasWidth );
     computeMatrix();
     invalidate();
   }
   
   public void setXlate(float offset) {
-    xlate = between(0f, offset,  (scale * canvasWidth - canvasWidth) / scale);
+    xShift = between(0f, offset,  (xZoom * canvasWidth - canvasWidth) / xZoom);
     // Log.i(AnalyzeActivity.TAG, "xlate: " + xlate + " [" + offset + "]");
     computeMatrix();
     invalidate();
@@ -308,17 +308,17 @@ public class AnalyzeView extends View {
   
   private void computeMatrix() {
     matrix.reset();
-    matrix.setTranslate(-xlate, 0f);
-    matrix.postScale(scale, 1f);
+    matrix.setTranslate(-xShift, 0f);
+    matrix.postScale(xZoom, 1f);
     // Log.i(AnalyzeActivity.TAG, "mat: " + xlate + "/" + scale);
   }
   
   public float getScale() {
-    return scale;
+    return xZoom;
   }
   
   public float getXlate() {
-    return xlate;
+    return xShift;
   }
   
   public float convertX(float x) {
@@ -378,8 +378,8 @@ public class AnalyzeView extends View {
     State state = new State(parentState);
     state.cx = cursorX;
     state.cy = cursorY;
-    state.scale = scale;
-    state.xlate = xlate;
+    state.scale = xZoom;
+    state.xlate = xShift;
     state.bounds = axisBounds;
     return state;
   }
@@ -391,8 +391,8 @@ public class AnalyzeView extends View {
       super.onRestoreInstanceState(s.getSuperState());
       this.cursorX = s.cx;
       this.cursorY = s.cy;
-      this.scale = s.scale;
-      this.xlate = s.xlate;
+      this.xZoom = s.scale;
+      this.xShift = s.xlate;
       this.axisBounds = s.bounds;
       // Log.i(AnalyzeActivity.TAG, "Restore: " + cx + "," + cy + " " + scale + ":" + xlate + " (" + bounds + ")");
       computeMatrix();
@@ -466,7 +466,7 @@ public class AnalyzeView extends View {
     }
     for(int i = 0; i < gridPoints2dB[1].length; i++) {
       float pos = (float) (gridPoints2dB[1][i] / axisBounds.bottom * canvasHeight);
-      c.drawLine(0, pos, 0.02f * canvasWidth / scale, pos, gridPaint);
+      c.drawLine(0, pos, 0.02f * canvasWidth / xZoom, pos, gridPaint);
     }
   }
 }
