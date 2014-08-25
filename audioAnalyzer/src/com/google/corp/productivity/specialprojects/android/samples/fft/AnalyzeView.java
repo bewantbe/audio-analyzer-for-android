@@ -48,6 +48,11 @@ public class AnalyzeView extends View {
   private Path path;
   private int[] myLocation = {0, 0}; // window location on screen
   private Matrix matrix = new Matrix();
+  private static boolean isBusy = false;
+  
+  public boolean isBusy() {
+	return isBusy;
+  }
   
   public AnalyzeView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
@@ -69,7 +74,7 @@ public class AnalyzeView extends View {
     this.readyCallback = ready;
   }
   
-  private void setup(@SuppressWarnings("unused") AttributeSet attrs) {
+  private void setup(AttributeSet attrs) {
     // Log.i(AnalyzeActivity.TAG, "Setup plot view");
     path = new Path();
     
@@ -82,13 +87,13 @@ public class AnalyzeView extends View {
     cursorPaint.setColor(Color.BLUE);
     
     gridPaint = new Paint(linePaint);
-    gridPaint.setColor(Color.WHITE);
+    gridPaint.setColor(Color.DKGRAY);
     
     cursorX = cursorY = 0f;
     scale=1f;
     xlate=0f;
     canvasWidth = canvasHeight = 0;
-    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -65.0f);
+    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -90.0f);
   }
   
   public void setBounds(RectF bounds) {
@@ -98,9 +103,41 @@ public class AnalyzeView extends View {
   public RectF getBounds() {
     return new RectF(axisBounds);
   }
+
+  private double integerScale(double b, int nParts) {
+	  if (b <= 0) {
+		  return 0;
+	  }
+	  double ndigit = Math.floor(Math.log10(b));
+	  double sdigit = Math.pow(10, Math.log10(b) - ndigit);  // 1 <= sdigit < 10
+	  final double[] subLevel = {5, 4, 2.5, 2, 1};
+	  int i = 0;
+	  while (true) {
+		  for (i = 0; i < subLevel.length; i++) {
+			  if (sdigit / subLevel[i] < nParts) {
+				  break;
+			  }
+		  }
+		  if (i == subLevel.length) {  // still sdigit / subLevel[i] < nParts, so search for more
+			  i = 0;
+			  sdigit *= 10;
+			  ndigit -= 1;
+		  } else {
+			  break;
+		  }
+	  }
+	  return Math.pow(10, ndigit) * subLevel[i];
+  }
+
+  private double[] integerPartition(double a, double b, int nParts) {
+	  double[] intPar = new double[nParts+1];
+	  double intSca = integerScale(b-a, nParts);
+	  
+	  return intPar;
+  }
   
   private double clamp(double value) {
-    if (value < axisBounds.bottom) {
+    if (value < axisBounds.bottom || value != value) {
       value = axisBounds.bottom;
     } else if (value > axisBounds.top) {
       value = axisBounds.top;
@@ -115,22 +152,27 @@ public class AnalyzeView extends View {
     if (canvasHeight < 1) {
       return;
     }
+    isBusy = true;
     path.reset();
     if (bars) {
       for (int i = start; i < count; i++) {
-        float x = i * canvasWidth / count;
+        float x = (float) i * canvasWidth / count;
         float y = (float) (canvasHeight + canvasHeight * (clamp(db[i]) - axisBounds.bottom) / axisBounds.height());
         if (y != canvasHeight) {
           path.moveTo(x, canvasHeight);     
           path.lineTo(x, y);
         }
       }
-    } else { 
-      for (int i = start; i < count; i++) {
-        path.lineTo((float) i * canvasWidth / count,
-          (float) (canvasHeight + canvasHeight * (clamp(db[i]) - axisBounds.bottom) / axisBounds.height()));
+    } else {
+      // (0,0) is the upper left of the View, in pixel unit
+      path.moveTo(0, (float) (canvasHeight + canvasHeight * (clamp(db[0]) - axisBounds.bottom) / axisBounds.height()));
+      for (int i = start+1; i < count; i++) {
+        float x = (float) i * canvasWidth / count;
+        float y = (float) (canvasHeight + canvasHeight * (clamp(db[i]) - axisBounds.bottom) / axisBounds.height());
+        path.lineTo(x, y);
       }
     }
+    isBusy = false;
   }
   
   public boolean setCursor(float x, float y) {
@@ -160,7 +202,8 @@ public class AnalyzeView extends View {
     // Log.i(AnalyzeActivity.TAG, "mark=" + mark);
   }
   
-  public double getX() {
+  @Override
+  public float getX() {
     // return bounds.width() * (xlate + cx) / (scale * w);
     return  canvasWidth == 0 ? 0 : axisBounds.width() * cursorX / canvasWidth;
   }
@@ -174,7 +217,7 @@ public class AnalyzeView extends View {
     return canvasWidth == 0 ? 0.0 : axisBounds.width() * tmp / canvasWidth;
   }
   
-  public double getY() {
+  public float getY() {
     return  canvasHeight == 0 ? 0 : axisBounds.height() * cursorY / canvasHeight;
   }
   
@@ -243,17 +286,21 @@ public class AnalyzeView extends View {
 
   @Override
   protected void onSizeChanged (int w, int h, int oldw, int oldh) {
+    isBusy = true;
     this.canvasHeight = h;
     this.canvasWidth = w;
     // Log.i(AnalyzeActivity.TAG, "size: " + oldw + "," + oldh + " -> " + w + "," + h);
     if (oldh == 0 && h > 0 && readyCallback != null) {
       readyCallback.ready();
     }
+    isBusy = false;
   }
   
   @Override
   protected void onDraw(Canvas c) {
+    isBusy = true;
     c.concat(matrix);
+    drawGridLines(c, 10, 10);
     c.drawPath(path, linePaint);
     if (cursorX > 0) {
       c.drawLine(cursorX, 0, cursorX, canvasHeight, cursorPaint); 
@@ -265,8 +312,7 @@ public class AnalyzeView extends View {
       c.drawLine(mark - 3, 0, mark, 25, cursorPaint);
       c.drawLine(mark + 3, 0, mark, 25, cursorPaint);
     }
-    
-    drawGridLines(c, 10, 10);
+    isBusy = false;
   }
   
   /*
@@ -326,8 +372,7 @@ public class AnalyzeView extends View {
       out.writeFloat(xlate);
       bounds.writeToParcel(out, flags);
     }
-    
-    @SuppressWarnings("hiding")
+
     public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {
       @Override
       public State createFromParcel(Parcel in) {

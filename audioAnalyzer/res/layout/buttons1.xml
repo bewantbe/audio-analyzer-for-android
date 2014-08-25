@@ -14,16 +14,17 @@
   <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
    android:id="@+id/bins"
    android:layout_width="wrap_content" android:layout_height="wrap_content"
-   android:text="512"
+   android:text="2048"
    android:tag="select"
    android:textSize="25sp"
-   custom:items="256 512 1024 2048"
+   custom:items="1024 2048 4096 8192"
   />
   <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-   android:text="-40" android:id="@+id/db"
+   android:id="@+id/db"
    android:layout_width="wrap_content" android:layout_height="wrap_content"
+   android:text="-110"
    android:tag="select"
    android:textSize="25sp"
-   custom:items="-65 -40 -20 -10"
+   custom:items="-110 -90 -60 -30"
   />
 </merge>

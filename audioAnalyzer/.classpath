@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="com/google/corp/productivity/specialprojects/android/samples/fft/RealDoubleFFT_Mixed.java|com/google/corp/productivity/specialprojects/android/samples/fft/RealDoubleFFT.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry kind="src" path="FFT Library_src"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
+	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
+	<classpathentry kind="lib" path="/home/xyy/soft/adt-bundle-linux-x86_64-20140702/sdk/extras/android/support/v4/android-support-v4.jar"/>
+	<classpathentry excluding="com/google/corp/productivity/specialprojects/android/samples/fft/RealDoubleFFT_Mixed.java|com/google/corp/productivity/specialprojects/android/samples/fft/RealDoubleFFT.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
-	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

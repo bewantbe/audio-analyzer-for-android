@@ -17,9 +17,9 @@
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
-import com.google.corp.productivity.specialprojects.android.fft.RealDoubleFFT;
 import com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeView.Ready;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -46,6 +46,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -58,12 +59,13 @@ import java.util.ArrayList;
 public class AnalyzeActivity extends Activity implements OnLongClickListener, OnClickListener,
       Ready, OnSharedPreferenceChangeListener {
   static final String TAG="audio";
-  private final static float MEAN_MAX = 16384f;   // Maximum signal value
-  private final static int AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
+  private final static double SAMPLE_VALUE_MAX = 32767.0;   // Maximum signal value
+  private final static int RECORDER_AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
+  private final static int BYTE_OF_SAMPLE = 2;
 
-  private int fftBins = 2048;
+  private int fftLen = 2048;
   private int sampleRate = 8000;
-  private int updateMs = 150;
+  private int updateMs = 100;
   private AnalyzeView graphView;
   private Looper samplingThread;
 
@@ -109,6 +111,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
     samplingThread = new Looper();
     samplingThread.start();
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   }
 
   @Override
@@ -125,6 +128,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   protected void onPause() {
     super.onPause();
     samplingThread.finish();
+    getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   }
 
   @Override
@@ -151,7 +155,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
 
   public static class MyPreferences extends PreferenceActivity {
-    @Override
+    @SuppressWarnings("deprecation")
+	@Override
     public void onCreate(Bundle state) {
       super.onCreate(state);
       addPreferencesFromResource(R.xml.preferences);
@@ -176,6 +181,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         Intent settings = new Intent(getBaseContext(), MyPreferences.class);
         startActivity(settings);
         return true;
+      case R.id.info_recoder:
+        Intent int_info_rec = new Intent(this, InfoRecActivity.class);
+        startActivity(int_info_rec);
+    	return true;
       default:
           return super.onOptionsItemSelected(item);
       }
@@ -201,10 +210,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       showLines = prefs.getBoolean("showLines", false);
     }
     if (pref == null || pref.equals("refreshRate")) {
-      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "5"));
+      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "12"));
     }
     if (pref == null || pref.equals("fftBins")) {
-      fftBins = Integer.parseInt(prefs.getString("fftBins", "1024"));
+      fftLen = Integer.parseInt(prefs.getString("fftBins", "1024"));
     }
     if (pref == null || pref.equals("sampleRate")) {
       sampleRate = Integer.parseInt(prefs.getString("sampleRate", "16000"));
@@ -333,7 +342,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       return false;
     }
     if (v.getId() == R.id.bins) {
-      fftBins = Integer.parseInt(value);
+      fftLen = Integer.parseInt(value);
     } else if (v.getId() == R.id.sampling_rate) {
       sampleRate = Integer.parseInt(value);
       RectF bounds = graphView.getBounds();
@@ -353,62 +362,34 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     refreshMinFreqLabel();
   }
 
+  @SuppressLint("NewApi")
   private void refreshCursorLabel() {
     double f = graphView.getX();
     ((TextView) findViewById(R.id.freq_db)).setText(
-        Math.round(f) + "hz\n" + Math.round(graphView.getY()) + "db");
+        Math.round(f) + "Hz\n" + Math.round(graphView.getY()) + "dB");
   }
 
   private void refreshMinFreqLabel() {
-      ((TextView) findViewById(R.id.min)).setText(Math.round(graphView.getMin()) + "hz");
+      ((TextView) findViewById(R.id.min)).setText(Math.round(graphView.getMin()) + "Hz");
   }
   private void refreshMaxFreqLabel() {
-      ((TextView) findViewById(R.id.max)).setText(Math.round(graphView.getMax()) + "hz");
+      ((TextView) findViewById(R.id.max)).setText(Math.round(graphView.getMax()) + "Hz");
   }
 
   /**
-   * recompute the spectral "chart"
-   * @param data    The normalized fft output
+   * recompute the spectra "chart"
+   * @param data    The normalized FFT output
    */
 
   public void recompute(double[] data) {
-    graphView.recompute(data, 1, data.length / 2, showLines);
+    //graphView.recompute(data, 1, data.length / 2, showLines);
+  	if (graphView.isBusy() == true) {
+  		Log.d(TAG, "isBusy");  // seems it's never busy
+  	}
+    graphView.recompute(data, 1, data.length, showLines);
     graphView.invalidate();
   }
-
-  /**
-   * Convert our samples to double for fft.
-   */
-  private static double[] shortToDouble(short[] s, double[] d) {
-    for (int i = 0; i < d.length; i++) {
-      d[i] = s[i];
-    }
-    return d;
-  }
-
-  /**
-   * Compute db of bin, where "max" is the reference db
-   * @param r Real part
-   * @param i complex part
-   */
-  private static double db2(double r, double i, double maxSquared) {
-    return 5.0 * Math.log10((r * r + i * i) / maxSquared);
-  }
-
-  /**
-   * Convert the fft output to DB
-   */
-
-  static double[] convertToDb(double[] data, double maxSquared) {
-    data[0] = db2(data[0], 0.0, maxSquared);
-    int j = 1;
-    for (int i=1; i < data.length - 1; i+=2, j++) {
-      data[j] = db2(data[i], data[i+1], maxSquared);
-    }
-    data[j] = data[0];
-    return data;
-  }
-
+  
   /**
    * Verify the supplied audio rates are valid!
    * @param requested
@@ -424,73 +405,165 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     return validated.toArray(new String[0]);
   }
+  
   /**
    * Read a snapshot of audio data at a regular interval, and compute the FFT
-   * @author suhler@google.com 
+   * @author suhler@google.com
+   *         xyy82148@gmail.com
    */
-
   public class Looper extends Thread {
     AudioRecord record;
-    int minBytes;
-    long baseTimeMs;
     boolean isRunning = true;
     boolean isPaused1 = false;
-    // Choose 2 arbitrary test frequencies to verify FFT operation
-    DoubleSineGen sineGen1 = new DoubleSineGen(1234.0, sampleRate, MEAN_MAX);
-    DoubleSineGen sineGen2 = new DoubleSineGen(3300.0, sampleRate, MEAN_MAX / 4.0);
-    double[] tmp = new double[fftBins];
-    
-    // Timers
-    private int loops = 0;
+    double dtRMS = 0;
+
+    private void SleepWithoutInterrupt(long millis) {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
 
     public Looper() {
-      minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
-          AudioFormat.ENCODING_PCM_16BIT);
-      minBytes = Math.max(minBytes, fftBins);
-      // VOICE_RECOGNITION: use the mic with AGC turned off!
-      record =  new AudioRecord(AGC_OFF, sampleRate,
-          AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,  minBytes);
-      Log.d(TAG, "Buffer size: " + minBytes + " (" + record.getSampleRate() + "=" + sampleRate + ")");
     }
 
     @Override
     public void run() {
-      final double[] fftData = new double[fftBins];
-      RealDoubleFFT fft = new RealDoubleFFT(fftBins);
-      double scale = MEAN_MAX * MEAN_MAX * fftBins * fftBins / 2d;
-      short[] audioSamples = new short[minBytes];
+      // Initialize
+      // TODO: if failed, use another fallback option
+      int minBytes = AudioRecord.getMinBufferSize(sampleRate,
+          AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+      // Determine size of each read() operation
+      int bufSizeInShorts = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen);
+      // Wait until previous instance of AudioRecord fully released.
+      SleepWithoutInterrupt(500);
+      // Signal source for testing FFT
+      DoubleSineGen sineGen1 = new DoubleSineGen(1234.0, sampleRate, SAMPLE_VALUE_MAX * 0.5);
+      DoubleSineGen sineGen2 = new DoubleSineGen(3300.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+
+      // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
+      record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
+                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufSizeInShorts);
+      Log.d(TAG, "Buffer size: " + minBytes + "bytes (" + record.getSampleRate()
+                 + "=" + sampleRate + ")");
+
+      Log.i(TAG, "Recorder Info:\n"
+                 + "Sample rate: " + Integer.toString(record.getSampleRate()) + "Hz, "
+                 + "buf: " + Integer.toString(2*bufSizeInShorts) + "bytes, "
+                 + "FFT length: " + Integer.toString(fftLen));
+
+      // Start recording
       record.startRecording();
+      SleepWithoutInterrupt(100);
 
-      baseTimeMs = SystemClock.uptimeMillis();
-      while(isRunning) {
-        loops++;
-        baseTimeMs += updateMs;
-        int delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
-        if (delay < 20) {
-          Log.i(TAG, "wait: " + delay);
-        }
-        try {
-          Thread.sleep(delay < 10 ? 10 : delay);
-        } catch (InterruptedException e) {
-          // Log.i(TAG, "Delay interrupted");
-          continue;
+      short[] audioSamples = new short[bufSizeInShorts];
+      STFT stft = new STFT(fftLen);
+
+      long baseTimeMs  = SystemClock.uptimeMillis();       // time that the plot get updated
+      long startTimeMs = SystemClock.uptimeMillis();       // time of recording start
+      
+      // Variables for count FPS
+      long timeInterval = 2000;                            // output FPS per timeInterval ms 
+      long time4FrameCount = SystemClock.uptimeMillis();
+      int frameCount = 0;
+      
+      long nFramesRead = 0;         // It's will overflow after millions of years of recording
+      int numOfReadShort = bufSizeInShorts;
+      double[] mdata = new double[bufSizeInShorts];
+
+      boolean isTestingOld = isTesting;
+
+      while (isRunning) {
+        // long aha = SystemClock.uptimeMillis();
+        if (isTestingOld != isTesting) {
+          isTestingOld = isTesting;
+          stft.clear();
+          startTimeMs = SystemClock.uptimeMillis();
+          nFramesRead = 0;
         }
 
+        // Read data
         if (isTesting) {
-          sineGen1.getSamples(fftData);
-          sineGen2.addSamples(fftData);
+          sineGen1.getSamples(mdata);  // mdata.length should be even
+          sineGen2.addSamples(mdata);
+          for (int i = 0; i < bufSizeInShorts; i++) {
+            // //audioSamples[i] = (short) (16384.0 * (Math.random() - 0.5));
+            audioSamples[i] = (short) Math.round(mdata[i]);
+          }
+          numOfReadShort = bufSizeInShorts;
         } else {
-          record.read(audioSamples, 0, minBytes);
-          shortToDouble(audioSamples, fftData);
+          numOfReadShort = record.read(audioSamples, 0, bufSizeInShorts);
+          // Log.i(TAG, "Read: " + Integer.toString(numOfReadShort) + " samples");
         }
+        nFramesRead += numOfReadShort;
         if (isPaused1) {
-          continue;
+          continue;  // keep reading data, so that buffer not get overflowed?
         }
-        fft.ft(fftData);
-        convertToDb(fftData, scale);
-        update(fftData);
+        stft.feedData(audioSamples, numOfReadShort);
+        // Log.i(TAG, "time " + Long.toString(SystemClock.uptimeMillis()-aha)
+        // + "ms  shorts read:" + Integer.toString(numOfReadShort));
+
+        // Plot if there is enough data
+        if (stft.nElemSpectrumAmp() > 0) {
+          dtRMS = 0;
+          for (int i = 0; i < numOfReadShort; i++) {
+            double s = audioSamples[i] / 32768.0;
+            dtRMS += s * s;                           // assume mean value is zero
+          }
+          dtRMS = Math.sqrt(dtRMS / numOfReadShort);  // compute Root-Mean-Square
+
+          // Limit the frame rate by wait `delay' ms.
+          // May cause buffer overrun, so choose a small updateMs.
+          baseTimeMs += updateMs;
+          int delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
+          // Log.i(TAG, "delay = " + delay);
+          if (delay > 0) {
+            try {
+              Thread.sleep(delay);
+            } catch (InterruptedException e) {
+              Log.i(TAG, "Sleep interrupted");
+              break;
+            }
+          } else {
+            baseTimeMs -= delay;  // get current time. Time to go.
+            // Log.i(TAG, "time: cmp t="+Long.toString(SystemClock.uptimeMillis())
+            //            + " v.s. t'=" + Long.toString(baseTimeMs));
+          }
+          frameCount++;
+          // update graph
+          update(stft.getSpectrumAmp());
+        }
+
+        long timeNow = SystemClock.uptimeMillis();
+        if (time4FrameCount + timeInterval <= timeNow) {
+          // Show FPS
+          Log.i(TAG, "FPS: " + Double.toString(1000 * (double) frameCount / (timeNow - time4FrameCount))
+                     + "(" + Integer.toString(frameCount) + "/"
+                     + Long.toString(timeNow - time4FrameCount) + "ms)");
+          time4FrameCount += timeInterval;
+          frameCount = 0;
+          // Check whether buffer overrun occur
+          long nFramesFromTime = (timeNow - startTimeMs) * record.getSampleRate() / 1000;
+          if (nFramesFromTime > 2 * bufSizeInShorts + nFramesRead) {
+            Log.w(TAG, "Buffer Overrun occured !\n"
+                       + " (Read " + Long.toString(nFramesRead) + " frames ("
+                       + Double.toString((double) nFramesRead / record.getSampleRate()) + "sec)\n"
+                       + "  Should read " + Long.toString(nFramesFromTime) + " frames ("
+                       + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
+          }
+          // Show peak amplitude
+          double[] am = stft.getSpectrumAmp();
+          double max_amp = -9e9;
+          for (double d : am) {
+            if (d > max_amp) {
+              max_amp = d;
+            }
+          }
+          Log.i(TAG, "max spectrum amplitude: " + Double.toString(max_amp) + " dB");
+        }
       }
-      Log.i(TAG, "Releasing Audio");
+      Log.i(TAG, "Releasing Audio. Looper().Run()");
       record.stop();
       record.release();
       record = null;
@@ -501,22 +574,27 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         @Override
         public void run() {
           AnalyzeActivity.this.recompute(data);
+          TextView tv = (TextView) findViewById(R.id.textview_subhead);
+          tv.setText(String.format("RMS: %6.2fdB", 20 * Math.log10(dtRMS)));
+          tv.invalidate();
         }
       });
     }
 
     public void setPause(boolean pause) {
       this.isPaused1 = pause;
+      // Note: When paused (or not), it is not allowed to change the recorder (sample rate, fftLen etc.)
+      // Recreate the whole thread would be a safe way to go.
     }
 
     public void finish() {
-      isRunning=false;
+      isRunning = false;
       interrupt();
     }
   }
 
   private void vibrate(int ms) {
-    ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(ms);
+    //((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(ms);
   }
 
   /**
@@ -545,7 +623,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
 
   /**
-   * Interface for view heirarchy visitor
+   * Interface for view hierarchy visitor
    */
   interface Visit {
     public void exec(View view);
