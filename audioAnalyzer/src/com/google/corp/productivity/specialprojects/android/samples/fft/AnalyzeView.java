@@ -27,6 +27,7 @@ import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -51,7 +52,7 @@ public class AnalyzeView extends View {
   private static boolean isBusy = false;
   
   public boolean isBusy() {
-	return isBusy;
+    return isBusy;
   }
   
   public AnalyzeView(Context context, AttributeSet attrs, int defStyle) {
@@ -103,37 +104,55 @@ public class AnalyzeView extends View {
   public RectF getBounds() {
     return new RectF(axisBounds);
   }
+  
+  // return position of grid lines, there are roughly gridDensity lines for the bigger grid
+  private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity) {
+    double intervalValue = endValue - startValue;
+    double gridIntervalGuess = intervalValue / gridDensity;
+    double gridIntervalBig;
+    double gridStartValueBig;
+    double gridIntervalSmall;
+    double gridStartValueSmall;
+    
+    double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
+    double fraction = gridIntervalGuess / exponent;
+    
+    // grid interval is 1, 2, 5, 10, ...
+    if (fraction < Math.sqrt(1*2)) {
+      gridIntervalBig   = 1;
+      gridIntervalSmall = 0.2;
+    } else if (fraction < Math.sqrt(2*5)) {
+      gridIntervalBig   = 2;
+      gridIntervalSmall = 1.0;
+    } else if (fraction < Math.sqrt(5*10)) {
+      gridIntervalBig   = 5;
+      gridIntervalSmall = 1;
+    } else {
+      gridIntervalBig   = 10;
+      gridIntervalSmall = 2;
+    }
+    gridIntervalBig   *= exponent;
+    gridStartValueBig   = Math.ceil(startValue / gridIntervalBig)   * gridIntervalBig;    
 
-  private double integerScale(double b, int nParts) {
-	  if (b <= 0) {
-		  return 0;
-	  }
-	  double ndigit = Math.floor(Math.log10(b));
-	  double sdigit = Math.pow(10, Math.log10(b) - ndigit);  // 1 <= sdigit < 10
-	  final double[] subLevel = {5, 4, 2.5, 2, 1};
-	  int i = 0;
-	  while (true) {
-		  for (i = 0; i < subLevel.length; i++) {
-			  if (sdigit / subLevel[i] < nParts) {
-				  break;
-			  }
-		  }
-		  if (i == subLevel.length) {  // still sdigit / subLevel[i] < nParts, so search for more
-			  i = 0;
-			  sdigit *= 10;
-			  ndigit -= 1;
-		  } else {
-			  break;
-		  }
-	  }
-	  return Math.pow(10, ndigit) * subLevel[i];
-  }
-
-  private double[] integerPartition(double a, double b, int nParts) {
-	  double[] intPar = new double[nParts+1];
-	  double intSca = integerScale(b-a, nParts);
-	  
-	  return intPar;
+    int nGrid = (int)Math.floor(intervalValue / gridIntervalBig) + 1;
+    double[] bigGridPoints = new double[nGrid];
+    for (int i = 0; i < nGrid; i++) {
+      bigGridPoints[i] = gridStartValueBig + i*gridIntervalBig;
+    }
+    
+    gridIntervalSmall *= exponent;
+    gridStartValueSmall = Math.ceil(startValue / gridIntervalSmall) * gridIntervalSmall;
+    
+    nGrid = (int)Math.floor(intervalValue / gridIntervalSmall) + 1;
+    double[] smallGridPoints = new double[nGrid];
+    for (int i = 0; i < nGrid; i++) {
+      smallGridPoints[i] = gridStartValueSmall + i*gridIntervalSmall;
+    }
+    
+    double[][] gridPoints2 = new double[2][];
+    gridPoints2[0] = bigGridPoints;
+    gridPoints2[1] = smallGridPoints;
+    return gridPoints2;
   }
   
   private double clamp(double value) {
@@ -146,7 +165,7 @@ public class AnalyzeView extends View {
   }
   
   /**
-   * Recompute the line lengths for the first 'w' bins
+   * Recompute the plot
    */
   public void recompute(double[] db, int start, int count, boolean bars) {
     if (canvasHeight < 1) {
@@ -396,10 +415,18 @@ public class AnalyzeView extends View {
   }
 
   private void drawGridLines(Canvas c, int nx, int ny) {
-    for(int i=0; i<=nx; i++) {
-      float pos = i * (canvasWidth-1) / nx;
+    double xMin = getMin();
+    double xMax = getMax();
+    double[][] gridPoints2 = genLinearGridPoints(xMin, xMax, 5);
+    for(int i = 0; i < gridPoints2[0].length; i++) {
+      //float pos = (float) ((gridPoints2[0][i] - xMin) / (xMax - xMin) * (canvasWidth-1) / scale);
+      float pos = (float) (gridPoints2[0][i] / 8000.0 * canvasWidth);
       c.drawLine(pos, 0, pos, canvasHeight, gridPaint);
     }
+//    for(int i=0; i<=nx; i++) {
+//      float pos = i * (canvasWidth-1) / nx;
+//      c.drawLine(pos, 0, pos, canvasHeight, gridPaint);
+//    }
     for(int i=0; i<=ny; i++) {
       float pos = i * (canvasHeight-1) / ny;
       c.drawLine(0, pos, canvasWidth, pos, gridPaint);
