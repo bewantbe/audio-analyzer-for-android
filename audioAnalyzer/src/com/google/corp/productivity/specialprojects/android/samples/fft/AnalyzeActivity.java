@@ -557,7 +557,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
                        + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
           }
           // Show peak amplitude
-          double[] am = stft.getSpectrumAmpDB();
+          final double[] am = stft.getSpectrumAmpDB();
           double max_amp = -Double.MAX_VALUE;
           for (double d : am) {
             if (d > max_amp) {

@@ -1,8 +1,5 @@
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
-import java.util.LinkedList;
-import java.util.Queue;
-
 import android.util.Log;
 
 import com.google.corp.productivity.specialprojects.android.fft.RealDoubleFFT;
@@ -11,18 +8,16 @@ import com.google.corp.productivity.specialprojects.android.fft.RealDoubleFFT;
 public class STFT {
   // data for frequency Analysis
   private double[] spectrumAmpOut;
-  private double[] spectrumAmpOutTmp;
+  private double[] spectrumAmpOutDB;
   private double[] spectrumAmpIn;
   private double[] spectrumAmpInTmp;
   private double[] wnd;
   private int spectrumAmpPt;
   private RealDoubleFFT spectrumAmpFFT;
-  public Queue<double[]> spectrumAmpOutQueue = new LinkedList<double[]>();
-  private double[][] spectrumAmpOutArray = new double[2][];                // 2 since half overlap
+//  public Queue<double[]> spectrumAmpOutQueue = new LinkedList<double[]>();
+  private double[][] spectrumAmpOutArray;
   private int spectrumAmpOutArrayPt = 0;                                   // Pointer for spectrumAmpOutArray
-
-  // data for spectrogram
-  public Queue<double[]> spectrogram;
+  private int nAnalysed = 0;
 
   public STFT(int i_fftlen) {
     if (((-i_fftlen)&i_fftlen) != i_fftlen) {
@@ -30,10 +25,15 @@ public class STFT {
       throw new IllegalArgumentException("Currently, only power of 2 are supported in fftlen");
     }
     spectrumAmpOut   = new double[i_fftlen/2+1];
+    spectrumAmpOutDB = new double[i_fftlen/2+1];
     spectrumAmpIn    = new double[i_fftlen];
     spectrumAmpInTmp = new double[i_fftlen];
     wnd              = new double[i_fftlen];
     spectrumAmpFFT   = new RealDoubleFFT(spectrumAmpIn.length);
+    spectrumAmpOutArray = new double[2][];                       // 2 since half overlap
+    for (int i = 0; i < spectrumAmpOutArray.length; i++) {
+      spectrumAmpOutArray[i] = new double[i_fftlen/2+1];
+    }
     
     double normalizeFactor = 0;
     for (int i=0; i<wnd.length; i++) {
@@ -72,9 +72,9 @@ public class STFT {
           spectrumAmpInTmp[i] = spectrumAmpIn[i] * wnd[i];
         }
         spectrumAmpFFT.ft(spectrumAmpInTmp);
-        spectrumAmpOutTmp = new double[spectrumAmpOut.length];
-        fftToAmp(spectrumAmpOutTmp, spectrumAmpInTmp);
-        spectrumAmpOutQueue.add(spectrumAmpOutTmp);
+        fftToAmp(spectrumAmpOutArray[spectrumAmpOutArrayPt], spectrumAmpInTmp);
+        spectrumAmpOutArrayPt = (spectrumAmpOutArrayPt+1) % spectrumAmpOutArray.length;
+        nAnalysed++;
 //        spectrumAmpPt = 0;                          // no overlap
         // half overlap
         int n2 = spectrumAmpIn.length / 2;
@@ -87,9 +87,8 @@ public class STFT {
   }
 
   private void fftToAmp(double[] dataOut, double[] data) {
-    // Should preallocate dataOut properly
     // data.length should be even number
-    double scaler = 2.0*2.0 / (data.length * data.length);  // *2 since there is negative frequency part
+    double scaler = 2.0*2.0 / (data.length * data.length);  // *2 since there are positive and negative frequency part
     dataOut[0] = data[0]*data[0] * scaler / 4.0;
     int j = 1;
     for (int i = 1; i < data.length - 1; i += 2, j++) {
@@ -98,56 +97,49 @@ public class STFT {
     dataOut[j] = data[data.length-1]*data[data.length-1] * scaler / 4.0;
   }
 
-//  private void fftToAmpDB(double[] dataOut, double[] data) {
-//    fftToAmp(dataOut, data);
-//    for (int i = 0; i < dataOut.length; i++) {
-//      dataOut[i] = 10.0 * Math.log10(dataOut[i]);
-//    }
-//  }
-
-  // return recently calculated spectrum, and clean spectrum queue 
-  public double[] pollSpectrumAmp() {
-    int sz = spectrumAmpOutQueue.size();
-    if (sz == 0) {
+  // return recently calculated spectrum 
+  final public double[] pollSpectrumAmp() {
+    if (nAnalysed == 0) {    // no new result
       return spectrumAmpOut;
     }
+    nAnalysed = 0;
+    // put average of spectrumAmpOutArray to spectrumAmpOut
     for (int j = 0; j < spectrumAmpOut.length; j++) {
       spectrumAmpOut[j] = 0;
     }
-    while (spectrumAmpOutQueue.size() > 0) {
-      spectrumAmpOutTmp = spectrumAmpOutQueue.poll();
+    for (int i = 0; i < spectrumAmpOutArray.length; i++) {
       for (int j = 0; j < spectrumAmpOut.length; j++) {
-        spectrumAmpOut[j] += spectrumAmpOutTmp[j];
+        spectrumAmpOut[j] += spectrumAmpOutArray[i][j];
       }
 //      Log.i(AnalyzeActivity.TAG, "pollSpectrumAmp(): while loop, st[1] = " + Double.toString(spectrumAmpOutTmp[1]));
     }
-//    spectrumAmpOutQueue.clear();
     for (int j = 0; j < spectrumAmpOut.length; j++) {
-      spectrumAmpOut[j] /= sz;
+      spectrumAmpOut[j] /= spectrumAmpOutArray.length;
     }
 //    Log.i(AnalyzeActivity.TAG, "pollSpectrumAmp(): sz = " + Integer.toString(sz) + "  s[1]=" + Double.toString(spectrumAmpOut[1]));
     return spectrumAmpOut;
   }
   
-  public double[] getSpectrumAmp() {
+  final public double[] getSpectrumAmp() {
     return pollSpectrumAmp();
   }
-
-  public double[] getSpectrumAmpDB() {
-    spectrumAmpOutTmp = getSpectrumAmp();
-    for (int i = 0; i < spectrumAmpOutTmp.length; i++) {
-      spectrumAmpOutTmp[i] = 10.0 * Math.log10(spectrumAmpOutTmp[i]);
+  
+  final public double[] getSpectrumAmpDB() {
+    if (nAnalysed != 0) {
+      final double[] x = getSpectrumAmp();
+      for (int i = 0; i < spectrumAmpOutDB.length; i++) {
+        spectrumAmpOutDB[i] = 10.0 * Math.log10(x[i]);
+      }
     }
 //  Log.i(AnalyzeActivity.TAG, "pollSpectrumAmp():  s[1]=" + Double.toString(spectrumAmpOutTmp[1]));
-    return spectrumAmpOutTmp;
+    return spectrumAmpOutDB;
   }
-
+  
   public int nElemSpectrumAmp() {
-    return spectrumAmpOutQueue.size();
+    return nAnalysed;
   }
   
   public void clear() {
-    spectrumAmpOutQueue.clear();
     spectrumAmpPt = 0;
     for (int i=0; i<spectrumAmpOut.length; i++) {
       spectrumAmpOut[i] = 0;
