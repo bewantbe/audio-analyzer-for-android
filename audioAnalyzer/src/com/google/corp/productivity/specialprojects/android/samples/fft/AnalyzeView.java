@@ -17,6 +17,7 @@
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -36,7 +37,7 @@ import android.view.View;
 
 public class AnalyzeView extends View {
   private float cursorX, cursorY; // cursor location
-  private float xZoom;    // horizontal scaling
+  private float xZoom;     // horizontal scaling
   private float xShift;    // horizontal translation
   private float mark;
   private RectF axisBounds;
@@ -46,10 +47,16 @@ public class AnalyzeView extends View {
   private Paint linePaint;
   private Paint cursorPaint;
   private Paint gridPaint;
+  private Paint labelPaint;
   private Path path;
   private int[] myLocation = {0, 0}; // window location on screen
   private Matrix matrix = new Matrix();
+  private Matrix matrix0 = new Matrix();
+  private Matrix matrix4Text = new Matrix();
   private static boolean isBusy = false;
+  
+  private double[][] gridPoints2;
+  private double[][] gridPoints2dB;
   
   public boolean isBusy() {
     return isBusy;
@@ -89,7 +96,10 @@ public class AnalyzeView extends View {
     
     gridPaint = new Paint(linePaint);
     gridPaint.setColor(Color.DKGRAY);
-    
+
+    labelPaint = new Paint(linePaint);
+    labelPaint.setColor(Color.GRAY);
+
     cursorX = cursorY = 0f;
     xZoom=1f;
     xShift=0f;
@@ -118,9 +128,7 @@ public class AnalyzeView extends View {
     double intervalValue = endValue - startValue;
     double gridIntervalGuess = intervalValue / gridDensity;
     double gridIntervalBig;
-    double gridStartValueBig;
     double gridIntervalSmall;
-    double gridStartValueSmall;
     
     if (scale_mode == 0 || intervalValue <= 1) {  // Linear scale (Hz)
       double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
@@ -159,18 +167,17 @@ public class AnalyzeView extends View {
         gridIntervalSmall = 1.0/6;
       }
     }
-    gridStartValueBig   = Math.ceil(startValue / gridIntervalBig)   * gridIntervalBig;    
     
     int nGrid = (int)Math.floor(intervalValue / gridIntervalBig) + 1;
     double[] bigGridPoints = new double[nGrid];
+    double gridStartValueBig   = Math.ceil(startValue / gridIntervalBig)   * gridIntervalBig;    
     for (int i = 0; i < nGrid; i++) {
       bigGridPoints[i] = gridStartValueBig + i*gridIntervalBig;
     }
-    
-    gridStartValueSmall = Math.ceil(startValue / gridIntervalSmall) * gridIntervalSmall;
-    
+
     nGrid = (int)Math.floor(intervalValue / gridIntervalSmall) + 1;
     double[] smallGridPoints = new double[nGrid];
+    double gridStartValueSmall = Math.ceil(startValue / gridIntervalSmall) * gridIntervalSmall;
     for (int i = 0; i < nGrid; i++) {
       smallGridPoints[i] = gridStartValueSmall + i*gridIntervalSmall;
     }
@@ -301,7 +308,7 @@ public class AnalyzeView extends View {
   
   public void setXlate(float offset) {
     xShift = between(0f, offset,  (xZoom * canvasWidth - canvasWidth) / xZoom);
-    // Log.i(AnalyzeActivity.TAG, "xlate: " + xlate + " [" + offset + "]");
+    // Log.i(AnalyzeActivity.TAG, "xShift: " + xShift + " [" + offset + "]");
     computeMatrix();
     invalidate();
   }
@@ -310,7 +317,13 @@ public class AnalyzeView extends View {
     matrix.reset();
     matrix.setTranslate(-xShift, 0f);
     matrix.postScale(xZoom, 1f);
-    // Log.i(AnalyzeActivity.TAG, "mat: " + xlate + "/" + scale);
+    matrix0.reset();
+    matrix0.setTranslate(0f, 0f);
+    matrix0.postScale(1f, 1f);
+    matrix4Text.reset();
+    matrix4Text.setTranslate(0f, 0f);
+    matrix4Text.postScale(1f, 1f);
+    // Log.i(AnalyzeActivity.TAG, "mat: " + xShift + "/" + xZoom);
   }
   
   public float getScale() {
@@ -352,8 +365,10 @@ public class AnalyzeView extends View {
   @Override
   protected void onDraw(Canvas c) {
     isBusy = true;
+    c.concat(matrix0);
+    c.save();
     c.concat(matrix);
-    drawGridLines(c, 5, 5);
+    drawGridLines(c, 3, 5);
     c.drawPath(path, linePaint);
     if (cursorX > 0) {
       c.drawLine(cursorX, 0, cursorX, canvasHeight, cursorPaint); 
@@ -365,6 +380,8 @@ public class AnalyzeView extends View {
       c.drawLine(mark - 3, 0, mark, 25, cursorPaint);
       c.drawLine(mark + 3, 0, mark, 25, cursorPaint);
     }
+    c.restore();
+    drawGridLabels(c);
     isBusy = false;
   }
   
@@ -447,26 +464,50 @@ public class AnalyzeView extends View {
       bounds = RectF.CREATOR.createFromParcel(in);
     }
   }
-
+  
   private void drawGridLines(Canvas c, int nx, int ny) {
-    double[][] gridPoints2 = genLinearGridPoints(getMin(), getMax(), nx);
+    gridPoints2 = genLinearGridPoints(getMin(), getMax(), nx);
     for(int i = 0; i < gridPoints2[0].length; i++) {
-      float pos = (float) (gridPoints2[0][i] / axisBounds.right * canvasWidth);
-      c.drawLine(pos, 0, pos, canvasHeight, gridPaint);
+      float xPos = (float) (gridPoints2[0][i] / axisBounds.right * canvasWidth);
+      c.drawLine(xPos, 0, xPos, canvasHeight, gridPaint);
     }
     for(int i = 0; i < gridPoints2[1].length; i++) {
-      float pos = (float) (gridPoints2[1][i] / axisBounds.right * canvasWidth);
-      c.drawLine(pos, 0, pos, 0.03f * canvasHeight, gridPaint);
+      float xPos = (float) (gridPoints2[1][i] / axisBounds.right * canvasWidth);
+      c.drawLine(xPos, 0, xPos, 0.03f * canvasHeight, gridPaint);
     }
-    double[][] gridPoints2dB = genDBGridPoints(axisBounds.bottom, axisBounds.top, ny);
+    gridPoints2dB = genDBGridPoints(axisBounds.bottom, axisBounds.top, ny);
     for(int i = 0; i < gridPoints2dB[0].length; i++) {
-      float pos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
+      float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
 //      Log.i(AnalyzeActivity.TAG, " y pos: " + Double.toString(gridPoints2dB[0][i]));
-      c.drawLine(0, pos, canvasWidth, pos, gridPaint);
+      c.drawLine(xShift, yPos, xShift + canvasWidth/xZoom, yPos, gridPaint);
     }
     for(int i = 0; i < gridPoints2dB[1].length; i++) {
-      float pos = (float) (gridPoints2dB[1][i] / axisBounds.bottom * canvasHeight);
-      c.drawLine(0, pos, 0.02f * canvasWidth / xZoom, pos, gridPaint);
+      float yPos = (float) (gridPoints2dB[1][i] / axisBounds.bottom * canvasHeight);
+      c.drawLine(xShift, yPos, xShift + 0.02f * canvasWidth / xZoom, yPos, gridPaint);
+    }
+  }
+  
+  float canvasX4axis(float x) {
+    return (x - axisBounds.left) / axisBounds.width() * canvasWidth;
+  }
+  
+  // Map from axis to visible canvas
+  float canvasWindowX4axis(float x) {
+    return (canvasX4axis(x) - xShift) * xZoom;
+  }
+  
+  // The coordinate of this function is identical to screen.
+  @SuppressLint("DefaultLocale")
+  private void drawGridLabels(Canvas c) {
+    for(int i = 0; i < gridPoints2[0].length; i++) {
+      float xPos = canvasWindowX4axis((float)gridPoints2[0][i]);
+      String s = String.format("%.0f", gridPoints2[0][i]);
+      c.drawText(s, xPos, 15, labelPaint);
+    }
+    for(int i = 0; i < gridPoints2dB[0].length; i++) {
+      float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
+      String s = String.format("%.0f", gridPoints2dB[0][i]);
+      c.drawText(s, 0, yPos, labelPaint);
     }
   }
 }

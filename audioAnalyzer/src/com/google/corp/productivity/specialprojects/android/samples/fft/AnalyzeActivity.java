@@ -534,7 +534,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           }
           frameCount++;
           // update graph
-          update(stft.getSpectrumAmp());
+//          int sz = stft.nElemSpectrumAmp();
+//          Log.i(TAG, " queue size: " + Integer.toString(sz));
+          update(stft.getSpectrumAmpDB());
         }
 
         long timeNow = SystemClock.uptimeMillis();
@@ -555,14 +557,14 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
                        + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
           }
           // Show peak amplitude
-          double[] am = stft.getSpectrumAmp();
-          double max_amp = -9e9;
+          double[] am = stft.getSpectrumAmpDB();
+          double max_amp = -Double.MAX_VALUE;
           for (double d : am) {
             if (d > max_amp) {
               max_amp = d;
             }
           }
-          Log.i(TAG, "max spectrum amplitude: " + Double.toString(max_amp) + " dB");
+          Log.i(TAG, "max spectrum amplitude: " + Double.toString(max_amp) + " dB, am[1]=" + Double.toString(am[1]));
         }
       }
       Log.i(TAG, "Releasing Audio. Looper().Run()");
