@@ -448,8 +448,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       DoubleSineGen sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
+      // The buffer size here seems not relate to the delay.
+      // So choose a slight larger size (~1sec) so that no overrun occur.
       record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufSizeInShorts);
+                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufSizeInShorts * 8);
       Log.d(TAG, "Buffer size: " + minBytes + "bytes (" + record.getSampleRate()
                  + "=" + sampleRate + ")");
 
@@ -572,6 +574,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
             }
           }
           Log.i(TAG, "max spectrum amplitude: " + Double.toString(max_amp) + " dB, am[1]=" + Double.toString(am[1]));
+          Log.i(TAG, "data read: " + Integer.toString(stft.lenRead) + "  data analysed: " + Integer.toString(stft.lenAnalysed));
+          stft.lenRead = 0;
+          stft.lenAnalysed = 0;
         }
       }
       Log.i(TAG, "Releasing Audio. Looper().Run()");

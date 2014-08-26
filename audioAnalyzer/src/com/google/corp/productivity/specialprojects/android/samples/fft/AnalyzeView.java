@@ -238,7 +238,7 @@ public class AnalyzeView extends View {
       }
     } else {
       // (0,0) is the upper left of the View, in pixel unit
-      path.moveTo(0, canvasHeight + canvasHeight * (clamp((float)db[0]) - axisBounds.bottom) / axisBounds.height());
+      path.moveTo((float) start * canvasWidth / count, canvasHeight + canvasHeight * (clamp((float)db[0]) - axisBounds.bottom) / axisBounds.height());
       for (int i = start+1; i < count; i++) {
         float x = (float) i * canvasWidth / count;
         float y = canvasHeight + canvasHeight * (clamp((float)db[i]) - axisBounds.bottom) / axisBounds.height();
