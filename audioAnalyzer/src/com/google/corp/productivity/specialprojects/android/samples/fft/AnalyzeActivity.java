@@ -421,6 +421,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     boolean isRunning = true;
     boolean isPaused1 = false;
     double dtRMS = 0;
+    double maxAmpDB;
+    double maxFreq;
 
     private void SleepWithoutInterrupt(long millis) {
       try {
@@ -550,8 +552,20 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           dtRMS = Math.sqrt(dtRMS / numOfReadShort * 2.0);
 
           // Update graph plot
-          update(stft.getSpectrumAmpDB());
+          final double[] spectrumDB = stft.getSpectrumAmpDB();
+          update(spectrumDB);
           frameCount++;
+
+          // Count and show peak amplitude
+          maxAmpDB  = 20 * Math.log10(0.5/32768);
+          maxFreq = 0;
+          for (int i = 1; i < spectrumDB.length; i++) {  // skip the direct current term
+            if (spectrumDB[i] > maxAmpDB) {
+              maxAmpDB  = spectrumDB[i];
+              maxFreq = i;
+            }
+          }
+          maxFreq = maxFreq * sampleRate / fftLen;
         }
 
         // Show debug information
@@ -572,18 +586,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
                        + "  Should read " + Long.toString(nFramesFromTime) + " frames ("
                        + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
           }
-          // Count and show peak amplitude
-          final double[] am = stft.getSpectrumAmpDB();
-          double max_amp = -Double.MAX_VALUE;
-          for (double d : am) {
-            if (d > max_amp) {
-              max_amp = d;
-            }
-          }
-          Log.i(TAG, "max spectrum amplitude: " + Double.toString(max_amp) + " dB, am[1]=" + Double.toString(am[1]));
-          Log.i(TAG, "data read: " + Integer.toString(stft.lenRead) + "  data analysed: " + Integer.toString(stft.lenAnalysed));
-          stft.lenRead = 0;
-          stft.lenAnalysed = 0;
+          Log.i(TAG, String.format("max spectrum amplitude: %.2fdB @ %.1fHz", maxAmpDB, maxFreq));
         }
       }
       Log.i(TAG, "Looper::Run(): Releasing Audio.");
@@ -598,7 +601,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         public void run() {
           AnalyzeActivity.this.recompute(data);
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
-          tv.setText(String.format("RMS: %6.2fdB", 20 * Math.log10(dtRMS)));
+          tv.setText(String.format("RMS: %6.2fdB, peak: %6.2fdB @ %5.1fHz",
+              20*Math.log10(dtRMS), maxAmpDB, maxFreq));
           tv.invalidate();
         }
       });

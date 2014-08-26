@@ -21,8 +21,6 @@ public class STFT {
   private int spectrumAmpOutArrayPt = 0;                                   // Pointer for spectrumAmpOutArray
   private int nAnalysed = 0;
   private RealDoubleFFT spectrumAmpFFT;
-  public int lenRead = 0;
-  public int lenAnalysed = 0;
   
   private void init(int i_fftlen, int minFeedSize) {
     if (minFeedSize <= 0) {
@@ -84,13 +82,11 @@ public class STFT {
         spectrumAmpIn[spectrumAmpPt] = ds[dsPt] / 32768.0;
         spectrumAmpPt++;
         dsPt++;
-        lenRead++;
       }
       if (spectrumAmpPt == spectrumAmpIn.length) {    // enough data for one FFT
         for (int i = 0; i < wnd.length; i++) {
           spectrumAmpInTmp[i] = spectrumAmpIn[i] * wnd[i];
         }
-        lenAnalysed += spectrumAmpInTmp.length;
         spectrumAmpFFT.ft(spectrumAmpInTmp);
         fftToAmp(spectrumAmpOutTmp, spectrumAmpInTmp);
         System.arraycopy(spectrumAmpOutTmp, 0, spectrumAmpOutArray[spectrumAmpOutArrayPt], 0,
@@ -141,7 +137,6 @@ public class STFT {
         spectrumAmpOutDB[i] = 10.0 * Math.log10(x[i]);
       }
     }
-//  Log.i(AnalyzeActivity.TAG, "pollSpectrumAmp():  s[1]=" + Double.toString(spectrumAmpOutTmp[1]));
     return spectrumAmpOutDB;
   }
   
