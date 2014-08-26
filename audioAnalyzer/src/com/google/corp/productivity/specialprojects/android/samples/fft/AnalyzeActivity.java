@@ -66,7 +66,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   private int fftLen = 2048;
   private int sampleRate = 8000;
-  private int updateMs = 100;
+  private int updateMs = 40;
   private AnalyzeView graphView;
   private Looper samplingThread;
 
@@ -213,7 +213,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       showLines = prefs.getBoolean("showLines", false);
     }
     if (pref == null || pref.equals("refreshRate")) {
-      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "12"));
+      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "25"));
     }
     if (pref == null || pref.equals("fftBins")) {
       fftLen = Integer.parseInt(prefs.getString("fftBins", "1024"));
@@ -433,6 +433,45 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     public Looper() {
     }
 
+    private long baseTimeMs = SystemClock.uptimeMillis();
+
+    private void LimitFrameRate() {
+      // Limit the frame rate by wait `delay' ms.
+      // May cause buffer overrun, so choose a small updateMs.
+      baseTimeMs += updateMs;
+      int delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
+//      Log.i(TAG, "delay = " + delay);
+      if (delay > 0) {
+        try {
+          Thread.sleep(delay);
+        } catch (InterruptedException e) {
+          Log.i(TAG, "Sleep interrupted");  // seems never reached
+        }
+      } else {
+        baseTimeMs -= delay;  // get current time. Time to go.
+        // Log.i(TAG, "time: cmp t="+Long.toString(SystemClock.uptimeMillis())
+        //            + " v.s. t'=" + Long.toString(baseTimeMs));
+      }
+    }
+    
+    DoubleSineGen sineGen1;
+    DoubleSineGen sineGen2;
+    double[] mdata;
+    // used in run()
+    private int readTestData(short[] a, int offsetInShorts, int sizeInShorts) {
+      sineGen1.getSamples(mdata);  // mdata.length should be even
+      sineGen2.addSamples(mdata);
+      for (int i = 0; i < sizeInShorts; i++) {
+        a[offsetInShorts + i] = (short) Math.round(mdata[i]);
+      }
+//      for (int i = 0; i < bufSizeInShorts; i++) {
+//      //audioSamples[i] = (short) (32767.0 * (2.0*Math.random() - 1));
+//        audioSamples[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
+//      }
+      LimitFrameRate();
+      return sizeInShorts;
+    }
+    
     @Override
     public void run() {
       // Initialize
@@ -443,9 +482,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       int bufSizeInShorts = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen);
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
-      // Signal source for testing FFT
-      DoubleSineGen sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
-      DoubleSineGen sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+      // Signal source for testing
+      sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
+      sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+      mdata = new double[bufSizeInShorts];
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
       // The buffer size here seems not relate to the delay.
@@ -464,25 +504,20 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       record.startRecording();
       SleepWithoutInterrupt(100);
 
-      short[] audioSamples = new short[bufSizeInShorts];
       STFT stft = new STFT(fftLen);
+      short[] audioSamples = new short[bufSizeInShorts];
+      int numOfReadShort;
 
-      long baseTimeMs  = SystemClock.uptimeMillis();       // time that the plot get updated
+      // Variables for count FPS, and Debug
       long startTimeMs = SystemClock.uptimeMillis();       // time of recording start
-      
-      // Variables for count FPS
       long timeInterval = 2000;                            // output FPS per timeInterval ms 
       long time4FrameCount = SystemClock.uptimeMillis();
-      int frameCount = 0;
-      
       long nFramesRead = 0;         // It's will overflow after millions of years of recording
-      int numOfReadShort = bufSizeInShorts;
-      double[] mdata = new double[bufSizeInShorts];
+      int frameCount = 0;
 
       boolean isTestingOld = isTesting;
 
       while (isRunning) {
-        // long aha = SystemClock.uptimeMillis();
         if (isTestingOld != isTesting) {
           isTestingOld = isTesting;
           stft.clear();
@@ -492,16 +527,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
         // Read data
         if (isTesting) {
-          sineGen1.getSamples(mdata);  // mdata.length should be even
-          sineGen2.addSamples(mdata);
-          for (int i = 0; i < bufSizeInShorts; i++) {
-            audioSamples[i] = (short) Math.round(mdata[i]);
-          }
-//          for (int i = 0; i < bufSizeInShorts; i++) {
-//          //audioSamples[i] = (short) (32767.0 * (2.0*Math.random() - 1));
-//            audioSamples[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
-//          }
-          numOfReadShort = bufSizeInShorts;
+          numOfReadShort = readTestData(audioSamples, 0, bufSizeInShorts);
         } else {
           numOfReadShort = record.read(audioSamples, 0, bufSizeInShorts);
           // Log.i(TAG, "Read: " + Integer.toString(numOfReadShort) + " samples");
@@ -511,46 +537,27 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           continue;  // keep reading data, so that buffer not get overflowed?
         }
         stft.feedData(audioSamples, numOfReadShort);
-        // Log.i(TAG, "time " + Long.toString(SystemClock.uptimeMillis()-aha)
-        // + "ms  shorts read:" + Integer.toString(numOfReadShort));
 
-        // Plot if there is enough data
+        // If there is new spectrum data, do plot
         if (stft.nElemSpectrumAmp() > 0) {
+          // compute Root-Mean-Square
           dtRMS = 0;
           for (int i = 0; i < numOfReadShort; i++) {
             double s = audioSamples[i] / 32768.0;
             dtRMS += s * s;                           // assume mean value is zero
           }
-          // compute Root-Mean-Square, "* 2.0" normalize to sine wave.
+          // "* 2.0" normalize to sine wave.
           dtRMS = Math.sqrt(dtRMS / numOfReadShort * 2.0);
 
-          // Limit the frame rate by wait `delay' ms.
-          // May cause buffer overrun, so choose a small updateMs.
-          baseTimeMs += updateMs;
-          int delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
-          // Log.i(TAG, "delay = " + delay);
-          if (delay > 0) {
-            try {
-              Thread.sleep(delay);
-            } catch (InterruptedException e) {
-              Log.i(TAG, "Sleep interrupted");
-              break;
-            }
-          } else {
-            baseTimeMs -= delay;  // get current time. Time to go.
-            // Log.i(TAG, "time: cmp t="+Long.toString(SystemClock.uptimeMillis())
-            //            + " v.s. t'=" + Long.toString(baseTimeMs));
-          }
-          frameCount++;
-          // update graph
-//          int sz = stft.nElemSpectrumAmp();
-//          Log.i(TAG, " queue size: " + Integer.toString(sz));
+          // Update graph plot
           update(stft.getSpectrumAmpDB());
+          frameCount++;
         }
 
+        // Show debug information
         long timeNow = SystemClock.uptimeMillis();
         if (time4FrameCount + timeInterval <= timeNow) {
-          // Show FPS
+          // Count and show FPS
           Log.i(TAG, "FPS: " + Double.toString(1000 * (double) frameCount / (timeNow - time4FrameCount))
                      + "(" + Integer.toString(frameCount) + "/"
                      + Long.toString(timeNow - time4FrameCount) + "ms)");
@@ -565,7 +572,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
                        + "  Should read " + Long.toString(nFramesFromTime) + " frames ("
                        + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
           }
-          // Show peak amplitude
+          // Count and show peak amplitude
           final double[] am = stft.getSpectrumAmpDB();
           double max_amp = -Double.MAX_VALUE;
           for (double d : am) {
@@ -579,7 +586,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           stft.lenAnalysed = 0;
         }
       }
-      Log.i(TAG, "Releasing Audio. Looper().Run()");
+      Log.i(TAG, "Looper::Run(): Releasing Audio.");
       record.stop();
       record.release();
       record = null;
