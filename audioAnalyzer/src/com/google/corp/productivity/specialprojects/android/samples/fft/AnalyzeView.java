@@ -55,8 +55,8 @@ public class AnalyzeView extends View {
   private Matrix matrix4Text = new Matrix();
   private static boolean isBusy = false;
   
-  private double[][] gridPoints2;
-  private double[][] gridPoints2dB;
+  private double[][] gridPoints2   = new double[2][0];
+  private double[][] gridPoints2dB = new double[2][0];
   
   public boolean isBusy() {
     return isBusy;
@@ -116,7 +116,7 @@ public class AnalyzeView extends View {
   }
   
   // return position of grid lines, there are roughly gridDensity lines for the bigger grid
-  private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity, int scale_mode) {
+  private void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue, double gridDensity, int scale_mode) {
     if (startValue == endValue) {
       Log.e(AnalyzeActivity.TAG, "genLinearGridPoints()");
     }
@@ -167,33 +167,46 @@ public class AnalyzeView extends View {
         gridIntervalSmall = 1.0/6;
       }
     }
-    
+
+    if (gridPointsArray == null || gridPointsArray.length != 2) {
+      Log.e(AnalyzeActivity.TAG, " genLinearGridPoints(): empty array!!");
+    }
+
     int nGrid = (int)Math.floor(intervalValue / gridIntervalBig) + 1;
-    double[] bigGridPoints = new double[nGrid];
+    if (nGrid != gridPointsArray[0].length) {    // reallocate space when need
+      gridPointsArray[0] = new double[nGrid];
+    }
+    double[] bigGridPoints = gridPointsArray[0];
     double gridStartValueBig   = Math.ceil(startValue / gridIntervalBig)   * gridIntervalBig;    
     for (int i = 0; i < nGrid; i++) {
       bigGridPoints[i] = gridStartValueBig + i*gridIntervalBig;
     }
-
+    
     nGrid = (int)Math.floor(intervalValue / gridIntervalSmall) + 1;
-    double[] smallGridPoints = new double[nGrid];
+    if (nGrid != gridPointsArray[1].length) {    // reallocate space when need
+      gridPointsArray[1] = new double[nGrid];
+    }
+    double[] smallGridPoints = gridPointsArray[1];
     double gridStartValueSmall = Math.ceil(startValue / gridIntervalSmall) * gridIntervalSmall;
     for (int i = 0; i < nGrid; i++) {
       smallGridPoints[i] = gridStartValueSmall + i*gridIntervalSmall;
     }
-    
-    double[][] gridPoints2 = new double[2][];
-    gridPoints2[0] = bigGridPoints;
-    gridPoints2[1] = smallGridPoints;
-    return gridPoints2;
   }
   
   private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity) {
-    return genLinearGridPoints(startValue, endValue, gridDensity, 0);
+    if (gridPoints2 == null || gridPoints2.length != 2) {
+      gridPoints2 = new double[2][0];
+    }
+    genLinearGridPoints(gridPoints2, startValue, endValue, gridDensity, 0);
+    return gridPoints2;
   }
   
   private double[][] genDBGridPoints(double startValue, double endValue, double gridDensity) {
-    return genLinearGridPoints(startValue, endValue, gridDensity, 1);
+    if (gridPoints2dB == null || gridPoints2dB.length != 2) {
+      gridPoints2dB = new double[2][0];
+    }
+    genLinearGridPoints(gridPoints2dB, startValue, endValue, gridDensity, 1);
+    return gridPoints2dB;
   }
   
   private double clamp(double value) {

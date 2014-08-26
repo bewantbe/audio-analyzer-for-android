@@ -13,11 +13,10 @@ public class STFT {
   private double[] spectrumAmpInTmp;
   private double[] wnd;
   private int spectrumAmpPt;
-  private RealDoubleFFT spectrumAmpFFT;
-//  public Queue<double[]> spectrumAmpOutQueue = new LinkedList<double[]>();
   private double[][] spectrumAmpOutArray;
   private int spectrumAmpOutArrayPt = 0;                                   // Pointer for spectrumAmpOutArray
   private int nAnalysed = 0;
+  private RealDoubleFFT spectrumAmpFFT;
 
   public STFT(int i_fftlen) {
     if (((-i_fftlen)&i_fftlen) != i_fftlen) {
