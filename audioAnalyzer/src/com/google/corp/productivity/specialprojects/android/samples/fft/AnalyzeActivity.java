@@ -31,6 +31,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Debug;
 import android.os.SystemClock;
 import android.os.Vibrator;
 import android.preference.PreferenceActivity;
@@ -91,6 +92,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         ((TextView) view).setFreezesText(true);
       }
     }, "select");
+//    Debug.startMethodTracing("calc");
   }
 
   /**
@@ -133,6 +135,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   @Override
   protected void onDestroy() {
+//    Debug.stopMethodTracing();
     getPreferences().unregisterOnSharedPreferenceChangeListener(this);
     super.onDestroy();
   }
@@ -156,7 +159,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   public static class MyPreferences extends PreferenceActivity {
     @SuppressWarnings("deprecation")
-	@Override
+    @Override
     public void onCreate(Bundle state) {
       super.onCreate(state);
       addPreferencesFromResource(R.xml.preferences);
@@ -441,8 +444,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
       // Signal source for testing FFT
-      DoubleSineGen sineGen1 = new DoubleSineGen(1234.0, sampleRate, SAMPLE_VALUE_MAX * 0.5);
-      DoubleSineGen sineGen2 = new DoubleSineGen(3300.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+      DoubleSineGen sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
+      DoubleSineGen sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
       record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
@@ -490,9 +493,12 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           sineGen1.getSamples(mdata);  // mdata.length should be even
           sineGen2.addSamples(mdata);
           for (int i = 0; i < bufSizeInShorts; i++) {
-            // //audioSamples[i] = (short) (16384.0 * (Math.random() - 0.5));
             audioSamples[i] = (short) Math.round(mdata[i]);
           }
+//          for (int i = 0; i < bufSizeInShorts; i++) {
+//          //audioSamples[i] = (short) (32767.0 * (2.0*Math.random() - 1));
+//            audioSamples[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
+//          }
           numOfReadShort = bufSizeInShorts;
         } else {
           numOfReadShort = record.read(audioSamples, 0, bufSizeInShorts);
@@ -513,7 +519,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
             double s = audioSamples[i] / 32768.0;
             dtRMS += s * s;                           // assume mean value is zero
           }
-          dtRMS = Math.sqrt(dtRMS / numOfReadShort);  // compute Root-Mean-Square
+          // compute Root-Mean-Square, "* 2.0" normalize to sine wave.
+          dtRMS = Math.sqrt(dtRMS / numOfReadShort * 2.0);
 
           // Limit the frame rate by wait `delay' ms.
           // May cause buffer overrun, so choose a small updateMs.

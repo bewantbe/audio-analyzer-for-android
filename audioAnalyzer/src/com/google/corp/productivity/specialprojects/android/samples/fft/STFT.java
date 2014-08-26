@@ -104,9 +104,9 @@ public class STFT {
     nAnalysed = 0;
     // put average of spectrumAmpOutArray to spectrumAmpOut
     for (int j = 0; j < spectrumAmpOut.length; j++) {
-      spectrumAmpOut[j] = 0;
+      spectrumAmpOut[j] = spectrumAmpOutArray[0][j];
     }
-    for (int i = 0; i < spectrumAmpOutArray.length; i++) {
+    for (int i = 1; i < spectrumAmpOutArray.length; i++) {
       for (int j = 0; j < spectrumAmpOut.length; j++) {
         spectrumAmpOut[j] += spectrumAmpOutArray[i][j];
       }

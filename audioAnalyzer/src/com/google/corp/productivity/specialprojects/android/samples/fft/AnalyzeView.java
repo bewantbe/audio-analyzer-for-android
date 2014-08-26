@@ -209,8 +209,8 @@ public class AnalyzeView extends View {
     return gridPoints2dB;
   }
   
-  private double clamp(double value) {
-    if (value < axisBounds.bottom || value != value) {
+  private float clamp(float value) {
+    if (value < axisBounds.bottom || Float.isNaN(value)) {
       value = axisBounds.bottom;
     } else if (value > axisBounds.top) {
       value = axisBounds.top;
@@ -230,7 +230,7 @@ public class AnalyzeView extends View {
     if (bars) {
       for (int i = start; i < count; i++) {
         float x = (float) i * canvasWidth / count;
-        float y = (float) (canvasHeight + canvasHeight * (clamp(db[i]) - axisBounds.bottom) / axisBounds.height());
+        float y = (canvasHeight + canvasHeight * (clamp((float)db[i]) - axisBounds.bottom) / axisBounds.height());
         if (y != canvasHeight) {
           path.moveTo(x, canvasHeight);     
           path.lineTo(x, y);
@@ -238,10 +238,10 @@ public class AnalyzeView extends View {
       }
     } else {
       // (0,0) is the upper left of the View, in pixel unit
-      path.moveTo(0, (float) (canvasHeight + canvasHeight * (clamp(db[0]) - axisBounds.bottom) / axisBounds.height()));
+      path.moveTo(0, canvasHeight + canvasHeight * (clamp((float)db[0]) - axisBounds.bottom) / axisBounds.height());
       for (int i = start+1; i < count; i++) {
         float x = (float) i * canvasWidth / count;
-        float y = (float) (canvasHeight + canvasHeight * (clamp(db[i]) - axisBounds.bottom) / axisBounds.height());
+        float y = canvasHeight + canvasHeight * (clamp((float)db[i]) - axisBounds.bottom) / axisBounds.height();
         path.lineTo(x, y);
       }
     }
