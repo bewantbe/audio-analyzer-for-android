@@ -17,8 +17,7 @@
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
-import java.util.Formatter;
-import java.util.Locale;
+import java.text.DecimalFormat;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -59,10 +58,8 @@ public class AnalyzeView extends View {
   
   private double[][] gridPoints2   = new double[2][0];
   private double[][] gridPoints2dB = new double[2][0];
-  private Formatter[] gridPointsFmt = new Formatter[0];
-  private Formatter[] gridPointsFmtDB = new Formatter[0];
-  private StringBuilder[] gridPointsStr = new StringBuilder[0];
-  private StringBuilder[] gridPointsStrDB = new StringBuilder[0];
+  private StringBuffer[] gridPointsStr = new StringBuffer[0];
+  private StringBuffer[] gridPointsStrDB = new StringBuffer[0];
   
   public boolean isBusy() {
     return isBusy;
@@ -214,39 +211,56 @@ public class AnalyzeView extends View {
 //    genLinearGridPoints(gridPoints2dB, startValue, endValue, gridDensity, 1);
 //    return gridPoints2dB;
 //  }
+  
+  private DecimalFormat myFormatter = new DecimalFormat("@@");
+  double[] oldGridPointBoundary = new double[2];
+  double[] oldGridPointBoundaryDB = new double[2];
 
-  // It's so ugly to write these Formatter and StringBuilder stuff -- in order to reduce garbage.
+  // It's so ugly to write these Formatter and StringBuffer stuff -- in order to reduce garbage -- and not success!
   // Also, since there is no "pass by reference", modify array is also ugly...
   // TODO: use array of array to solve this?
+  // Still buggy....
   private void updateLinearGridPoints(double startValue, double endValue, double gridDensity) {
     genLinearGridPoints(gridPoints2, startValue, endValue, gridDensity, 0);
-    if (gridPoints2[0].length != gridPointsFmt.length) {  // XXX  I don't like to repeat thing...
-      gridPointsFmt = new Formatter    [gridPoints2[0].length];
-      gridPointsStr = new StringBuilder[gridPoints2[0].length];
+    boolean needUpdate = false;
+    if (gridPoints2[0].length != gridPointsStr.length) {  // XXX  I don't like to repeat thing...
+      gridPointsStr = new StringBuffer[gridPoints2[0].length];
       for (int i = 0; i < gridPoints2[0].length; i++) {
-        gridPointsStr[i] = new StringBuilder();
-        gridPointsFmt[i] = new Formatter(gridPointsStr[i], Locale.getDefault());
+        gridPointsStr[i] = new StringBuffer();
       }
+      needUpdate = true;
     }
-    for (int i = 0; i < gridPointsFmt.length; i++) {
-      gridPointsStr[i].setLength(0);
-      gridPointsFmt[i].format("%.0f", gridPoints2[0][i]);
+    if (needUpdate || gridPoints2[0][0] != oldGridPointBoundary[0]
+        || gridPoints2[0][gridPoints2[0].length-1] != oldGridPointBoundary[1]) {
+      oldGridPointBoundary[0] = gridPoints2[0][0];
+      oldGridPointBoundary[1] = gridPoints2[0][gridPoints2[0].length-1];
+      for (int i = 0; i < gridPointsStr.length; i++) {
+        gridPointsStr[i].setLength(0);
+        gridPointsStr[i].append(myFormatter.format(gridPoints2[0][i]));
+      }
+      Log.i(AnalyzeActivity.TAG, "  Update...");
     }
   }
   
   private void updateDBGridPoints(double startValue, double endValue, double gridDensity) {
     genLinearGridPoints(gridPoints2dB, startValue, endValue, gridDensity, 1);
-    if (gridPoints2dB[0].length != gridPointsFmtDB.length) {
-      gridPointsFmtDB = new Formatter    [gridPoints2dB[0].length];
-      gridPointsStrDB = new StringBuilder[gridPoints2dB[0].length];
+    boolean needUpdate = false;
+    if (gridPoints2dB[0].length != gridPointsStrDB.length) {
+      gridPointsStrDB = new StringBuffer[gridPoints2dB[0].length];
       for (int i = 0; i < gridPoints2dB[0].length; i++) {
-        gridPointsStrDB[i] = new StringBuilder();
-        gridPointsFmtDB[i] = new Formatter(gridPointsStrDB[i], Locale.getDefault());
+        gridPointsStrDB[i] = new StringBuffer();
       }
+      needUpdate = true;
     }
-    for (int i = 0; i < gridPointsFmtDB.length; i++) {
-      gridPointsStrDB[i].setLength(0);
-      gridPointsFmtDB[i].format("%.0f", gridPoints2dB[0][i]);
+    if (needUpdate || gridPoints2dB[0][0] != oldGridPointBoundaryDB[0]
+        || gridPoints2dB[0][gridPoints2dB[0].length-1] != oldGridPointBoundaryDB[1]) {
+      oldGridPointBoundaryDB[0] = gridPoints2dB[0][0];
+      oldGridPointBoundaryDB[1] = gridPoints2dB[0][gridPoints2dB[0].length-1];
+      for (int i = 0; i < gridPointsStrDB.length; i++) {
+        gridPointsStrDB[i].setLength(0);
+        gridPointsStrDB[i].append(myFormatter.format(gridPoints2dB[0][i]));
+      }
+      Log.i(AnalyzeActivity.TAG, "  Update...");
     }
   }
   
@@ -562,18 +576,4 @@ public class AnalyzeView extends View {
     }
   }
   
-//  // The coordinate of this function is identical to screen.
-//  @SuppressLint("DefaultLocale")
-//  private void drawGridLabels(Canvas c) {
-//    for(int i = 0; i < gridPoints2[0].length; i++) {
-//      float xPos = canvasWindowX4axis((float)gridPoints2[0][i]);
-//      String s = String.format("%.0f", gridPoints2[0][i]);
-//      c.drawText(s, xPos, 15, labelPaint);
-//    }
-//    for(int i = 0; i < gridPoints2dB[0].length; i++) {
-//      float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
-//      String s = String.format("%.0f", gridPoints2dB[0][i]);
-//      c.drawText(s, 0, yPos, labelPaint);
-//    }
-//  }
 }
