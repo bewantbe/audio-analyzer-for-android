@@ -22,7 +22,6 @@ import com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeV
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -31,9 +30,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.SystemClock;
-import android.os.Vibrator;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.text.Html;
@@ -288,7 +285,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
   
   /**
-   * TODO: add button-specific help on longclick
+   * TODO: add button-specific help on long click
    */
 
   @Override
@@ -424,22 +421,21 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     double maxAmpDB;
     double maxFreq;
 
+    public Looper() {
+    }
+
     private void SleepWithoutInterrupt(long millis) {
       try {
-        Thread.sleep(100);
+        Thread.sleep(millis);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-    }
-
-    public Looper() {
     }
 
     private long baseTimeMs = SystemClock.uptimeMillis();
 
     private void LimitFrameRate() {
       // Limit the frame rate by wait `delay' ms.
-      // May cause buffer overrun, so choose a small updateMs.
       baseTimeMs += updateMs;
       int delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
 //      Log.i(TAG, "delay = " + delay);
@@ -450,7 +446,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           Log.i(TAG, "Sleep interrupted");  // seems never reached
         }
       } else {
-        baseTimeMs -= delay;  // get current time. Time to go.
+        baseTimeMs -= delay;  // get current time
         // Log.i(TAG, "time: cmp t="+Long.toString(SystemClock.uptimeMillis())
         //            + " v.s. t'=" + Long.toString(baseTimeMs));
       }
@@ -459,6 +455,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     DoubleSineGen sineGen1;
     DoubleSineGen sineGen2;
     double[] mdata;
+    
     // used in run()
     private int readTestData(short[] a, int offsetInShorts, int sizeInShorts) {
       sineGen1.getSamples(mdata);  // mdata.length should be even
@@ -478,36 +475,42 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     public void run() {
       // Initialize
       // TODO: if failed, use another fallback option
-      int minBytes = AudioRecord.getMinBufferSize(sampleRate,
-          AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-      // Determine size of each read() operation
-      int bufSizeInShorts = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen);
+      int minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
+                                                  AudioFormat.ENCODING_PCM_16BIT);
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
-      // Signal source for testing
-      sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
-      sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
-      mdata = new double[bufSizeInShorts];
+
+      /**
+       * Develop -> Reference -> AudioRecord
+       *    Data should be read from the audio hardware in chunks of sizes
+       *    inferior to the total recording buffer size.
+       */
+      // Determine size of each read() operation
+      int chunkSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen);
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
       // The buffer size here seems not relate to the delay.
-      // So choose a slight larger size (~1sec) so that no overrun occur.
+      // So choose a slightly larger size (~1sec) that overrun is unlikely.
       record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufSizeInShorts * 8);
-      Log.d(TAG, "Buffer size: " + minBytes + "bytes (" + record.getSampleRate()
-                 + "=" + sampleRate + ")");
+                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * chunkSampleSize * 8);
 
-      Log.i(TAG, "Recorder Info:\n"
-                 + "Sample rate: " + Integer.toString(record.getSampleRate()) + "Hz, "
-                 + "buf: " + Integer.toString(2*bufSizeInShorts) + "bytes, "
-                 + "FFT length: " + Integer.toString(fftLen));
+      // Signal source for testing
+      sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
+      sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+      mdata = new double[chunkSampleSize];
+
+      Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
+        String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), sampleRate) +
+        String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / BYTE_OF_SAMPLE, minBytes) +
+        String.format("  read chunk size : %d samples, %d Bytes\n", chunkSampleSize, 2*chunkSampleSize) +
+        String.format("  FFT length      : %d\n", fftLen));
 
       // Start recording
       record.startRecording();
       SleepWithoutInterrupt(100);
 
       STFT stft = new STFT(fftLen);
-      short[] audioSamples = new short[bufSizeInShorts];
+      short[] audioSamples = new short[chunkSampleSize];
       int numOfReadShort;
 
       // Variables for count FPS, and Debug
@@ -529,11 +532,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
         // Read data
         if (isTesting) {
-          numOfReadShort = readTestData(audioSamples, 0, bufSizeInShorts);
+          numOfReadShort = readTestData(audioSamples, 0, chunkSampleSize);
         } else {
-          numOfReadShort = record.read(audioSamples, 0, bufSizeInShorts);
-          // Log.i(TAG, "Read: " + Integer.toString(numOfReadShort) + " samples");
+          numOfReadShort = record.read(audioSamples, 0, chunkSampleSize);   // pulling
         }
+        // Log.i(TAG, "Read: " + Integer.toString(numOfReadShort) + " samples");
         nFramesRead += numOfReadShort;
         if (isPaused1) {
           continue;  // keep reading data, so that buffer not get overflowed?
@@ -579,17 +582,17 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           frameCount = 0;
           // Check whether buffer overrun occur
           long nFramesFromTime = (timeNow - startTimeMs) * record.getSampleRate() / 1000;
-          if (nFramesFromTime > 2 * bufSizeInShorts + nFramesRead) {
+          if (nFramesFromTime > 2 * chunkSampleSize + nFramesRead) {
             Log.w(TAG, "Buffer Overrun occured !\n"
                        + " (Read " + Long.toString(nFramesRead) + " frames ("
                        + Double.toString((double) nFramesRead / record.getSampleRate()) + "sec)\n"
                        + "  Should read " + Long.toString(nFramesFromTime) + " frames ("
                        + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
           }
-          Log.i(TAG, String.format("max spectrum amplitude: %.2fdB @ %.1fHz", maxAmpDB, maxFreq));
+          Log.i(TAG, String.format("spectrum peak: %.2fdB @ %.1fHz", maxAmpDB, maxFreq));
         }
       }
-      Log.i(TAG, "Looper::Run(): Releasing Audio.");
+      Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
       record.stop();
       record.release();
       record = null;
