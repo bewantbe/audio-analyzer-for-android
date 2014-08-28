@@ -58,8 +58,8 @@ public class AnalyzeView extends View {
   
   private double[][] gridPoints2   = new double[2][0];
   private double[][] gridPoints2dB = new double[2][0];
-  private StringBuffer[] gridPointsStr = new StringBuffer[0];
-  private StringBuffer[] gridPointsStrDB = new StringBuffer[0];
+  private StringBuffer[] gridPoints2Str = new StringBuffer[0];
+  private StringBuffer[] gridPoints2StrDB = new StringBuffer[0];
   
   public boolean isBusy() {
     return isBusy;
@@ -119,9 +119,11 @@ public class AnalyzeView extends View {
   }
   
   // return position of grid lines, there are roughly gridDensity lines for the bigger grid
-  private void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue, double gridDensity, int scale_mode) {
+  private void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue,
+                                   double gridDensity, int scale_mode) {
     if (startValue == endValue) {
       Log.e(AnalyzeActivity.TAG, "genLinearGridPoints()");
+      return;
     }
     if (startValue > endValue) {
       double t = endValue;
@@ -196,74 +198,56 @@ public class AnalyzeView extends View {
     }
   }
   
-//  private double[][] genLinearGridPoints(double startValue, double endValue, double gridDensity) {
-//    if (gridPoints2 == null || gridPoints2.length != 2) {
-//      gridPoints2 = new double[2][0];
-//    }
-//    genLinearGridPoints(gridPoints2, startValue, endValue, gridDensity, 0);
-//    return gridPoints2;
-//  }
-//  
-//  private double[][] genDBGridPoints(double startValue, double endValue, double gridDensity) {
-//    if (gridPoints2dB == null || gridPoints2dB.length != 2) {
-//      gridPoints2dB = new double[2][0];
-//    }
-//    genLinearGridPoints(gridPoints2dB, startValue, endValue, gridDensity, 1);
-//    return gridPoints2dB;
-//  }
-  
   private DecimalFormat myFormatter = new DecimalFormat("@@");
-  double[] oldGridPointBoundary = new double[2];
-  double[] oldGridPointBoundaryDB = new double[2];
+  double[][] oldGridPointBoundaryArray = new double[2][2];
+  
+  double[][][] gridPointsArray = {gridPoints2, gridPoints2dB};
+  StringBuffer[][] gridPointsStrArray = new StringBuffer[2][0];
+  
+  public enum GridScaleType {
+    FREQ(0), DB(1);
+    
+    private final int value;
+    private GridScaleType(int value) { this.value = value; }
+    public int getValue() { return value; }
+  }
 
-  // It's so ugly to write these Formatter and StringBuffer stuff -- in order to reduce garbage -- and not success!
+  // It's so ugly to write these StringBuffer stuff -- in order to reduce garbage -- and no big success!
   // Also, since there is no "pass by reference", modify array is also ugly...
-  // TODO: use array of array to solve this?
-  // Still buggy....
-  private void updateLinearGridPoints(double startValue, double endValue, double gridDensity) {
-    genLinearGridPoints(gridPoints2, startValue, endValue, gridDensity, 0);
+  void updateGridLabels(double startValue, double endValue, double gridDensity, GridScaleType scale_mode) {
+    int scale_mode_id = scale_mode.getValue();
+    double[][] gridPoints = gridPointsArray[scale_mode_id];
+    StringBuffer[] gridPointsStr = gridPointsStrArray[scale_mode_id];
+    double[] oldGridPointBoundary = oldGridPointBoundaryArray[scale_mode_id];
+
+    genLinearGridPoints(gridPoints, startValue, endValue, gridDensity, scale_mode_id);
+    double[] gridPointsBig = gridPoints[0];
     boolean needUpdate = false;
-    if (gridPoints2[0].length != gridPointsStr.length) {  // XXX  I don't like to repeat thing...
-      gridPointsStr = new StringBuffer[gridPoints2[0].length];
-      for (int i = 0; i < gridPoints2[0].length; i++) {
+    if (gridPointsBig.length != gridPointsStr.length) {
+      gridPointsStrArray[scale_mode_id] = new StringBuffer[gridPointsBig.length];
+      gridPointsStr = gridPointsStrArray[scale_mode_id];
+      for (int i = 0; i < gridPointsBig.length; i++) {
         gridPointsStr[i] = new StringBuffer();
       }
+      if (scale_mode_id == 0) {
+        gridPoints2Str = gridPointsStr;
+      } else {
+        gridPoints2StrDB = gridPointsStr;
+      }
       needUpdate = true;
     }
-    if (needUpdate || gridPoints2[0][0] != oldGridPointBoundary[0]
-        || gridPoints2[0][gridPoints2[0].length-1] != oldGridPointBoundary[1]) {
-      oldGridPointBoundary[0] = gridPoints2[0][0];
-      oldGridPointBoundary[1] = gridPoints2[0][gridPoints2[0].length-1];
+    if (gridPointsBig.length > 0 && (needUpdate || gridPointsBig[0] != oldGridPointBoundary[0]
+        || gridPointsBig[gridPointsBig.length-1] != oldGridPointBoundary[1])) {
+      oldGridPointBoundary[0] = gridPointsBig[0];
+      oldGridPointBoundary[1] = gridPointsBig[gridPointsBig.length-1];
       for (int i = 0; i < gridPointsStr.length; i++) {
         gridPointsStr[i].setLength(0);
-        gridPointsStr[i].append(myFormatter.format(gridPoints2[0][i]));
+        gridPointsStr[i].append(myFormatter.format(gridPointsBig[i]));
       }
-      Log.i(AnalyzeActivity.TAG, "  Update...");
+      Log.i(AnalyzeActivity.TAG, "  Update grid label scale_mode_id=" + Integer.toString(scale_mode_id));
     }
   }
-  
-  private void updateDBGridPoints(double startValue, double endValue, double gridDensity) {
-    genLinearGridPoints(gridPoints2dB, startValue, endValue, gridDensity, 1);
-    boolean needUpdate = false;
-    if (gridPoints2dB[0].length != gridPointsStrDB.length) {
-      gridPointsStrDB = new StringBuffer[gridPoints2dB[0].length];
-      for (int i = 0; i < gridPoints2dB[0].length; i++) {
-        gridPointsStrDB[i] = new StringBuffer();
-      }
-      needUpdate = true;
-    }
-    if (needUpdate || gridPoints2dB[0][0] != oldGridPointBoundaryDB[0]
-        || gridPoints2dB[0][gridPoints2dB[0].length-1] != oldGridPointBoundaryDB[1]) {
-      oldGridPointBoundaryDB[0] = gridPoints2dB[0][0];
-      oldGridPointBoundaryDB[1] = gridPoints2dB[0][gridPoints2dB[0].length-1];
-      for (int i = 0; i < gridPointsStrDB.length; i++) {
-        gridPointsStrDB[i].setLength(0);
-        gridPointsStrDB[i].append(myFormatter.format(gridPoints2dB[0][i]));
-      }
-      Log.i(AnalyzeActivity.TAG, "  Update...");
-    }
-  }
-  
+
   private float clamp(float value) {
     if (value < axisBounds.bottom || Float.isNaN(value)) {
       value = axisBounds.bottom;
@@ -534,7 +518,8 @@ public class AnalyzeView extends View {
   }
   
   private void drawGridLines(Canvas c, int nx, int ny) {
-    updateLinearGridPoints(getMin(), getMax(), nx);
+    //updateLinearGridPoints(getMin(), getMax(), nx);
+    updateGridLabels(getMin(), getMax(), nx, GridScaleType.FREQ);
     for(int i = 0; i < gridPoints2[0].length; i++) {
       float xPos = (float) (gridPoints2[0][i] / axisBounds.right * canvasWidth);
       c.drawLine(xPos, 0, xPos, canvasHeight, gridPaint);
@@ -543,7 +528,8 @@ public class AnalyzeView extends View {
       float xPos = (float) (gridPoints2[1][i] / axisBounds.right * canvasWidth);
       c.drawLine(xPos, 0, xPos, 0.03f * canvasHeight, gridPaint);
     }
-    updateDBGridPoints(axisBounds.bottom, axisBounds.top, ny);
+//    updateDBGridPoints(axisBounds.bottom, axisBounds.top, ny);
+    updateGridLabels(axisBounds.bottom, axisBounds.top, ny, GridScaleType.DB);
     for(int i = 0; i < gridPoints2dB[0].length; i++) {
       float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
 //      Log.i(AnalyzeActivity.TAG, " y pos: " + Double.toString(gridPoints2dB[0][i]));
@@ -566,13 +552,13 @@ public class AnalyzeView extends View {
   
   // The coordinate of this function is identical to screen.
   private void drawGridLabels(Canvas c) {
-    for(int i = 0; i < gridPoints2[0].length; i++) {
+    for(int i = 0; i < gridPoints2Str.length; i++) {
       float xPos = canvasWindowX4axis((float)gridPoints2[0][i]);
-      c.drawText(gridPointsStr[i].toString(), xPos, 15, labelPaint);
+      c.drawText(gridPoints2Str[i].toString(), xPos, 15, labelPaint);
     }
-    for(int i = 0; i < gridPoints2dB[0].length; i++) {
+    for(int i = 0; i < gridPoints2StrDB.length; i++) {
       float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
-      c.drawText(gridPointsStrDB[i].toString(), 0, yPos, labelPaint);
+      c.drawText(gridPoints2StrDB[i].toString(), 0, yPos, labelPaint);
     }
   }
   

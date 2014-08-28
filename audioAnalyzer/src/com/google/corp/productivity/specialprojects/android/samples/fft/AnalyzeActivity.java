@@ -419,7 +419,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     boolean isPaused1 = false;
     double dtRMS = 0;
     double maxAmpDB;
-    double maxFreq;
+    double maxAmpFreq;
 
     public Looper() {
     }
@@ -561,14 +561,14 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
           // Count and show peak amplitude
           maxAmpDB  = 20 * Math.log10(0.5/32768);
-          maxFreq = 0;
+          maxAmpFreq = 0;
           for (int i = 1; i < spectrumDB.length; i++) {  // skip the direct current term
             if (spectrumDB[i] > maxAmpDB) {
               maxAmpDB  = spectrumDB[i];
-              maxFreq = i;
+              maxAmpFreq = i;
             }
           }
-          maxFreq = maxFreq * sampleRate / fftLen;
+          maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
         }
 
         // Show debug information
@@ -589,7 +589,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
                        + "  Should read " + Long.toString(nFramesFromTime) + " frames ("
                        + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
           }
-          Log.i(TAG, String.format("spectrum peak: %.2fdB @ %.1fHz", maxAmpDB, maxFreq));
+          Log.i(TAG, String.format("spectrum peak: %.1fHz (%.2fdB)", maxAmpFreq, maxAmpDB));
         }
       }
       Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
@@ -604,8 +604,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         public void run() {
           AnalyzeActivity.this.recompute(data);
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
-          tv.setText(String.format("RMS: %6.2fdB, peak: %6.2fdB @ %5.1fHz",
-              20*Math.log10(dtRMS), maxAmpDB, maxFreq));
+          tv.setText(String.format("RMS: %6.2fdB, peak: %5.1fHz (%6.2fdB)",
+              20*Math.log10(dtRMS), maxAmpFreq, maxAmpDB));
           tv.invalidate();
         }
       });
