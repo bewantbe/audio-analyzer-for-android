@@ -143,17 +143,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
    applyPreferences(prefs, key);
   }
 
-  @Override
-  public boolean onTouchEvent(MotionEvent event) {
-    if (isMeasure) {
-      measureEvent(event);
-    } else {
-      scaleEvent(event);
-    }
-    graphView.invalidate();
-    return super.onTouchEvent(event);
-  }
-
   public static class MyPreferences extends PreferenceActivity {
     @SuppressWarnings("deprecation")
     @Override
@@ -220,6 +209,17 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
   }
   
+  @Override
+  public boolean onTouchEvent(MotionEvent event) {
+    if (isMeasure) {
+      measureEvent(event);
+    } else {
+      scaleEvent(event);
+    }
+    graphView.invalidate();
+    return super.onTouchEvent(event);
+  }
+
   // XXX this'll be factored into its own class when I get it working better
 
   private void measureEvent(MotionEvent event) {
@@ -240,40 +240,47 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   final private static float INIT = Float.MIN_VALUE;
   private boolean isPinching = false;
-  private float start = INIT;
-  float x0;
-  private float initScale;
+  private float moveX0 = INIT, moveY0 = INIT;
+  float x0, y0;
+  int[] wc = new int[2];
 
   private void scaleEvent(MotionEvent event) {
     if (event.getAction() != MotionEvent.ACTION_MOVE) {
-      start = INIT;
+      moveX0 = INIT;
+      moveY0 = INIT;
       isPinching = false;
-      // Log.i(TAG, "Skip event " + event.getAction());
+      Log.i(TAG, "scaleEvent(): Skip event " + event.getAction());
       return;
     }
     switch (event.getPointerCount()) {
       case 2 :
-        float delta = Math.abs(event.getX(0) - event.getX(1));
-        // Log.i(TAG, "delta=" + delta);
         if (isPinching)  {
-          float scale = initScale * delta / start;
-          graphView.setScale(Math.min(10f, scale));
+          graphView.setShiftScale(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
           updateAllLabels();
         } else {
-          // Log.i(TAG, "Start scale: " + start);
-          start = delta;
-          initScale = graphView.getXZoom();
+          graphView.setShiftScaleBegin(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
         }
         isPinching = true;
         break;
       case 1:
         float x = event.getX(0);
-        if (isPinching || start == INIT) {
-          start = graphView.getXlate();
+        float y = event.getY(0);
+        graphView.getLocationInWindow(wc);
+//        Log.i(TAG, "scaleEvent(): xy=" + x + " " + y + "  wc = " + wc[0] + " " + wc[1]);
+        if (isPinching || moveX0 == INIT) {
+          moveX0 = graphView.getXShift();
           x0 = x;
-          // Log.i(TAG, "Setting xlate point: " + start);
+          moveY0 = graphView.getYShift();
+          y0 = y;
         } else {
-          graphView.setXShift(start + (x0 - x) / graphView.getXZoom());
+          if (y < wc[1] + 50) {
+            graphView.setXShift(moveX0 + (x0 - x) / graphView.getXZoom());
+          } else if (x < wc[0] + 50) {
+            graphView.setYShift(moveY0 + (y0 - y) / graphView.getYZoom());
+          } else {
+            graphView.setXShift(moveX0 + (x0 - x) / graphView.getXZoom());
+            graphView.setYShift(moveY0 + (y0 - y) / graphView.getYZoom());
+          }
           updateAllLabels();
         }
         isPinching = false;
@@ -372,10 +379,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
 
   private void refreshMinFreqLabel() {
-      ((TextView) findViewById(R.id.min)).setText(Math.round(graphView.getMin()) + "Hz");
+      ((TextView) findViewById(R.id.min)).setText(Math.round(graphView.getMinX()) + "Hz");
   }
   private void refreshMaxFreqLabel() {
-      ((TextView) findViewById(R.id.max)).setText(Math.round(graphView.getMax()) + "Hz");
+      ((TextView) findViewById(R.id.max)).setText(Math.round(graphView.getMaxX()) + "Hz");
   }
 
   /**
