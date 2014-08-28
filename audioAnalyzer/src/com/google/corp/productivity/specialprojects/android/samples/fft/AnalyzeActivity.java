@@ -262,7 +262,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         } else {
           // Log.i(TAG, "Start scale: " + start);
           start = delta;
-          initScale = graphView.getScale();
+          initScale = graphView.getXZoom();
         }
         isPinching = true;
         break;
@@ -273,7 +273,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           x0 = x;
           // Log.i(TAG, "Setting xlate point: " + start);
         } else {
-          graphView.setXlate(start + (x0 - x) / graphView.getScale());
+          graphView.setXlate(start + (x0 - x) / graphView.getXZoom());
           updateAllLabels();
         }
         isPinching = false;
@@ -388,7 +388,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   	if (graphView.isBusy() == true) {
   		Log.d(TAG, "isBusy");  // seems it's never busy
   	}
-    graphView.recompute(data, 1, data.length, showLines);
+    graphView.replotRawSpectrum(data, 1, data.length, showLines);
     graphView.invalidate();
   }
   
