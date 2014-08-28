@@ -140,6 +140,7 @@ public class AnalyzeView extends View {
     double gridIntervalBig;
     double gridIntervalSmall;
     
+    // Determine a suitable grid interval from guess
     if (scale_mode == 0 || intervalValue <= 1) {  // Linear scale (Hz)
       double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
       double fraction = gridIntervalGuess / exponent;
@@ -184,8 +185,10 @@ public class AnalyzeView extends View {
       return;
     }
 
+    // Reallocate if number of grid lines are different
+    // Then fill in the gird line coordinates. Assuming the grid lines starting from 0 
     int nGrid = (int)Math.floor(intervalValue / gridIntervalBig) + 1;
-    if (nGrid != gridPointsArray[0].length) {    // reallocate space when need
+    if (nGrid != gridPointsArray[0].length) {
       gridPointsArray[0] = new double[nGrid];
     }
     double[] bigGridPoints = gridPointsArray[0];
@@ -309,11 +312,11 @@ public class AnalyzeView extends View {
     }
   }
   
-  private float clamp(float value) {
-    if (value < axisBounds.bottom || Float.isNaN(value)) {
-      value = axisBounds.bottom;
-    } else if (value > axisBounds.top) {
-      value = axisBounds.top;
+  private float clampDB(float value) {
+    if (value < getMinY() || Float.isNaN(value)) {
+      value = getMinY();
+    } else if (value > getMaxY()) {
+      value = getMaxY();
     }
     return value;
   }
@@ -326,22 +329,24 @@ public class AnalyzeView extends View {
       return;
     }
     isBusy = true;
+    float minDB = canvasY4axis(getMinY());
     path.reset();
     if (bars) {
       for (int i = start; i < end; i++) {
         float x = (float) i / db.length * canvasWidth;
-        float y = canvasY4axis(clamp((float)db[i]));
+        float y = canvasY4axis(clampDB((float)db[i]));
         if (y != canvasHeight) {
-          path.moveTo(x, canvasHeight);     
+          //path.moveTo(x, canvasHeight);
+          path.moveTo(x, minDB);
           path.lineTo(x, y);
         }
       }
     } else {
       // (0,0) is the upper left of the View, in pixel unit
-      path.moveTo((float) start * canvasWidth / end, canvasHeight + canvasHeight * (clamp((float)db[0]) - axisBounds.bottom) / axisBounds.height());
+      path.moveTo((float) start / db.length * canvasWidth, canvasY4axis(clampDB((float)db[start])));
       for (int i = start+1; i < end; i++) {
         float x = (float) i / db.length * canvasWidth;
-        float y = canvasY4axis(clamp((float)db[i]));
+        float y = canvasY4axis(clampDB((float)db[i]));
         path.lineTo(x, y);
       }
     }
@@ -384,10 +389,10 @@ public class AnalyzeView extends View {
   /**
    * Translate a mouse event X coordinate into a graph coordinate.
    */
-  public double xlateX(float x) {
+  public float xlateX(float x) {
     getLocationOnScreen(myLocation);
-    double tmp =  (x + myLocation[0]) / xZoom + xShift;
-    return canvasWidth == 0 ? 0.0 : axisBounds.width() * tmp / canvasWidth;
+    float tmp =  (x + myLocation[0]) / xZoom + xShift;
+    return canvasWidth == 0 ? 0.0f : axisBounds.width() * tmp / canvasWidth;
   }
   
   public float getY() {
@@ -395,20 +400,36 @@ public class AnalyzeView extends View {
   }
   
   // In axis frame
-  public double getMinX() {
+  public float getMinX() {
     return canvasWidth == 0 ? 0 : axisBounds.width() * xShift / canvasWidth;
   }
   
-  public double getMaxX() {
+  public float getMaxX() {
     return canvasWidth == 0 ? 0 : axisBounds.width() * (xShift * xZoom + canvasWidth) / (canvasWidth * xZoom);
   }
   
-  public double getMaxY() {
+  public float getMaxY() {
     return canvasHeight == 0 ? 0 : axisBounds.height() * yShift / canvasHeight;
   }
   
-  public double getMinY() {
+  public float getMinY() {
     return canvasHeight == 0 ? 0 : axisBounds.height() * (yShift * yZoom + canvasHeight) / (canvasHeight * yZoom);
+  }
+  
+  public float getXZoom() {
+    return xZoom;
+  }
+
+  public float getYZoom() {
+    return yZoom;
+  }
+  
+  public float getXShift() {
+    return xShift;
+  }
+  
+  public float getYShift() {
+    return yShift;
   }
   
   private boolean intersects(float x, float y) {
@@ -426,7 +447,17 @@ public class AnalyzeView extends View {
       return x;
     }
   }
+  
+  private float clampXShift(float offset) {
+    return clamp(offset, 0f, canvasWidth - canvasWidth / xZoom);
+  }
 
+  private float clampYShift(float offset) {
+    // limit to -180dB ~ 12 dB
+    return clamp(offset, canvasY4axis(12f), canvasY4axis(-144f) - canvasHeight / yZoom);
+    //return clamp(offset, 0f, canvasHeight - canvasHeight / yZoom);
+  }
+  
   public void setScale(float s) {
     xZoom = Math.max(s, 1f); 
     xShift = clamp(xShift, 0f, (xZoom - 1f) * canvasWidth );
@@ -435,13 +466,13 @@ public class AnalyzeView extends View {
   }
   
   public void setXShift(float offset) {
-    xShift = clamp(offset, 0f, canvasWidth - canvasWidth / xZoom);
+    xShift = clampXShift(offset);
     computeMatrix();
     invalidate();
   }
   
   public void setYShift(float offset) {
-    yShift = clamp(offset, 0f, canvasHeight - canvasHeight / yZoom);
+    yShift = clampYShift(offset);
     computeMatrix();
     invalidate();
   }
@@ -472,11 +503,11 @@ public class AnalyzeView extends View {
     if (canvasWidth*0.2f < xDiffOld) {
       xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, axisBounds.width()/100f);    // 100 sample frequency full screen
     }
-    xShift = clamp(xShiftOld + xMidOld/xZoomOld - (x1+x2)/2f/xZoom, 0f, canvasWidth - canvasWidth / xZoom);
+    xShift = clampXShift(xShiftOld + xMidOld/xZoomOld - (x1+x2)/2f/xZoom);
     if (canvasHeight*0.2f < yDiffOld) {
       yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, -axisBounds.height()/12f);  // ~ 3dB full screen
     }
-    yShift = clamp(yShiftOld + yMidOld/yZoomOld - (y1+y2)/2f/yZoom, 0f, canvasHeight - canvasHeight / yZoom);
+    yShift = clampYShift(yShiftOld + yMidOld/yZoomOld - (y1+y2)/2f/yZoom);
     computeMatrix();
     invalidate();
   }
@@ -491,28 +522,12 @@ public class AnalyzeView extends View {
     // Log.i(AnalyzeActivity.TAG, "  computeMatrix(): xShift=" + xShift + " xZoom=" + xZoom);
   }
   
-  public float getXZoom() {
-    return xZoom;
-  }
-
-  public float getYZoom() {
-    return yZoom;
-  }
-  
-  public float getXShift() {
-    return xShift;
-  }
-  
-  public float getYShift() {
-    return yShift;
-  }
-  
   @Override
   protected void onSizeChanged (int w, int h, int oldw, int oldh) {
     isBusy = true;
     this.canvasHeight = h;
     this.canvasWidth = w;
-    Log.i(AnalyzeActivity.TAG, "  onSizeChanged(): canvas " + oldw + "," + oldh + " -> " + w + "," + h);
+    Log.i(AnalyzeActivity.TAG, "  onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
     if (oldh == 0 && h > 0 && readyCallback != null) {
       readyCallback.ready();
     }

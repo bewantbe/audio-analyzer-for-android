@@ -240,14 +240,14 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   final private static float INIT = Float.MIN_VALUE;
   private boolean isPinching = false;
-  private float moveX0 = INIT, moveY0 = INIT;
+  private float xShift0 = INIT, yShift0 = INIT;
   float x0, y0;
   int[] wc = new int[2];
 
   private void scaleEvent(MotionEvent event) {
     if (event.getAction() != MotionEvent.ACTION_MOVE) {
-      moveX0 = INIT;
-      moveY0 = INIT;
+      xShift0 = INIT;
+      yShift0 = INIT;
       isPinching = false;
       Log.i(TAG, "scaleEvent(): Skip event " + event.getAction());
       return;
@@ -267,19 +267,19 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         float y = event.getY(0);
         graphView.getLocationInWindow(wc);
 //        Log.i(TAG, "scaleEvent(): xy=" + x + " " + y + "  wc = " + wc[0] + " " + wc[1]);
-        if (isPinching || moveX0 == INIT) {
-          moveX0 = graphView.getXShift();
+        if (isPinching || xShift0 == INIT) {
+          xShift0 = graphView.getXShift();
           x0 = x;
-          moveY0 = graphView.getYShift();
+          yShift0 = graphView.getYShift();
           y0 = y;
         } else {
-          if (y < wc[1] + 50) {
-            graphView.setXShift(moveX0 + (x0 - x) / graphView.getXZoom());
-          } else if (x < wc[0] + 50) {
-            graphView.setYShift(moveY0 + (y0 - y) / graphView.getYZoom());
+          if (x0 < wc[0] + 50) {
+            graphView.setYShift(yShift0 + (y0 - y) / graphView.getYZoom());
+          } else if (y0 < wc[1] + 50) {
+            graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
           } else {
-            graphView.setXShift(moveX0 + (x0 - x) / graphView.getXZoom());
-            graphView.setYShift(moveY0 + (y0 - y) / graphView.getYZoom());
+            graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
+            graphView.setYShift(yShift0 + (y0 - y) / graphView.getYZoom());
           }
           updateAllLabels();
         }
