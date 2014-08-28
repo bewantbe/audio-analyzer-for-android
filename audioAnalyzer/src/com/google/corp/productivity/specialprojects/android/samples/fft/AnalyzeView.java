@@ -55,9 +55,9 @@ public class AnalyzeView extends View {
   private int[] myLocation = {0, 0}; // window location on screen
   private Matrix matrix = new Matrix();
   private Matrix matrix0 = new Matrix();
-  private Matrix matrix4Text = new Matrix();
   private static boolean isBusy = false;
   
+  private float gridDensity;
   private double[][] gridPoints2   = new double[2][0];
   private double[][] gridPoints2dB = new double[2][0];
   private StringBuffer[] gridPoints2Str = new StringBuffer[0];
@@ -112,6 +112,7 @@ public class AnalyzeView extends View {
     yShift=0f;
     canvasWidth = canvasHeight = 0;
     axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -90.0f);
+    gridDensity = 1/85f;  // every 85 pixel one grid line, on average
   }
   
   public void setBounds(RectF bounds) {
@@ -318,7 +319,7 @@ public class AnalyzeView extends View {
   }
   
   /**
-   * Recompute the plot
+   * Re-plot the spectrum
    */
   public void replotRawSpectrum(double[] db, int start, int end, boolean bars) {
     if (canvasHeight < 1) {
@@ -352,9 +353,9 @@ public class AnalyzeView extends View {
       // Log.i(AnalyzeActivity.TAG, x + "," + y);
       float current = getXlate();
       if (x <= 3 && xShift > 0f) {
-        setXlate(current - 10f) ;
+        setXShift(current - 10f) ;
       } else if (x >=  canvasWidth - 3) {
-        setXlate(current + 10f);
+        setXShift(current + 10f);
       } else {
         cursorX = x + myLocation[0];
         cursorY = y - myLocation[1];
@@ -411,31 +412,37 @@ public class AnalyzeView extends View {
        x < myLocation[0] + getWidth() && y < myLocation[1] + getHeight();
   }
   
+  private float clamp(float x, float min, float max) {
+    if (x > max) {
+      return max;
+    } else if (x < min) {
+      return min; 
+    } else {
+      return x;
+    }
+ }
+
   public void setScale(float f) {
     xZoom = Math.max(f, 1f); 
-    xShift = between(0f, xShift,  (xZoom - 1f) * canvasWidth );
+    xShift = clamp(xShift, 0f, (xZoom - 1f) * canvasWidth );
     computeMatrix();
     invalidate();
   }
   
-  public void setXlate(float offset) {
-    xShift = between(0f, offset,  (xZoom * canvasWidth - canvasWidth) / xZoom);
-    // Log.i(AnalyzeActivity.TAG, "xShift: " + xShift + " [" + offset + "]");
+  public void setXShift(float offset) {
+    xShift = clamp(offset, 0f, (xZoom * canvasWidth - canvasWidth) / xZoom);
     computeMatrix();
     invalidate();
   }
   
   private void computeMatrix() {
     matrix.reset();
-    matrix.setTranslate(-xShift, 0f);
-    matrix.postScale(xZoom, 1f);
+    matrix.setTranslate(-xShift, -yShift);
+    matrix.postScale(xZoom, yZoom);
     matrix0.reset();
     matrix0.setTranslate(0f, 0f);
     matrix0.postScale(1f, 1f);
-    matrix4Text.reset();
-    matrix4Text.setTranslate(0f, 0f);
-    matrix4Text.postScale(1f, 1f);
-    // Log.i(AnalyzeActivity.TAG, "mat: " + xShift + "/" + xZoom);
+    // Log.i(AnalyzeActivity.TAG, "  computeMatrix(): xShift=" + xShift + " xZoom=" + xZoom);
   }
   
   public float getXZoom() {
@@ -446,22 +453,6 @@ public class AnalyzeView extends View {
     return xShift;
   }
   
-  public float convertX(float x) {
-    float[] pts = {x};
-    matrix.mapPoints(pts);
-    return pts[0];
-  }
-  
-  private float between(float min, float x, float max) {
-     if (x > max) {
-       return max;
-     } else if (x < min) {
-       return min; 
-     } else {
-       return x;
-     }
-  }
-
   @Override
   protected void onSizeChanged (int w, int h, int oldw, int oldh) {
     isBusy = true;
@@ -479,7 +470,7 @@ public class AnalyzeView extends View {
     isBusy = true;
     c.concat(matrix0);
     c.save();
-    drawGridLines(c, canvasWidth/80f, canvasHeight/90f);
+    drawGridLines(c, canvasWidth * gridDensity, canvasHeight * gridDensity);
     c.concat(matrix);
     c.drawPath(path, linePaint);
     if (cursorX > 0) {
@@ -554,13 +545,13 @@ public class AnalyzeView extends View {
       out.writeFloat(xlate);
       bounds.writeToParcel(out, flags);
     }
-
+    
     public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {
       @Override
       public State createFromParcel(Parcel in) {
         return new State(in);
       }
-
+      
       @Override
       public State[] newArray(int size) {
         return new State[size];

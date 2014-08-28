@@ -273,7 +273,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           x0 = x;
           // Log.i(TAG, "Setting xlate point: " + start);
         } else {
-          graphView.setXlate(start + (x0 - x) / graphView.getXZoom());
+          graphView.setXShift(start + (x0 - x) / graphView.getXZoom());
           updateAllLabels();
         }
         isPinching = false;
