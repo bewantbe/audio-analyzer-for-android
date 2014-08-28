@@ -40,6 +40,8 @@ public class AnalyzeView extends View {
   private float cursorX, cursorY; // cursor location
   private float xZoom;     // horizontal scaling
   private float xShift;    // horizontal translation
+  private float yZoom;     // vertical scaling
+  private float yShift;    // vertical translation
   private float mark;
   private RectF axisBounds;
   private Ready readyCallback = null;      // callback to caller when rendering is complete
@@ -106,6 +108,8 @@ public class AnalyzeView extends View {
     cursorX = cursorY = 0f;
     xZoom=1f;
     xShift=0f;
+    yZoom=1f;
+    yShift=0f;
     canvasWidth = canvasHeight = 0;
     axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -90.0f);
   }
@@ -212,7 +216,7 @@ public class AnalyzeView extends View {
     public int getValue() { return value; }
   }
 
-  // It's so ugly to write these StringBuffer stuff -- in order to reduce garbage -- and no big success!
+  // It's so ugly to write these StringBuffer stuff -- in order to reduce garbage -- and without big success!
   // Also, since there is no "pass by reference", modify array is also ugly...
   void updateGridLabels(double startValue, double endValue, double gridDensity, GridScaleType scale_mode) {
     int scale_mode_id = scale_mode.getValue();
@@ -419,8 +423,8 @@ public class AnalyzeView extends View {
     isBusy = true;
     c.concat(matrix0);
     c.save();
-    c.concat(matrix);
     drawGridLines(c, 3, 5);
+    c.concat(matrix);
     c.drawPath(path, linePaint);
     if (cursorX > 0) {
       c.drawLine(cursorX, 0, cursorX, canvasHeight, cursorPaint); 
@@ -517,48 +521,57 @@ public class AnalyzeView extends View {
     }
   }
   
-  private void drawGridLines(Canvas c, int nx, int ny) {
-    //updateLinearGridPoints(getMin(), getMax(), nx);
-    updateGridLabels(getMin(), getMax(), nx, GridScaleType.FREQ);
-    for(int i = 0; i < gridPoints2[0].length; i++) {
-      float xPos = (float) (gridPoints2[0][i] / axisBounds.right * canvasWidth);
-      c.drawLine(xPos, 0, xPos, canvasHeight, gridPaint);
-    }
-    for(int i = 0; i < gridPoints2[1].length; i++) {
-      float xPos = (float) (gridPoints2[1][i] / axisBounds.right * canvasWidth);
-      c.drawLine(xPos, 0, xPos, 0.03f * canvasHeight, gridPaint);
-    }
-//    updateDBGridPoints(axisBounds.bottom, axisBounds.top, ny);
-    updateGridLabels(axisBounds.bottom, axisBounds.top, ny, GridScaleType.DB);
-    for(int i = 0; i < gridPoints2dB[0].length; i++) {
-      float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
-//      Log.i(AnalyzeActivity.TAG, " y pos: " + Double.toString(gridPoints2dB[0][i]));
-      c.drawLine(xShift, yPos, xShift + canvasWidth/xZoom, yPos, gridPaint);
-    }
-    for(int i = 0; i < gridPoints2dB[1].length; i++) {
-      float yPos = (float) (gridPoints2dB[1][i] / axisBounds.bottom * canvasHeight);
-      c.drawLine(xShift, yPos, xShift + 0.02f * canvasWidth / xZoom, yPos, gridPaint);
-    }
-  }
-  
+  // Map a coordinate in frame of axis to frame of canvas c (in pixel unit)
   float canvasX4axis(float x) {
     return (x - axisBounds.left) / axisBounds.width() * canvasWidth;
   }
   
-  // Map from axis to visible canvas
-  float canvasWindowX4axis(float x) {
+  float canvasY4axis(float y) {
+    return (y - axisBounds.top) / axisBounds.height() * canvasHeight;
+  }
+  
+  // Map a coordinate in frame of axis to frame of view id=plot (in pixel unit)
+  float canvasViewX4axis(float x) {
     return (canvasX4axis(x) - xShift) * xZoom;
   }
   
-  // The coordinate of this function is identical to screen.
+  float canvasViewY4axis(float y) {
+    return (canvasY4axis(y) - yShift) * yZoom;
+  }
+  
+  private void drawGridLines(Canvas c, int nx, int ny) {
+//    Log.i(AnalyzeActivity.TAG, " axisBounds.height(): " + Double.toString(axisBounds.height()));
+    updateGridLabels(getMin(), getMax(), nx, GridScaleType.FREQ);
+    for(int i = 0; i < gridPoints2[0].length; i++) {
+      float xPos = canvasViewX4axis((float)gridPoints2[0][i]);
+      c.drawLine(xPos, 0, xPos, canvasHeight, gridPaint);
+    }
+    for(int i = 0; i < gridPoints2[1].length; i++) {
+      float xPos = canvasViewX4axis((float)gridPoints2[1][i]);
+      c.drawLine(xPos, 0, xPos, 0.03f * canvasHeight, gridPaint);
+    }
+    updateGridLabels(axisBounds.bottom, axisBounds.top, ny, GridScaleType.DB);
+    for(int i = 0; i < gridPoints2dB[0].length; i++) {
+      float yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
+      c.drawLine(0, yPos, canvasWidth, yPos, gridPaint);
+    }
+    for(int i = 0; i < gridPoints2dB[1].length; i++) {
+      float yPos = canvasViewY4axis((float)gridPoints2dB[1][i]);
+      c.drawLine(0, yPos, 0.02f * canvasWidth, yPos, gridPaint);
+    }
+  }
+  
+  // The coordinate frame of this function is identical to its view(id=plot).
   private void drawGridLabels(Canvas c) {
     for(int i = 0; i < gridPoints2Str.length; i++) {
-      float xPos = canvasWindowX4axis((float)gridPoints2[0][i]);
+      float xPos = canvasViewX4axis((float)gridPoints2[0][i]);
       c.drawText(gridPoints2Str[i].toString(), xPos, 15, labelPaint);
+      c.drawLine(0, 0, canvasWidth, 0, labelPaint);
     }
     for(int i = 0; i < gridPoints2StrDB.length; i++) {
-      float yPos = (float) (gridPoints2dB[0][i] / axisBounds.bottom * canvasHeight);
+      float yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
       c.drawText(gridPoints2StrDB[i].toString(), 0, yPos, labelPaint);
+      c.drawLine(0, 0, 0, canvasHeight, labelPaint);
     }
   }
   
