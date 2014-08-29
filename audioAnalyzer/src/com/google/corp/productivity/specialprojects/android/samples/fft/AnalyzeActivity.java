@@ -69,7 +69,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   private boolean showLines;
   private boolean isTesting = false;
-  private boolean isPaused = false;
   private boolean isMeasure = true;
 
   @Override
@@ -302,9 +301,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     return true;
   }
 
+  // responds to layout with android:tag="select"
   @Override
   public void onClick(View v) {
     vibrate(50);
+    Log.i(TAG, "onClick(): " + v.toString());
     if (processClick(v)) {
       reRecur();
       updateAllLabels();
@@ -337,11 +338,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     if (v.getId() == R.id.run) {
       boolean pause = value.equals("stop");
-      if (isPaused != pause) {
-        isPaused = pause;
-        if (samplingThread != null) {
-          samplingThread.setPause(isPaused);
-        }
+      if (samplingThread != null && samplingThread.getPause() != pause) {
+        samplingThread.setPause(pause);
       }
       return false;
     }
@@ -375,7 +373,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private void refreshCursorLabel() {
     double f = graphView.getX();
     ((TextView) findViewById(R.id.freq_db)).setText(
-        Math.round(f) + "Hz\n" + Math.round(graphView.getY()) + "dB");
+        Math.round(10*f)/10 + "Hz\n" + Math.round(graphView.getY()) + "dB");
   }
 
   private void refreshMinFreqLabel() {
@@ -393,7 +391,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   public void recompute(double[] data) {
     //graphView.recompute(data, 1, data.length / 2, showLines);
   	if (graphView.isBusy() == true) {
-  		Log.d(TAG, "isBusy");  // seems it's never busy
+  		Log.d(TAG, "recompute(): isBusy == true");  // seems it's never busy
   	}
     graphView.replotRawSpectrum(data, 1, data.length, showLines);
     graphView.invalidate();
@@ -484,6 +482,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       // TODO: if failed, use another fallback option
       int minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
                                                   AudioFormat.ENCODING_PCM_16BIT);
+      if (minBytes == AudioRecord.ERROR_BAD_VALUE) {
+        Log.e(TAG, "Looper::run(): Invalid AudioRecord parameter.\n");
+        return;
+      }
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
 
@@ -516,7 +518,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       record.startRecording();
       SleepWithoutInterrupt(100);
 
-      STFT stft = new STFT(fftLen);
+      STFT stft = new STFT(fftLen, record.getSampleRate());
       short[] audioSamples = new short[chunkSampleSize];
       int numOfReadShort;
 
@@ -622,6 +624,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       this.isPaused1 = pause;
       // Note: When paused (or not), it is not allowed to change the recorder (sample rate, fftLen etc.)
       // Recreate the whole thread would be a safe way to go.
+    }
+
+    public boolean getPause() {
+      return this.isPaused1;
     }
 
     public void finish() {

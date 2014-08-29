@@ -22,25 +22,34 @@ public class STFT {
   private int nAnalysed = 0;
   private RealDoubleFFT spectrumAmpFFT;
   
-  private void init(int i_fftlen, int minFeedSize) {
+  private double[] dBAFactor;
+  
+  private void initDBAFactor(int fftlen, double sampleRate) {
+    dBAFactor = new double[fftlen/2+1];
+    for (int i = 0; i < fftlen/2+1; i++) {
+      dBAFactor[i] = (double)i/fftlen * sampleRate;
+    }
+  }
+  
+  private void init(int fftlen, double sampleRate, int minFeedSize) {
     if (minFeedSize <= 0) {
       throw new IllegalArgumentException("STFT::init(): should minFeedSize >= 1.");
     }
-    if (((-i_fftlen)&i_fftlen) != i_fftlen) {
-      // error: i_fftlen should be power of 2
+    if (((-fftlen)&fftlen) != fftlen) {
+      // error: fftlen should be power of 2
       throw new IllegalArgumentException("STFT::init(): Currently, only power of 2 are supported in fftlen");
     }
-    spectrumAmpOutCum= new double[i_fftlen/2+1];
-    spectrumAmpOutTmp= new double[i_fftlen/2+1];
-    spectrumAmpOut   = new double[i_fftlen/2+1];
-    spectrumAmpOutDB = new double[i_fftlen/2+1];
-    spectrumAmpIn    = new double[i_fftlen];
-    spectrumAmpInTmp = new double[i_fftlen];
-    wnd              = new double[i_fftlen];
+    spectrumAmpOutCum= new double[fftlen/2+1];
+    spectrumAmpOutTmp= new double[fftlen/2+1];
+    spectrumAmpOut   = new double[fftlen/2+1];
+    spectrumAmpOutDB = new double[fftlen/2+1];
+    spectrumAmpIn    = new double[fftlen];
+    spectrumAmpInTmp = new double[fftlen];
+    wnd              = new double[fftlen];
     spectrumAmpFFT   = new RealDoubleFFT(spectrumAmpIn.length);
-    spectrumAmpOutArray = new double[(int)Math.ceil((double)minFeedSize / (i_fftlen/2))][]; // /2 since half overlap
+    spectrumAmpOutArray = new double[(int)Math.ceil((double)minFeedSize / (fftlen/2))][]; // /2 since half overlap
     for (int i = 0; i < spectrumAmpOutArray.length; i++) {
-      spectrumAmpOutArray[i] = new double[i_fftlen/2+1];
+      spectrumAmpOutArray[i] = new double[fftlen/2+1];
     }
     
     double normalizeFactor = 0;
@@ -58,14 +67,15 @@ public class STFT {
     for (int i=0; i<wnd.length; i++) {
       wnd[i] *= normalizeFactor;
     }
+    initDBAFactor(fftlen, sampleRate);
   }
   
-  public STFT(int i_fftlen, int minFeedSize) {
-    init(i_fftlen, minFeedSize);
+  public STFT(int fftlen, double sampleRate, int minFeedSize) {
+    init(fftlen, sampleRate, minFeedSize);
   }
 
-  public STFT(int i_fftlen) {
-    init(i_fftlen, 1);
+  public STFT(int fftlen, double sampleRate) {
+    init(fftlen, sampleRate, 1);
   }
 
   public void feedData(short[] ds) {

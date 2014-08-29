@@ -1,19 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Audio Spectrum Analyzer 0.1</string>
-    <string name="instructions_text">      &lt;h2&gt;Select button operation&lt;/h2&gt;
+    <string name="app_name">Audio Spectrum Analyzer 0.2</string>
+    <string name="instructions_text">      &lt;h2&gt;Important notes&lt;/h2&gt;
+      All the dB in this software are Decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustics dB (e.g. dB SPL or dBA).
+      A full-scale sine wave is designated 0 dBFS.
+      The dBA in this software is a simple minded A-weighting dBFS.
+      &lt;h2&gt;Select button operation&lt;/h2&gt;
       Click on a button to cycle through a set of possible values.  The buttons are:
       &lt;p/&gt;
       &lt;font color=&quot;red&quot;&gt;Sampling Rate&lt;/font&gt;
       &lt;br/&gt;Selects the sampling rate, in samples/second
       &lt;p/&gt;
       &lt;font color=&quot;red&quot;&gt;Sample Resolution&lt;/font&gt;
-      &lt;br/&gt;Selects the number of frequency bins. More bins provides better resolution, but
-      takes more compute power.
+      &lt;br/&gt;Selects the number of frequency bins. More bins provides better resolution, but takes more compute power and slower responds.
       &lt;p/&gt;
       &lt;font color=&quot;red&quot;&gt;Magnitude Scale&lt;/font&gt;
-      &lt;br/&gt;Selects minimum value displayed (in db)
+      &lt;br/&gt;Selects minimum value displayed (in dB)
       &lt;p/&gt;
       &lt;font color=&quot;red&quot;&gt;View/scale&lt;/font&gt;
       &lt;br/&gt;In &lt;b&gt;view&lt;/b&gt; mode, touching the plot area moves the cursor
@@ -31,7 +34,7 @@
       &lt;font color=&quot;red&quot;&gt;Instrument tuner&lt;/font&gt;
       &lt;br/&gt;(removed from this version)
       &lt;p/&gt;
-      &lt;font color="red"&gt;Set Test Frequencies&lt;/font&gt;
+      &lt;font color=&quot;red&quot;&gt;Set Test Frequencies&lt;/font&gt;
       &lt;br/&gt;(removed from this version)
       &lt;p&gt;
       by S A Uhler

@@ -9,7 +9,7 @@
    android:text="16000"
    android:tag="select"
    android:textSize="25sp"
-   custom:items="8000 11025 16000 22050 32000 44100"
+   custom:items="8000 11025 16000 22050 32000 44100 48000"
   />
   <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
    android:id="@+id/bins"
@@ -17,14 +17,14 @@
    android:text="2048"
    android:tag="select"
    android:textSize="25sp"
-   custom:items="1024 2048 4096 8192"
+   custom:items="512 1024 2048 4096 8192"
   />
   <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
    android:id="@+id/db"
    android:layout_width="wrap_content" android:layout_height="wrap_content"
-   android:text="-110"
+   android:text="-120"
    android:tag="select"
    android:textSize="25sp"
-   custom:items="-110 -90 -60 -30"
+   custom:items="-120 -90 -60 -30"
   />
 </merge>

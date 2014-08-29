@@ -208,7 +208,8 @@ public class AnalyzeView extends View {
     }
   }
   
-  private DecimalFormat myFormatter = new DecimalFormat("@@");
+  private DecimalFormat smallFormatter = new DecimalFormat("@@");
+  private DecimalFormat largeFormatter = new DecimalFormat("#");
   double[][] oldGridPointBoundaryArray = new double[2][2];
   
   double[][][] gridPointsArray = {gridPoints2, gridPoints2dB};
@@ -252,7 +253,13 @@ public class AnalyzeView extends View {
       oldGridPointBoundary[1] = gridPointsBig[gridPointsBig.length-1];
       for (int i = 0; i < gridPointsStr.length; i++) {
         gridPointsStr[i].setLength(0);
-        gridPointsStr[i].append(myFormatter.format(gridPointsBig[i]));
+        if (Math.abs(gridPointsBig[i]) >= 10) {
+          gridPointsStr[i].append(largeFormatter.format(gridPointsBig[i]));
+        } else if (gridPointsBig[i] != 0) {
+          gridPointsStr[i].append(smallFormatter.format(gridPointsBig[i]));
+        } else {
+          gridPointsStr[i].append("0");
+        }
       }
 //      Log.i(AnalyzeActivity.TAG, "  Update grid label scale_mode_id=" + Integer.toString(scale_mode_id));
     }
@@ -298,18 +305,25 @@ public class AnalyzeView extends View {
     }
   }
   
-  // The coordinate frame of this function is identical to its view(id=plot).
+  // The coordinate frame of this function is identical to its view (id=plot).
   private void drawGridLabels(Canvas c) {
+    float xPos, yPos;
+    yPos = 15;
     for(int i = 0; i < gridPoints2Str.length; i++) {
-      float xPos = canvasViewX4axis((float)gridPoints2[0][i]);
-      c.drawText(gridPoints2Str[i].toString(), xPos, 15, labelPaint);
+      xPos = canvasViewX4axis((float)gridPoints2[0][i]);
+      if (xPos > canvasWidth - 60) continue;
+      c.drawText(gridPoints2Str[i].toString(), xPos, yPos, labelPaint);
       c.drawLine(0, 0, canvasWidth, 0, labelPaint);
     }
+    c.drawText("Hz", canvasWidth - 20, yPos, labelPaint);
+    xPos = 4;
     for(int i = 0; i < gridPoints2StrDB.length; i++) {
-      float yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
-      c.drawText(gridPoints2StrDB[i].toString(), 0, yPos, labelPaint);
+      yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
+      if (yPos > canvasHeight - 19) continue;
+      c.drawText(gridPoints2StrDB[i].toString(), xPos, yPos, labelPaint);
       c.drawLine(0, 0, 0, canvasHeight, labelPaint);
     }
+    c.drawText("dB", xPos, canvasHeight - 5, labelPaint);
   }
   
   private float clampDB(float value) {
@@ -416,6 +430,10 @@ public class AnalyzeView extends View {
     return canvasHeight == 0 ? 0 : axisBounds.height() * (yShift * yZoom + canvasHeight) / (canvasHeight * yZoom);
   }
   
+  public float getMinCanvasY() {
+    return canvasHeight == 0 ? 0 : yShift + canvasHeight/yZoom;
+  }
+    
   public float getXZoom() {
     return xZoom;
   }
@@ -501,11 +519,11 @@ public class AnalyzeView extends View {
   // Do the scaling according to the motion event getX() and getY() (getPointerCount()==2)
   public void setShiftScale(float x1, float y1, float x2, float y2) {
     if (canvasWidth*0.2f < xDiffOld) {
-      xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, axisBounds.width()/100f);    // 100 sample frequency full screen
+      xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, axisBounds.width()/200f);    // 100 sample frequency full screen
     }
     xShift = clampXShift(xShiftOld + xMidOld/xZoomOld - (x1+x2)/2f/xZoom);
     if (canvasHeight*0.2f < yDiffOld) {
-      yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, -axisBounds.height()/12f);  // ~ 3dB full screen
+      yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, -axisBounds.height()/6f);  // ~ 3dB full screen
     }
     yShift = clampYShift(yShiftOld + yMidOld/yZoomOld - (y1+y2)/2f/yZoom);
     computeMatrix();
