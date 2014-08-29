@@ -70,6 +70,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private boolean showLines;
   private boolean isTesting = false;
   private boolean isMeasure = true;
+  
+  private boolean isAWeighting = false;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -321,6 +323,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     samplingThread = new Looper();
     samplingThread.start();
+    if (samplingThread.stft != null) {
+      samplingThread.stft.setAWeighting(isAWeighting);
+    }
   }
 
   /**
@@ -337,6 +342,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       return false;
     }
     if (v.getId() == R.id.run) {
+//      if (samplingThread != null && samplingThread.stft != null) {
+//        isAWeighting = !isAWeighting;
+//        samplingThread.stft.setAWeighting(isAWeighting);
+//      }
       boolean pause = value.equals("stop");
       if (samplingThread != null && samplingThread.getPause() != pause) {
         samplingThread.setPause(pause);
@@ -423,8 +432,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     boolean isRunning = true;
     boolean isPaused1 = false;
     double dtRMS = 0;
+    double dtRMS_s = 0;
     double maxAmpDB;
     double maxAmpFreq;
+    public STFT stft;   // use with care
 
     public Looper() {
     }
@@ -461,16 +472,18 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     DoubleSineGen sineGen2;
     double[] mdata;
     
-    // used in run()
+    // generate test data
     private int readTestData(short[] a, int offsetInShorts, int sizeInShorts) {
       sineGen1.getSamples(mdata);  // mdata.length should be even
       sineGen2.addSamples(mdata);
       for (int i = 0; i < sizeInShorts; i++) {
         a[offsetInShorts + i] = (short) Math.round(mdata[i]);
       }
-//      for (int i = 0; i < bufSizeInShorts; i++) {
-//      //audioSamples[i] = (short) (32767.0 * (2.0*Math.random() - 1));
-//        audioSamples[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
+//      for (int i = 0; i < sizeInShorts; i++) {
+//        a[i] = (short) (32767.0 * (2.0*Math.random() - 1));
+//      }
+//      for (int i = 0; i < sizeInShorts; i++) {
+//        a[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
 //      }
       LimitFrameRate();
       return sizeInShorts;
@@ -518,7 +531,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       record.startRecording();
       SleepWithoutInterrupt(100);
 
-      STFT stft = new STFT(fftLen, record.getSampleRate());
+      stft = new STFT(fftLen, record.getSampleRate());
+      stft.setAWeighting(isAWeighting);
       short[] audioSamples = new short[chunkSampleSize];
       int numOfReadShort;
 
@@ -578,6 +592,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
             }
           }
           maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
+          
+          dtRMS_s = stft.getRMSFromFT();
         }
 
         // Show debug information
@@ -613,8 +629,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         public void run() {
           AnalyzeActivity.this.recompute(data);
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
-          tv.setText(String.format("RMS: %6.2fdB, peak: %5.1fHz (%6.2fdB)",
-              20*Math.log10(dtRMS), maxAmpFreq, maxAmpDB));
+          tv.setText(String.format("RMS: %6.2fdB, %6.2fdB, peak: %5.1fHz (%6.2fdB)",
+              20*Math.log10(dtRMS), 10*Math.log10(dtRMS_s), maxAmpFreq, maxAmpDB));
           tv.invalidate();
         }
       });
@@ -629,7 +645,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     public boolean getPause() {
       return this.isPaused1;
     }
-
+    
     public void finish() {
       isRunning = false;
       interrupt();

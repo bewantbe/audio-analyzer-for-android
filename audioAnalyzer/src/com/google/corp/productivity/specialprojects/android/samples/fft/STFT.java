@@ -16,19 +16,34 @@ public class STFT {
   private double[] spectrumAmpIn;
   private double[] spectrumAmpInTmp;
   private double[] wnd;
+  private double wndEnergyFactor = 1; 
   private int spectrumAmpPt;
   private double[][] spectrumAmpOutArray;
   private int spectrumAmpOutArrayPt = 0;                                   // Pointer for spectrumAmpOutArray
   private int nAnalysed = 0;
   private RealDoubleFFT spectrumAmpFFT;
+  private boolean boolAWeighting = false;
   
-  private double[] dBAFactor;
+  private double[] dBAFactor;    // multiply to power spectrum to get A-weighting
   
+  private double sqr(double x) { return x*x; }
+  
+  // Generate multiplier for A-weighting
   private void initDBAFactor(int fftlen, double sampleRate) {
     dBAFactor = new double[fftlen/2+1];
     for (int i = 0; i < fftlen/2+1; i++) {
-      dBAFactor[i] = (double)i/fftlen * sampleRate;
+      double f = (double)i/fftlen * sampleRate;
+      double r = sqr(12200)*sqr(sqr(f)) / ((f*f+sqr(20.6)) * Math.sqrt((f*f+sqr(107.7)) * (f*f+sqr(737.9))) * (f*f+sqr(12200)));
+      dBAFactor[i] = r*r*1.58489319246111;  // 1.58489319246111 = 10^(1/5)
     }
+  }
+  
+  public void setAWeighting(boolean e_isAWeighting) {
+    boolAWeighting = e_isAWeighting;
+  }
+  
+  public boolean getAWeighting() {
+    return boolAWeighting;
   }
   
   private void init(int fftlen, double sampleRate, int minFeedSize) {
@@ -64,10 +79,14 @@ public class STFT {
       normalizeFactor += wnd[i];
     }
     normalizeFactor = wnd.length / normalizeFactor;
+    wndEnergyFactor = 0;
     for (int i=0; i<wnd.length; i++) {
       wnd[i] *= normalizeFactor;
+      wndEnergyFactor += wnd[i]*wnd[i];
     }
+    wndEnergyFactor = wnd.length / wndEnergyFactor;
     initDBAFactor(fftlen, sampleRate);
+    boolAWeighting = false;
   }
   
   public STFT(int fftlen, double sampleRate, int minFeedSize) {
@@ -133,6 +152,11 @@ public class STFT {
       for (int j = 0; j < spectrumAmpOutCum.length; j++) {
         spectrumAmpOutCum[j] /= nAnalysed;
       }
+      if (boolAWeighting) {
+        for (int j = 0; j < spectrumAmpOutCum.length; j++) {
+          spectrumAmpOutCum[j] *= dBAFactor[j];
+        }
+      }
       nAnalysed = 0;
       System.arraycopy(spectrumAmpOutCum, 0, spectrumAmpOut, 0, spectrumAmpOut.length);
       Arrays.fill(spectrumAmpOutCum, 0.0);
@@ -148,6 +172,15 @@ public class STFT {
       }
     }
     return spectrumAmpOutDB;
+  }
+  
+  public double getRMSFromFT() {
+    double[] spectrum = getSpectrumAmp();
+    double s = 0;
+    for (int i = 0; i < spectrum.length; i++) {
+      s += spectrum[i];
+    }
+    return s * wndEnergyFactor;
   }
   
   public int nElemSpectrumAmp() {
