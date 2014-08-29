@@ -33,9 +33,11 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
+import android.support.v4.view.GestureDetectorCompat;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -60,6 +62,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private final static double SAMPLE_VALUE_MAX = 32767.0;   // Maximum signal value
   private final static int RECORDER_AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
   private final static int BYTE_OF_SAMPLE = 2;
+  
+  private GestureDetectorCompat mDetector;
 
   private int fftLen = 2048;
   private int sampleRate = 8000;
@@ -90,6 +94,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         ((TextView) view).setFreezesText(true);
       }
     }, "select");
+    mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
 //    Debug.startMethodTracing("calc");
   }
 
@@ -210,8 +215,32 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
   }
   
+  class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
+    private static final String DEBUG_TAG = "Gestures"; 
+    
+    @Override
+    public boolean onDown(MotionEvent event) {
+        Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDown: " + event.toString()); 
+        return true;
+    }
+    
+    @Override
+    public boolean onDoubleTap(MotionEvent event) {
+        Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDoubleTap: " + event.toString()); 
+        return true;
+    }
+
+    @Override
+    public boolean onFling(MotionEvent event1, MotionEvent event2, 
+            float velocityX, float velocityY) {
+        Log.d(DEBUG_TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
+        return true;
+    }
+  }
+  
   @Override
   public boolean onTouchEvent(MotionEvent event) {
+    this.mDetector.onTouchEvent(event);
     if (isMeasure) {
       measureEvent(event);
     } else {
