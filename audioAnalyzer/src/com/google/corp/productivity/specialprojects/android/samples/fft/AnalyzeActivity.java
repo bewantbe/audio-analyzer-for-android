@@ -215,18 +215,43 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
   }
   
+  private boolean isInGraphView(float x, float y) {
+    graphView.getLocationInWindow(wc);
+    return x>wc[0] && y>wc[1] && x<wc[0]+graphView.getWidth() && y<wc[1]+graphView.getHeight();
+  }
+  
+  /**
+   * XXX  I could couldn't find a way to attach these events to the graphView
+   * @author xyy
+   */
   class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
-    private static final String DEBUG_TAG = "Gestures"; 
+    private static final String DEBUG_TAG = "Gestures";
     
     @Override
     public boolean onDown(MotionEvent event) {
-        Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDown: " + event.toString()); 
+        Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDown: " + event.toString());
+        if (event.getPointerCount() == 2
+            && isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
+          if (isMeasure == true) {
+            isMeasure = !isMeasure;
+            SelectorText st = (SelectorText) findViewById(R.id.mode);
+            st.performClick();
+          }
+        }
         return true;
     }
     
     @Override
     public boolean onDoubleTap(MotionEvent event) {
         Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDoubleTap: " + event.toString()); 
+        if (isInGraphView(event.getX(0), event.getY(0))) {
+          // go from scale mode to measure mode (one way)
+          if (isMeasure == false) {
+            isMeasure = !isMeasure;
+            SelectorText st = (SelectorText) findViewById(R.id.mode);
+            st.performClick();
+          }
+        }
         return true;
     }
 
@@ -260,7 +285,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         }
         break;
       case 2:
-        // not implemented
+        if (isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
+          isMeasure = !isMeasure;
+          SelectorText st = (SelectorText) findViewById(R.id.mode);
+          st.performClick();
+        }
     }
   }
 
@@ -282,6 +311,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       Log.i(TAG, "scaleEvent(): Skip event " + event.getAction());
       return;
     }
+//    Log.i(TAG, "scaleEvent(): switch " + event.getAction());
     switch (event.getPointerCount()) {
       case 2 :
         if (isPinching)  {
@@ -409,9 +439,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   @SuppressLint("NewApi")
   private void refreshCursorLabel() {
-    double f = graphView.getX();
     ((TextView) findViewById(R.id.freq_db)).setText(
-        Math.round(10*f)/10 + "Hz\n" + Math.round(graphView.getY()) + "dB");
+        String.format("%.1fHz\n%.1fdB", graphView.getCursorX(), graphView.getCursorY()));
   }
 
   private void refreshMinFreqLabel() {

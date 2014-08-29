@@ -367,6 +367,12 @@ public class AnalyzeView extends View {
     isBusy = false;
   }
   
+  private boolean intersects(float x, float y) {
+    getLocationOnScreen(myLocation);
+    return x >= myLocation[0] && y >= myLocation[1] &&
+       x < myLocation[0] + getWidth() && y < myLocation[1] + getHeight();
+  }
+  
   public boolean setCursor(float x, float y) {
     if (intersects(x, y)) {
       // Log.i(AnalyzeActivity.TAG, x + "," + y);
@@ -376,9 +382,8 @@ public class AnalyzeView extends View {
       } else if (x >=  canvasWidth - 3) {
         setXShift(current + 10f);
       } else {
-        cursorX = x + myLocation[0];
-        cursorY = y - myLocation[1];
-        cursorX = cursorX/xZoom + xShift; // ??
+        cursorX = xShift + (x - myLocation[0])/xZoom;  // coordinate in canvas
+        cursorY = yShift + (y - myLocation[1])/yZoom;
       }
       return true;
     } else {
@@ -394,22 +399,11 @@ public class AnalyzeView extends View {
     // Log.i(AnalyzeActivity.TAG, "mark=" + mark);
   }
   
-  @Override
-  public float getX() {
-    // return bounds.width() * (xlate + cx) / (scale * w);
+  public float getCursorX() {
     return  canvasWidth == 0 ? 0 : axisBounds.width() * cursorX / canvasWidth;
   }
   
-  /**
-   * Translate a mouse event X coordinate into a graph coordinate.
-   */
-  public float xlateX(float x) {
-    getLocationOnScreen(myLocation);
-    float tmp =  (x + myLocation[0]) / xZoom + xShift;
-    return canvasWidth == 0 ? 0.0f : axisBounds.width() * tmp / canvasWidth;
-  }
-  
-  public float getY() {
+  public float getCursorY() {
     return  canvasHeight == 0 ? 0 : axisBounds.height() * cursorY / canvasHeight;
   }
   
@@ -448,12 +442,6 @@ public class AnalyzeView extends View {
   
   public float getYShift() {
     return yShift;
-  }
-  
-  private boolean intersects(float x, float y) {
-    getLocationOnScreen(myLocation);
-    return x >= myLocation[0] && y >= myLocation[1] &&
-       x < myLocation[0] + getWidth() && y < myLocation[1] + getHeight();
   }
   
   private float clamp(float x, float min, float max) {
@@ -560,11 +548,11 @@ public class AnalyzeView extends View {
     drawGridLines(c, canvasWidth * gridDensity, canvasHeight * gridDensity);
     c.concat(matrix);
     c.drawPath(path, linePaint);
-    if (cursorX > 0) {
-      c.drawLine(cursorX, 0, cursorX, canvasHeight, cursorPaint); 
+    if (xShift <= cursorX && cursorX <= xShift + canvasWidth/xZoom) {
+      c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
     }
-    if (cursorY > 0) {
-      c.drawLine(0, cursorY, canvasWidth, cursorY, cursorPaint); 
+    if (yShift <= cursorY && cursorY <= yShift + canvasHeight/yZoom) {
+      c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
     }
     if (mark > 0f) {
       c.drawLine(mark - 3, 0, mark, 25, cursorPaint);
