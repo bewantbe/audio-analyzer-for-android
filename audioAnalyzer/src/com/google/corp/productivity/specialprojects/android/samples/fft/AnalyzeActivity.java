@@ -19,7 +19,6 @@ package com.google.corp.productivity.specialprojects.android.samples.fft;
 
 import com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeView.Ready;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -230,14 +229,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     @Override
     public boolean onDown(MotionEvent event) {
         Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDown: " + event.toString());
-        if (event.getPointerCount() == 2
-            && isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
-          if (isMeasure == true) {
-            isMeasure = !isMeasure;
-            SelectorText st = (SelectorText) findViewById(R.id.mode);
-            st.performClick();
-          }
-        }
         return true;
     }
     
@@ -397,7 +388,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     String value = ((TextView) v).getText().toString();
     if (v.getId() == R.id.test) {
       isTesting = value.equals("test");
-      // Log.i(TAG, "Click: test=" + isTesting);
       return false;
     }
     if (v.getId() == R.id.run) {
@@ -413,7 +403,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     if (v.getId() == R.id.mode) {
       isMeasure = !value.equals("scale");
-        // Log.i(TAG, "Click: measure=" + isMeasure);
       return false;
     }
     if (v.getId() == R.id.bins) {
@@ -437,7 +426,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     refreshMinFreqLabel();
   }
 
-  @SuppressLint("NewApi")
   private void refreshCursorLabel() {
     ((TextView) findViewById(R.id.freq_db)).setText(
         String.format("%.1fHz\n%.1fdB", graphView.getCursorX(), graphView.getCursorY()));
@@ -456,7 +444,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
    */
 
   public void recompute(double[] data) {
-    //graphView.recompute(data, 1, data.length / 2, showLines);
   	if (graphView.isBusy() == true) {
   		Log.d(TAG, "recompute(): isBusy == true");  // seems it's never busy
   	}
@@ -490,7 +477,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     boolean isRunning = true;
     boolean isPaused1 = false;
     double dtRMS = 0;
-    double dtRMS_s = 0;
     double maxAmpDB;
     double maxAmpFreq;
     public STFT stft;   // use with care
@@ -651,7 +637,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           }
           maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
           
-          dtRMS_s = stft.getRMSFromFT();
+//          dtRMS_s = stft.getRMSFromFT();
         }
 
         // Show debug information
@@ -687,8 +673,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         public void run() {
           AnalyzeActivity.this.recompute(data);
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
-          tv.setText(String.format("RMS: %6.2fdB, %6.2fdB, peak: %5.1fHz (%6.2fdB)",
-              20*Math.log10(dtRMS), 10*Math.log10(dtRMS_s), maxAmpFreq, maxAmpDB));
+          tv.setText(String.format("RMS: %6.2fdB, peak: %5.1fHz (%6.2fdB)",
+              20*Math.log10(dtRMS), maxAmpFreq, maxAmpDB));
           tv.invalidate();
         }
       });
@@ -697,7 +683,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     public void setPause(boolean pause) {
       this.isPaused1 = pause;
       // Note: When paused (or not), it is not allowed to change the recorder (sample rate, fftLen etc.)
-      // Recreate the whole thread would be a safe way to go.
     }
 
     public boolean getPause() {

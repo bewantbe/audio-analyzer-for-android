@@ -1,30 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<merge
- xmlns:android="http://schemas.android.com/apk/res/android"
- xmlns:custom="http://schemas.android.com/apk/res/com.google.corp.productivity.specialprojects.android.samples.fft"
->
-  <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-   android:id="@+id/sampling_rate"
-   android:layout_width="wrap_content" android:layout_height="wrap_content"
-   android:text="16000"
-   android:tag="select"
-   android:textSize="25sp"
-   custom:items="8000 11025 16000 22050 32000 44100 48000"
-  />
-  <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-   android:id="@+id/bins"
-   android:layout_width="wrap_content" android:layout_height="wrap_content"
-   android:text="2048"
-   android:tag="select"
-   android:textSize="25sp"
-   custom:items="512 1024 2048 4096 8192"
-  />
-  <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-   android:id="@+id/db"
-   android:layout_width="wrap_content" android:layout_height="wrap_content"
-   android:text="-120"
-   android:tag="select"
-   android:textSize="25sp"
-   custom:items="-120 -90 -60 -30"
-  />
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res/com.google.corp.productivity.specialprojects.android.samples.fft" >
+
+    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        android:id="@+id/sampling_rate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:tag="select"
+        android:text="16000"
+        android:textSize="25sp"
+        custom:items="8000 11025 16000 22050 32000 44100 48000" />
+
+    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        android:id="@+id/bins"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:tag="select"
+        android:text="2048"
+        android:textSize="25sp"
+        custom:items="512 1024 2048 4096 8192" />
+
+    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        android:id="@+id/db"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:tag="select"
+        android:text="-120"
+        android:textSize="25sp"
+        custom:items="-120 -90 -60 -30" />
+
 </merge>
