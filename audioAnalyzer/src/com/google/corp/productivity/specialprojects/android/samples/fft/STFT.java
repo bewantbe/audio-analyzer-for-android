@@ -189,6 +189,8 @@ public class STFT {
   
   public void clear() {
     spectrumAmpPt = 0;
+    Arrays.fill(spectrumAmpOut, 0.0);
+    Arrays.fill(spectrumAmpOutDB, Math.log10(0));
     Arrays.fill(spectrumAmpOutCum, 0.0);
     for (int i = 0; i < spectrumAmpOutArray.length; i++) {
       Arrays.fill(spectrumAmpOutArray[i], 0.0);

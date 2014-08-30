@@ -71,7 +71,7 @@ public class InfoRecActivity extends Activity {
 
 		// Show supported sample rate and corresponding minimum buffer size.
 		String[] requested = new String[] { "8000", "11025", "16000", "22050",
-				"32000", "44100", "48000" };
+				"32000", "44100", "48000", "96000"};
 		String st = "sampleRate minBufSize\n";
 		ArrayList<String> validated = new ArrayList<String>();
 		for (String s : requested) {

@@ -29,6 +29,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.SystemClock;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
@@ -48,6 +49,9 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -57,7 +61,7 @@ import java.util.ArrayList;
 
 public class AnalyzeActivity extends Activity implements OnLongClickListener, OnClickListener,
       Ready, OnSharedPreferenceChangeListener {
-  static final String TAG="audio";
+  static final String TAG="AnalyzeActivity";
   private final static double SAMPLE_VALUE_MAX = 32767.0;   // Maximum signal value
   private final static int RECORDER_AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
   private final static int BYTE_OF_SAMPLE = 2;
@@ -75,6 +79,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private boolean isMeasure = true;
   
   private boolean isAWeighting = false;
+  
+  long diffSample = 0;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -479,6 +485,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     double dtRMS = 0;
     double maxAmpDB;
     double maxAmpFreq;
+    double actualSampleRate;   // sample rate based on SystemClock.uptimeMillis()
+    File filePathDebug;
+    FileWriter fileDebug;
     public STFT stft;   // use with care
 
     public Looper() {
@@ -535,6 +544,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     
     @Override
     public void run() {
+      // Wait until previous instance of AudioRecord fully released.
+      SleepWithoutInterrupt(500);
+      
       // Initialize
       // TODO: if failed, use another fallback option
       int minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
@@ -543,8 +555,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         Log.e(TAG, "Looper::run(): Invalid AudioRecord parameter.\n");
         return;
       }
-      // Wait until previous instance of AudioRecord fully released.
-      SleepWithoutInterrupt(500);
 
       /**
        * Develop -> Reference -> AudioRecord
@@ -552,66 +562,83 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
        *    inferior to the total recording buffer size.
        */
       // Determine size of each read() operation
-      int chunkSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen);
+      //int readChunkSize    = fftLen/2;  // /2 due to overlapped analyze window
+      int readChunkSize    = minBytes / BYTE_OF_SAMPLE;
+      int bufferSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen/2) * 2;
+      // tolerate up to 1 sec.
+      bufferSampleSize = (int)Math.ceil(1.0 * sampleRate / bufferSampleSize) * bufferSampleSize; 
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
       // The buffer size here seems not relate to the delay.
       // So choose a slightly larger size (~1sec) that overrun is unlikely.
       record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * chunkSampleSize * 8);
-
-      // Signal source for testing
-      sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
-      sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
-      mdata = new double[chunkSampleSize];
+                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
 
       Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
         String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), sampleRate) +
         String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / BYTE_OF_SAMPLE, minBytes) +
-        String.format("  read chunk size : %d samples, %d Bytes\n", chunkSampleSize, 2*chunkSampleSize) +
+        String.format("  buffer size     : %d samples, %d Bytes\n", bufferSampleSize, BYTE_OF_SAMPLE*bufferSampleSize) +
+        String.format("  read chunk size : %d samples, %d Bytes\n", readChunkSize, BYTE_OF_SAMPLE*readChunkSize) +
         String.format("  FFT length      : %d\n", fftLen));
+      sampleRate = record.getSampleRate();
+      actualSampleRate = sampleRate;
 
-      // Start recording
-      record.startRecording();
-      SleepWithoutInterrupt(100);
+      if (record == null || record.getState() == AudioRecord.STATE_UNINITIALIZED) {
+        Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()"); 
+        return ;
+      }
+      
+      // Signal source for testing
+      sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
+      sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+      mdata = new double[readChunkSize];
 
-      stft = new STFT(fftLen, record.getSampleRate());
-      stft.setAWeighting(isAWeighting);
-      short[] audioSamples = new short[chunkSampleSize];
+      short[] audioSamples = new short[readChunkSize];
       int numOfReadShort;
 
+      stft = new STFT(fftLen, sampleRate);
+      stft.setAWeighting(isAWeighting);
+
       // Variables for count FPS, and Debug
-      long startTimeMs = SystemClock.uptimeMillis();       // time of recording start
-      long timeInterval = 2000;                            // output FPS per timeInterval ms 
-      long time4FrameCount = SystemClock.uptimeMillis();
-      long nFramesRead = 0;         // It's will overflow after millions of years of recording
+      long timeNow;
+      long timeDebugInterval = 2000;                     // output debug information per timeDebugInterval ms 
+      long time4SampleCount = SystemClock.uptimeMillis();
       int frameCount = 0;
 
       boolean isTestingOld = isTesting;
+
+      // Start recording
+      record.startRecording();
+      long startTimeMs = SystemClock.uptimeMillis();     // time of recording start
+      long nSamplesRead = 0;         // It's will overflow after millions of years of recording
 
       while (isRunning) {
         if (isTestingOld != isTesting) {
           isTestingOld = isTesting;
           stft.clear();
           startTimeMs = SystemClock.uptimeMillis();
-          nFramesRead = 0;
+          nSamplesRead = 0;
         }
 
         // Read data
         if (isTesting) {
-          numOfReadShort = readTestData(audioSamples, 0, chunkSampleSize);
+          numOfReadShort = readTestData(audioSamples, 0, readChunkSize);
         } else {
-          numOfReadShort = record.read(audioSamples, 0, chunkSampleSize);   // pulling
+          numOfReadShort = record.read(audioSamples, 0, readChunkSize);   // pulling
         }
         // Log.i(TAG, "Read: " + Integer.toString(numOfReadShort) + " samples");
-        nFramesRead += numOfReadShort;
+        timeNow = SystemClock.uptimeMillis();
+        if (nSamplesRead == 0) {      // get overrun checker synchronized
+          startTimeMs = timeNow - numOfReadShort*1000/sampleRate;
+        }
+        nSamplesRead += numOfReadShort;
         if (isPaused1) {
-          continue;  // keep reading data, so that buffer not get overflowed?
+          continue;  // keep reading data, so overrun checker data still valid
         }
         stft.feedData(audioSamples, numOfReadShort);
 
         // If there is new spectrum data, do plot
-        if (stft.nElemSpectrumAmp() > 0) {
+        if (stft.nElemSpectrumAmp() >= 2) {
           // compute Root-Mean-Square
           dtRMS = 0;
           for (int i = 0; i < numOfReadShort; i++) {
@@ -641,24 +668,40 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         }
 
         // Show debug information
-        long timeNow = SystemClock.uptimeMillis();
-        if (time4FrameCount + timeInterval <= timeNow) {
+        if (time4SampleCount + timeDebugInterval <= timeNow) {
           // Count and show FPS
-          Log.i(TAG, "FPS: " + Double.toString(1000 * (double) frameCount / (timeNow - time4FrameCount))
-                     + "(" + Integer.toString(frameCount) + "/"
-                     + Long.toString(timeNow - time4FrameCount) + "ms)");
-          time4FrameCount += timeInterval;
+          double fps = 1000 * (double) frameCount / (timeNow - time4SampleCount);
+          Log.i(TAG, "FPS: " + Math.round(10*fps)/10.0 +
+                " (" + frameCount + "/" + (timeNow - time4SampleCount) + "ms)");
+          time4SampleCount += timeDebugInterval;
           frameCount = 0;
           // Check whether buffer overrun occur
-          long nFramesFromTime = (timeNow - startTimeMs) * record.getSampleRate() / 1000;
-          if (nFramesFromTime > 2 * chunkSampleSize + nFramesRead) {
+          long nSamplesFromTime = (long)((timeNow - startTimeMs) * actualSampleRate / 1000);
+          double f1 = (double) nSamplesRead / actualSampleRate;
+          double f2 = (double) nSamplesFromTime / actualSampleRate;
+          Log.i(TAG, "Buffer"
+              + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
+              + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
+              + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
+              + " sampleRate = " + Math.round(actualSampleRate*100)/100.0);
+          if (nSamplesFromTime > bufferSampleSize + nSamplesRead) {
             Log.w(TAG, "Buffer Overrun occured !\n"
-                       + " (Read " + Long.toString(nFramesRead) + " frames ("
-                       + Double.toString((double) nFramesRead / record.getSampleRate()) + "sec)\n"
-                       + "  Should read " + Long.toString(nFramesFromTime) + " frames ("
-                       + Double.toString((double) nFramesFromTime / record.getSampleRate()) + "sec))");
+                + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
+                + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
+                + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
+                + " sampleRate = " + Math.round(actualSampleRate*100)/100.0
+                + "\n Overrun counter reseted.");
+            // XXX log somewhere to the file
+            nSamplesRead = 0;  // start over
           }
-          Log.i(TAG, String.format("spectrum peak: %.1fHz (%.2fdB)", maxAmpFreq, maxAmpDB));
+          // Update actual sample rate
+          if (nSamplesRead > 10*sampleRate) {
+            actualSampleRate = 0.9*actualSampleRate + 0.1*(nSamplesRead * 1000.0 / (timeNow - startTimeMs));
+            if (Math.abs(actualSampleRate-sampleRate) > 0.01*sampleRate) {
+              Log.w(TAG, "Looper::run(): Sample rate inaccurate !\n");
+              nSamplesRead = 0;
+            }
+          }
         }
       }
       Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
@@ -673,8 +716,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         public void run() {
           AnalyzeActivity.this.recompute(data);
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
-          tv.setText(String.format("RMS: %6.2fdB, peak: %5.1fHz (%6.2fdB)",
-              20*Math.log10(dtRMS), maxAmpFreq, maxAmpDB));
+          double f1 = 20*Math.log10(dtRMS);
+          tv.setText("RMS: " + Math.round(100*f1)/100.0 + "dB, peak: "
+                     + Math.round(maxAmpFreq*10)/10.0+ "Hz (" + Math.round(maxAmpDB*100)/100.0 + "dB)");
           tv.invalidate();
         }
       });
@@ -692,6 +736,15 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     public void finish() {
       isRunning = false;
       interrupt();
+    }
+    
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            return true;
+        }
+        return false;
     }
   }
 

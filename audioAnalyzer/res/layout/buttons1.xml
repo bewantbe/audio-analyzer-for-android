@@ -7,9 +7,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:tag="select"
-        android:text="16000"
+        android:text="11025"
         android:textSize="25sp"
-        custom:items="8000 11025 16000 22050 32000 44100 48000" />
+        custom:items="8000 11025 16000 22050 32000 44100 48000 96000" />
 
     <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
         android:id="@+id/bins"
