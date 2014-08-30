@@ -293,7 +293,7 @@ public class AnalyzeView extends View {
     }
     for(int i = 0; i < gridPoints2[1].length; i++) {
       float xPos = canvasViewX4axis((float)gridPoints2[1][i]);
-      c.drawLine(xPos, 0, xPos, 0.03f * canvasHeight, gridPaint);
+      c.drawLine(xPos, 0, xPos, 0.02f * canvasHeight, gridPaint);
     }
     updateGridLabels(getMinY(), getMaxY(), ny, GridScaleType.DB);
     for(int i = 0; i < gridPoints2dB[0].length; i++) {
@@ -308,23 +308,28 @@ public class AnalyzeView extends View {
   
   // The coordinate frame of this function is identical to its view (id=plot).
   private void drawGridLabels(Canvas c) {
+    float textHeigh = labelPaint.getFontMetrics(null);
+    float widthHz = labelPaint.measureText("Hz");
     float xPos, yPos;
-    yPos = 15;
+    yPos = textHeigh;
     for(int i = 0; i < gridPoints2Str.length; i++) {
       xPos = canvasViewX4axis((float)gridPoints2[0][i]);
-      if (xPos > canvasWidth - 60) continue;
+      if (xPos + labelPaint.measureText(gridPoints2Str[i].toString()) + 1.5f*widthHz> canvasWidth) {
+        continue;
+      }
       c.drawText(gridPoints2Str[i].toString(), xPos, yPos, labelPaint);
       c.drawLine(0, 0, canvasWidth, 0, labelPaint);
     }
-    c.drawText("Hz", canvasWidth - 20, yPos, labelPaint);
-    xPos = 4;
+    
+    c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
+    xPos = 0.4f*widthHz;
     for(int i = 0; i < gridPoints2StrDB.length; i++) {
       yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
-      if (yPos > canvasHeight - 19) continue;
+      if (yPos + 1.3f*widthHz > canvasHeight) continue;
       c.drawText(gridPoints2StrDB[i].toString(), xPos, yPos, labelPaint);
       c.drawLine(0, 0, 0, canvasHeight, labelPaint);
     }
-    c.drawText("dB", xPos, canvasHeight - 5, labelPaint);
+    c.drawText("dB", xPos, canvasHeight - 0.4f*widthHz, labelPaint);
   }
   
   private float clampDB(float value) {

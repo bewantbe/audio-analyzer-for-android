@@ -475,7 +475,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   // convert frequency to pitch
   public void freq2Cent(StringBuilder a, double f, String sFill) {
     a.setLength(0);
-    if (f<=0) {
+    if (f<=0 || Double.isNaN(f) || Double.isInfinite(f)) {
       return;
     }
     // A4 = 440Hz
