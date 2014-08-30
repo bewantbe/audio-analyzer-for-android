@@ -21,8 +21,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="5dip"
-            android:lines="3"
-            android:minEms="5"
+            android:lines="2"
+            android:minEms="4"
             android:text="@string/textview_freq_db" />
 
         <include layout="@layout/buttons" />
