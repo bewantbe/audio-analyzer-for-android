@@ -42,6 +42,7 @@ public class AnalyzeView extends View {
   private float xShift;    // horizontal translation
   private float yZoom;     // vertical scaling
   private float yShift;    // vertical translation
+  private float minDB = -144f;
   private float mark;
   private RectF axisBounds;
   private Ready readyCallback = null;      // callback to caller when rendering is complete
@@ -127,7 +128,7 @@ public class AnalyzeView extends View {
   // return position of grid lines, there are roughly gridDensity lines for the bigger grid
   private void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue,
                                    double gridDensity, int scale_mode) {
-    if (startValue == endValue) {
+    if (startValue == endValue || Double.isInfinite(startValue+endValue) || Double.isNaN(startValue+endValue)) {
       Log.e(AnalyzeActivity.TAG, "genLinearGridPoints(): startValue == endValue !");
       return;
     }
@@ -349,7 +350,7 @@ public class AnalyzeView extends View {
       return;
     }
     isBusy = true;
-    float minDB = canvasY4axis(getMinY());
+    float minYcanvas = canvasY4axis(minDB);
     path.reset();
     if (bars) {
       for (int i = start; i < end; i++) {
@@ -357,7 +358,7 @@ public class AnalyzeView extends View {
         float y = canvasY4axis(clampDB((float)db[i]));
         if (y != canvasHeight) {
           //path.moveTo(x, canvasHeight);
-          path.moveTo(x, minDB);
+          path.moveTo(x, minYcanvas);
           path.lineTo(x, y);
         }
       }
@@ -466,7 +467,7 @@ public class AnalyzeView extends View {
 
   private float clampYShift(float offset) {
     // limit to -180dB ~ 12 dB
-    return clamp(offset, canvasY4axis(12f), canvasY4axis(-144f) - canvasHeight / yZoom);
+    return clamp(offset, canvasY4axis(12f), canvasY4axis(minDB) - canvasHeight / yZoom);
     //return clamp(offset, 0f, canvasHeight - canvasHeight / yZoom);
   }
   
@@ -485,6 +486,15 @@ public class AnalyzeView extends View {
   
   public void setYShift(float offset) {
     yShift = clampYShift(offset);
+    computeMatrix();
+    invalidate();
+  }
+  
+  public void resetViewScale() {
+    xShift = 0;
+    xZoom = 1;
+    yShift = 0;
+    yZoom = 1;
     computeMatrix();
     invalidate();
   }

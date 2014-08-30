@@ -232,27 +232,29 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
     @Override
     public boolean onDown(MotionEvent event) {
-        return true;
+      return true;
     }
     
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-        if (isInGraphView(event.getX(0), event.getY(0))) {
-          // go from scale mode to measure mode (one way)
-          if (isMeasure == false) {
-            isMeasure = !isMeasure;
-            SelectorText st = (SelectorText) findViewById(R.id.mode);
-            st.performClick();
-          }
+      if (isInGraphView(event.getX(0), event.getY(0))) {
+        // go from scale mode to measure mode (one way)
+        if (isMeasure == false) {
+          isMeasure = !isMeasure;
+          SelectorText st = (SelectorText) findViewById(R.id.mode);
+          st.performClick();
+        } else {
+          graphView.resetViewScale();
         }
-        return true;
+      }
+      return false;
     }
 
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2, 
             float velocityX, float velocityY) {
-        Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
-        return true;
+      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
+      return true;
     }
   }
   
