@@ -230,8 +230,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
    * @author xyy
    */
   class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
-    private static final String DEBUG_TAG = "Gestures";
-    
     @Override
     public boolean onDown(MotionEvent event) {
         return true;
@@ -239,7 +237,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-        Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDoubleTap: " + event.toString()); 
         if (isInGraphView(event.getX(0), event.getY(0))) {
           // go from scale mode to measure mode (one way)
           if (isMeasure == false) {
@@ -254,7 +251,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2, 
             float velocityX, float velocityY) {
-        Log.d(DEBUG_TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
+        Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
         return true;
     }
   }
@@ -362,7 +359,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   @Override
   public void onClick(View v) {
     vibrate(50);
-    Log.i(TAG, "onClick(): " + v.toString());
+//    Log.i(TAG, "onClick(): " + v.toString());
     if (processClick(v)) {
       reRecur();
       updateAllLabels();
@@ -427,20 +424,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   private void updateAllLabels() {
     refreshCursorLabel();
-    refreshMaxFreqLabel();
-    refreshMinFreqLabel();
   }
 
   private void refreshCursorLabel() {
     ((TextView) findViewById(R.id.freq_db)).setText(
         String.format("%.1fHz\n%.1fdB", graphView.getCursorX(), graphView.getCursorY()));
-  }
-
-  private void refreshMinFreqLabel() {
-      ((TextView) findViewById(R.id.min)).setText(Math.round(graphView.getMinX()) + "Hz");
-  }
-  private void refreshMaxFreqLabel() {
-      ((TextView) findViewById(R.id.max)).setText(Math.round(graphView.getMaxX()) + "Hz");
   }
 
   /**
@@ -733,11 +721,14 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         @Override
         public void run() {
           AnalyzeActivity.this.recompute(data);
+          // RMS
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
+          tv.setText("RMS:" + dfDB.format(20*Math.log10(dtRMSFromFT)) + "dB");
+          tv.invalidate();
+          // peak frequency
           freq2Cent(sCent, maxAmpFreq, " ");
-          double f1 = 20*Math.log10(dtRMS);
-          tv.setText("RMS:" + dfDB.format(f1) + "dB, peak: "
-                     + dfFreq.format(maxAmpFreq)+ "Hz (" + sCent + ") " + dfDB.format(maxAmpDB) + "dB");
+          tv = (TextView) findViewById(R.id.textview_peak);
+          tv.setText("Peak:" + dfFreq.format(maxAmpFreq)+ "Hz (" + sCent + ") " + dfDB.format(maxAmpDB) + "dB");
           tv.invalidate();
         }
       });

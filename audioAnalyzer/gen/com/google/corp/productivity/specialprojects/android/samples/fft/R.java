@@ -59,24 +59,22 @@ containing a value of this type.
         public static final int icon=0x7f020000;
     }
     public static final class id {
-        public static final int LinearLayout1=0x7f090009;
-        public static final int action_settings=0x7f090011;
+        public static final int action_settings=0x7f09000f;
         public static final int bins=0x7f090002;
         public static final int dbA=0x7f090003;
         public static final int freq_db=0x7f090008;
-        public static final int info=0x7f09000e;
-        public static final int info_recoder=0x7f090010;
+        public static final int info=0x7f09000c;
+        public static final int info_recoder=0x7f09000e;
         public static final int linearLayout1=0x7f090007;
-        public static final int max=0x7f09000b;
-        public static final int min=0x7f09000a;
         public static final int mode=0x7f090004;
-        public static final int plot=0x7f09000d;
+        public static final int plot=0x7f09000b;
         public static final int run=0x7f090005;
         public static final int sampling_rate=0x7f090001;
-        public static final int settings=0x7f09000f;
+        public static final int settings=0x7f09000d;
         public static final int test=0x7f090006;
         public static final int textview_info_rec=0x7f090000;
-        public static final int textview_subhead=0x7f09000c;
+        public static final int textview_peak=0x7f09000a;
+        public static final int textview_subhead=0x7f090009;
     }
     public static final class layout {
         public static final int activity_info_rec=0x7f030000;
