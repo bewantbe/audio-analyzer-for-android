@@ -481,9 +481,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     // A4 = 440Hz
     double p = 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
     int pi = (int) Math.round(p);
+    int po = (int) Math.floor(pi/12.0);
     final String[] L = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    a.append(L[pi % 12]);
-    a.append(pi/12-1);
+    a.append(L[pi-po*12]);
+    a.append(po-1);
     if (p-pi>0) {
       a.append('+');
     }
@@ -585,7 +586,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       // Determine size of each read() operation
       int readChunkSize    = fftLen/2;  // /2 due to overlapped analyze window
       readChunkSize = Math.min(readChunkSize, 2048);
-      //int readChunkSize    = minBytes / BYTE_OF_SAMPLE;
       int bufferSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen/2) * 2;
       // tolerate up to 1 sec.
       bufferSampleSize = (int)Math.ceil(1.0 * sampleRate / bufferSampleSize) * bufferSampleSize; 
