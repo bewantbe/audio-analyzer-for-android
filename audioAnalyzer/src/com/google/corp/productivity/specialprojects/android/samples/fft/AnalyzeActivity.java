@@ -52,6 +52,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /**
@@ -470,6 +471,27 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     return validated.toArray(new String[0]);
   }
+
+  // convert frequency to pitch
+  public void freq2Cent(StringBuilder a, double f, String sFill) {
+    a.setLength(0);
+    if (f<=0) {
+      return;
+    }
+    // A4 = 440Hz
+    double p = 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
+    int pi = (int) Math.round(p);
+    final String[] L = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+    a.append(L[pi % 12]);
+    a.append(pi/12-1);
+    if (p-pi>0) {
+      a.append('+');
+    }
+    a.append(Math.round(100*(p-pi)));
+    while (a.length() < 6 && !sFill.isEmpty()) {
+      a.append(sFill);
+    }
+  }
   
   /**
    * Read a snapshot of audio data at a regular interval, and compute the FFT
@@ -703,15 +725,19 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       record = null;
     }
 
+    DecimalFormat dfDB= new DecimalFormat("* ####.0");
+    DecimalFormat dfFreq= new DecimalFormat("* #####.0");
+    StringBuilder sCent = new StringBuilder("");
     private void update(final double[] data) {
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
           AnalyzeActivity.this.recompute(data);
           TextView tv = (TextView) findViewById(R.id.textview_subhead);
+          freq2Cent(sCent, maxAmpFreq, " ");
           double f1 = 20*Math.log10(dtRMS);
-          tv.setText("RMS: " + Math.round(100*f1)/100.0 + "dB, peak: "
-                     + Math.round(maxAmpFreq*10)/10.0+ "Hz (" + Math.round(maxAmpDB*100)/100.0 + "dB)");
+          tv.setText("RMS:" + dfDB.format(f1) + "dB, peak: "
+                     + dfFreq.format(maxAmpFreq)+ "Hz (" + sCent + ") " + dfDB.format(maxAmpDB) + "dB");
           tv.invalidate();
         }
       });
@@ -733,11 +759,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     
     /* Checks if external storage is available for read and write */
     public boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(state)) {
-            return true;
-        }
-        return false;
+      String state = Environment.getExternalStorageState();
+      if (Environment.MEDIA_MOUNTED.equals(state)) {
+        return true;
+      }
+      return false;
     }
   }
 

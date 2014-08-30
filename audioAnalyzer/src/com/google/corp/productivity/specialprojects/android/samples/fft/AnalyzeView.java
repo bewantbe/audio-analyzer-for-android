@@ -102,8 +102,9 @@ public class AnalyzeView extends View {
     gridPaint = new Paint(linePaint);
     gridPaint.setColor(Color.DKGRAY);
 
-    labelPaint = new Paint(linePaint);
+    labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     labelPaint.setColor(Color.GRAY);
+    labelPaint.setTextSize(14);
 
     cursorX = cursorY = 0f;
     xZoom=1f;
