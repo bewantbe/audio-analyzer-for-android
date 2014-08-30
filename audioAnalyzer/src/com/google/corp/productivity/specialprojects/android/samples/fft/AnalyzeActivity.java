@@ -70,7 +70,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   private int fftLen = 2048;
   private int sampleRate = 8000;
-  private int updateMs = 40;
   private AnalyzeView graphView;
   private Looper samplingThread;
 
@@ -210,7 +209,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       showLines = prefs.getBoolean("showLines", false);
     }
     if (pref == null || pref.equals("refreshRate")) {
-      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "25"));
+//      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "25"));
     }
     if (pref == null || pref.equals("fftBins")) {
       fftLen = Integer.parseInt(prefs.getString("fftBins", "1024"));
@@ -234,7 +233,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     
     @Override
     public boolean onDown(MotionEvent event) {
-        Log.d(DEBUG_TAG,"  AnalyzerGestureListener::onDown: " + event.toString());
         return true;
     }
     
@@ -397,10 +395,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       return false;
     }
     if (v.getId() == R.id.run) {
-//      if (samplingThread != null && samplingThread.stft != null) {
-//        isAWeighting = !isAWeighting;
-//        samplingThread.stft.setAWeighting(isAWeighting);
-//      }
       boolean pause = value.equals("stop");
       if (samplingThread != null && samplingThread.getPause() != pause) {
         samplingThread.setPause(pause);
@@ -411,16 +405,20 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       isMeasure = !value.equals("scale");
       return false;
     }
+    if (v.getId() == R.id.dbA) {
+      isAWeighting = !value.equals("dB");
+      if (samplingThread != null && samplingThread.stft != null) {
+        samplingThread.stft.setAWeighting(isAWeighting);
+      }
+      return false;
+    }
     if (v.getId() == R.id.bins) {
       fftLen = Integer.parseInt(value);
     } else if (v.getId() == R.id.sampling_rate) {
       sampleRate = Integer.parseInt(value);
       RectF bounds = graphView.getBounds();
       bounds.right = sampleRate / 2;
-      graphView.setBounds(bounds);
-    } else if (v.getId() == R.id.db) {
-      RectF bounds = graphView.getBounds();
-      bounds.bottom = Integer.parseInt(value);
+      bounds.bottom = -120;
       graphView.setBounds(bounds);
     }
     return true;
@@ -483,6 +481,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     boolean isRunning = true;
     boolean isPaused1 = false;
     double dtRMS = 0;
+    double dtRMSFromFT = 0;
     double maxAmpDB;
     double maxAmpFreq;
     double actualSampleRate;   // sample rate based on SystemClock.uptimeMillis()
@@ -501,12 +500,12 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       }
     }
 
-    private long baseTimeMs = SystemClock.uptimeMillis();
+    private double baseTimeMs = SystemClock.uptimeMillis();
 
-    private void LimitFrameRate() {
+    private void LimitFrameRate(double updateMs) {
       // Limit the frame rate by wait `delay' ms.
       baseTimeMs += updateMs;
-      int delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
+      long delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
 //      Log.i(TAG, "delay = " + delay);
       if (delay > 0) {
         try {
@@ -538,7 +537,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 //      for (int i = 0; i < sizeInShorts; i++) {
 //        a[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
 //      }
-      LimitFrameRate();
+      LimitFrameRate(1000.0*sizeInShorts / sampleRate);
       return sizeInShorts;
     }
     
@@ -562,8 +561,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
        *    inferior to the total recording buffer size.
        */
       // Determine size of each read() operation
-      //int readChunkSize    = fftLen/2;  // /2 due to overlapped analyze window
-      int readChunkSize    = minBytes / BYTE_OF_SAMPLE;
+      int readChunkSize    = fftLen/2;  // /2 due to overlapped analyze window
+      readChunkSize = Math.min(readChunkSize, 2048);
+      //int readChunkSize    = minBytes / BYTE_OF_SAMPLE;
       int bufferSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen/2) * 2;
       // tolerate up to 1 sec.
       bufferSampleSize = (int)Math.ceil(1.0 * sampleRate / bufferSampleSize) * bufferSampleSize; 
@@ -640,13 +640,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         // If there is new spectrum data, do plot
         if (stft.nElemSpectrumAmp() >= 2) {
           // compute Root-Mean-Square
-          dtRMS = 0;
-          for (int i = 0; i < numOfReadShort; i++) {
-            double s = audioSamples[i] / 32768.0;
-            dtRMS += s * s;                           // assume mean value is zero
-          }
-          // "* 2.0" normalize to sine wave.
-          dtRMS = Math.sqrt(dtRMS / numOfReadShort * 2.0);
+          dtRMS = stft.getRMS();
 
           // Update graph plot
           final double[] spectrumDB = stft.getSpectrumAmpDB();
@@ -663,8 +657,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
             }
           }
           maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
-          
-//          dtRMS_s = stft.getRMSFromFT();
+          dtRMSFromFT = stft.getRMSFromFT();
         }
 
         // Show debug information

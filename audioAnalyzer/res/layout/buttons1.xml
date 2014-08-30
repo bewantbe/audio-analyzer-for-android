@@ -7,8 +7,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:tag="select"
-        android:text="11025"
-        android:textSize="25sp"
+        android:text="16000"
+        android:textSize="21sp"
         custom:items="8000 11025 16000 22050 32000 44100 48000 96000" />
 
     <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
@@ -17,16 +17,16 @@
         android:layout_height="wrap_content"
         android:tag="select"
         android:text="2048"
-        android:textSize="25sp"
+        android:textSize="21sp"
         custom:items="512 1024 2048 4096 8192" />
 
     <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-        android:id="@+id/db"
+        android:id="@+id/dbA"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:tag="select"
-        android:text="-120"
-        android:textSize="25sp"
-        custom:items="-120 -90 -60 -30" />
+        android:text="dB"
+        android:textSize="21sp"
+        custom:items="dB dB(A)" />
 
 </merge>

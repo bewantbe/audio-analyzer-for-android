@@ -62,7 +62,7 @@ containing a value of this type.
         public static final int LinearLayout1=0x7f09000a;
         public static final int action_settings=0x7f090011;
         public static final int bins=0x7f090002;
-        public static final int db=0x7f090003;
+        public static final int dbA=0x7f090003;
         public static final int freq_db=0x7f090009;
         public static final int info=0x7f09000e;
         public static final int info_recoder=0x7f090010;

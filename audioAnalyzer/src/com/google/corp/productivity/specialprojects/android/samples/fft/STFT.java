@@ -23,6 +23,9 @@ public class STFT {
   private int nAnalysed = 0;
   private RealDoubleFFT spectrumAmpFFT;
   private boolean boolAWeighting = false;
+  private double cumRMS = 0;
+  private int    cntRMS = 0;
+  private double outRMS = 0;
   
   private double[] dBAFactor;    // multiply to power spectrum to get A-weighting
   
@@ -108,9 +111,12 @@ public class STFT {
     int dsPt = 0;           // input data point to be read
     while (dsPt < dsLen) {
       while (spectrumAmpPt < spectrumAmpIn.length && dsPt < dsLen) {
-        spectrumAmpIn[spectrumAmpPt] = ds[dsPt] / 32768.0;
-        spectrumAmpPt++;
+        double s = ds[dsPt] / 32768.0;
+        spectrumAmpIn[spectrumAmpPt] = s;
+        cumRMS += s*s;
         dsPt++;
+        spectrumAmpPt++;
+        cntRMS++;
       }
       if (spectrumAmpPt == spectrumAmpIn.length) {    // enough data for one FFT
         for (int i = 0; i < wnd.length; i++) {
@@ -157,30 +163,37 @@ public class STFT {
           spectrumAmpOutCum[j] *= dBAFactor[j];
         }
       }
-      nAnalysed = 0;
       System.arraycopy(spectrumAmpOutCum, 0, spectrumAmpOut, 0, spectrumAmpOut.length);
       Arrays.fill(spectrumAmpOutCum, 0.0);
+      nAnalysed = 0;
+      for (int i = 0; i < spectrumAmpOut.length; i++) {
+        spectrumAmpOutDB[i] = 10.0 * Math.log10(spectrumAmpOut[i]);
+      }
     }
     return spectrumAmpOut;
   }
   
   final public double[] getSpectrumAmpDB() {
-    if (nAnalysed != 0) {
-      final double[] x = getSpectrumAmp();
-      for (int i = 0; i < spectrumAmpOutDB.length; i++) {
-        spectrumAmpOutDB[i] = 10.0 * Math.log10(x[i]);
-      }
-    }
+    getSpectrumAmp();
     return spectrumAmpOutDB;
+  }
+
+  public double getRMS() {
+    if (cntRMS > 8000/30) {
+      outRMS = Math.sqrt(cumRMS / cntRMS * 2.0);  // "* 2.0" normalize to sine wave.
+      cumRMS = 0;
+      cntRMS = 0;
+    }
+    return outRMS;
   }
   
   public double getRMSFromFT() {
-    double[] spectrum = getSpectrumAmp();
+    getSpectrumAmpDB();
     double s = 0;
-    for (int i = 0; i < spectrum.length; i++) {
-      s += spectrum[i];
+    for (int i = 1; i < spectrumAmpOut.length; i++) {
+      s += spectrumAmpOut[i];
     }
-    return s * wndEnergyFactor;
+    return Math.sqrt(s * wndEnergyFactor);
   }
   
   public int nElemSpectrumAmp() {
