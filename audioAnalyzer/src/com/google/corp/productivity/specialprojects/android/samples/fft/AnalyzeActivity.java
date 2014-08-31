@@ -23,7 +23,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.RectF;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -31,6 +30,7 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GestureDetectorCompat;
@@ -51,7 +51,6 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
@@ -61,38 +60,42 @@ import java.util.ArrayList;
  */
 
 public class AnalyzeActivity extends Activity implements OnLongClickListener, OnClickListener,
-      Ready, OnSharedPreferenceChangeListener {
+      Ready {
   static final String TAG="AnalyzeActivity";
+
+  private AnalyzeView graphView;
+  private Looper samplingThread;
+  private GestureDetectorCompat mDetector;
+
   private final static double SAMPLE_VALUE_MAX = 32767.0;   // Maximum signal value
   private final static int RECORDER_AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
   private final static int BYTE_OF_SAMPLE = 2;
   
-  private GestureDetectorCompat mDetector;
+  private static int fftLen = 2048;
+  private static int sampleRate = 8000;
+  private static String wndFuncName;
+  private static int nFFTAverage = 2;
 
-  private int fftLen = 2048;
-  private int sampleRate = 8000;
-  private String wndFuncName;
-  private int nFFTAverage = 2;
-  private AnalyzeView graphView;
-  private Looper samplingThread;
-
-  private boolean showLines;
+  private static boolean showLines;
   private boolean isTesting = false;
   private boolean isMeasure = true;
-  
   private boolean isAWeighting = false;
   
-  long diffSample = 0;
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
-    applyPreferences(getPreferences(), null);
-    getPreferences().registerOnSharedPreferenceChangeListener(this);
-    graphView = (AnalyzeView) findViewById(R.id.plot);
+    
+    // filter out the invalid sampling rates
     SelectorText st = (SelectorText) findViewById(R.id.sampling_rate);
     st.setValues(validateAudioRates(st.getValues()));
+    
+    // set and get preferences in PreferenceActivity
+    PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+    updatePreferenceSaved();
+    
+    // travel Views, and attach ClickListener to the views that contain android:tag="select"  
+    graphView = (AnalyzeView) findViewById(R.id.plot);
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -101,6 +104,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         ((TextView) view).setFreezesText(true);
       }
     }, "select");
+    
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
 //    Debug.startMethodTracing("calc");
   }
@@ -113,6 +117,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   @Override
   protected void onResume() {
     super.onResume();
+    // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -127,16 +132,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
 
   @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-  }
-
-  @Override
-  public void onRestoreInstanceState(Bundle bundle) {
-    super.onRestoreInstanceState(bundle);
-  }
-
-  @Override
   protected void onPause() {
     super.onPause();
     samplingThread.finish();
@@ -146,25 +141,20 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   @Override
   protected void onDestroy() {
 //    Debug.stopMethodTracing();
-    getPreferences().unregisterOnSharedPreferenceChangeListener(this);
     super.onDestroy();
   }
 
   @Override
-  public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-   Log.i(TAG, key + "=" + prefs);
-   applyPreferences(prefs, key);
+  public void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
   }
 
-  public static class MyPreferences extends PreferenceActivity {
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onCreate(Bundle state) {
-      super.onCreate(state);
-      addPreferencesFromResource(R.xml.preferences);
-    }
+  @Override
+  public void onRestoreInstanceState(Bundle bundle) {
+    super.onRestoreInstanceState(bundle);
   }
-
+  
+  
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       MenuInflater inflater = getMenuInflater();
@@ -186,7 +176,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       case R.id.info_recoder:
         Intent int_info_rec = new Intent(this, InfoRecActivity.class);
         startActivity(int_info_rec);
-    	return true;
+      return true;
       default:
           return super.onOptionsItemSelected(item);
       }
@@ -203,38 +193,72 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       .create().show();
   }
 
-  private SharedPreferences getPreferences() {
-    return PreferenceManager.getDefaultSharedPreferences(this);
+  void updatePreferenceSaved() {
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    showLines = sharedPref.getBoolean("showLines", false);
+//    fftLen = Integer.parseInt(sharedPref.getString("fftBins", "1024"));
+//    sampleRate = Integer.parseInt(sharedPref.getString("sampleRate", "16000"));
+    wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
+    nFFTAverage = Integer.parseInt(sharedPref.getString("nFFTAverage", "2"));
   }
+  
+  // I'm using a old cell phone -- API level 9 (android 2.3.6)
+  @SuppressWarnings("deprecation")
+  public static class MyPreferences extends PreferenceActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+      super.onCreate(savedInstanceState);
+      addPreferencesFromResource(R.xml.preferences);
+    }
 
-  private void applyPreferences(SharedPreferences prefs, String pref) {
-    if (pref == null || pref.equals("showLines")) {
-      showLines = prefs.getBoolean("showLines", false);
+    SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+        new SharedPreferences.OnSharedPreferenceChangeListener() {
+      public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
+        Log.i(TAG, key + "=" + prefs);
+        if (key == null || key.equals("showLines")) {
+          showLines = prefs.getBoolean("showLines", false);
+        }
+        if (key == null || key.equals("refreshRate")) {
+//          updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "25"));
+        }
+//        if (key == null || key.equals("fftBins")) {
+//          fftLen = Integer.parseInt(prefs.getString("fftBins", "1024"));
+//        }
+//        if (key == null || key.equals("sampleRate")) {
+//          sampleRate = Integer.parseInt(prefs.getString("sampleRate", "16000"));
+//        }
+        if (key == null || key.equals("windowFunction")) {
+          wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
+          Preference connectionPref = findPreference(key);
+          connectionPref.setSummary(prefs.getString(key, ""));
+        }
+        if (key == null || key.equals("nFFTAverage")) {
+          nFFTAverage = Integer.parseInt(prefs.getString("nFFTAverage", "2"));
+        }
+      }
+    };
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getPreferenceScreen().getSharedPreferences()
+                .registerOnSharedPreferenceChangeListener(prefListener);
     }
-    if (pref == null || pref.equals("refreshRate")) {
-//      updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "25"));
-    }
-    if (pref == null || pref.equals("fftBins")) {
-      fftLen = Integer.parseInt(prefs.getString("fftBins", "1024"));
-    }
-    if (pref == null || pref.equals("sampleRate")) {
-      sampleRate = Integer.parseInt(prefs.getString("sampleRate", "16000"));
-    }
-    if (pref == null || pref.equals("windowFunction")) {
-      wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
-    }
-    if (pref == null || pref.equals("nFFTAverage")) {
-      nFFTAverage = Integer.parseInt(prefs.getString("nFFTAverage", "2"));
+    @Override
+    protected void onPause() {
+        super.onPause();
+        getPreferenceScreen().getSharedPreferences()
+                .unregisterOnSharedPreferenceChangeListener(prefListener);
     }
   }
   
   private boolean isInGraphView(float x, float y) {
-    graphView.getLocationInWindow(wc);
-    return x>wc[0] && y>wc[1] && x<wc[0]+graphView.getWidth() && y<wc[1]+graphView.getHeight();
+    graphView.getLocationInWindow(windowLocation);
+    return x>windowLocation[0] && y>windowLocation[1] && x<windowLocation[0]+graphView.getWidth() && y<windowLocation[1]+graphView.getHeight();
   }
   
   /**
-   * XXX  I could couldn't find a way to attach these events to the graphView
+   * Gesture Listener for graphView (and possibly other views)
+   * XXX  How to attach these events to the graphView?
    * @author xyy
    */
   class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -246,8 +270,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     @Override
     public boolean onDoubleTap(MotionEvent event) {
       if (isInGraphView(event.getX(0), event.getY(0))) {
-        // go from scale mode to measure mode (one way)
-        if (isMeasure == false) {
+        if (isMeasure == false) {  // go from scale mode to measure mode (one way)
           isMeasure = !isMeasure;
           SelectorText st = (SelectorText) findViewById(R.id.mode);
           st.performClick();
@@ -262,6 +285,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     public boolean onFling(MotionEvent event1, MotionEvent event2, 
             float velocityX, float velocityY) {
       Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
+      // Fly the canvas in graphView when in scale mode
       return true;
     }
   }
@@ -277,9 +301,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     graphView.invalidate();
     return super.onTouchEvent(event);
   }
-
-  // XXX this'll be factored into its own class when I get it working better
-
+  
+  /**
+   *  Manage cursor for measurement
+   */
   private void measureEvent(MotionEvent event) {
     switch (event.getPointerCount()) {
       case 1:
@@ -297,14 +322,13 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
 
   /**
-   *  Manage horizontal scroll and zoom (XXX should be its own class)
+   *  Manage scroll and zoom
    */
-
   final private static float INIT = Float.MIN_VALUE;
   private boolean isPinching = false;
   private float xShift0 = INIT, yShift0 = INIT;
   float x0, y0;
-  int[] wc = new int[2];
+  int[] windowLocation = new int[2];
 
   private void scaleEvent(MotionEvent event) {
     if (event.getAction() != MotionEvent.ACTION_MOVE) {
@@ -328,7 +352,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       case 1:
         float x = event.getX(0);
         float y = event.getY(0);
-        graphView.getLocationInWindow(wc);
+        graphView.getLocationInWindow(windowLocation);
 //        Log.i(TAG, "scaleEvent(): xy=" + x + " " + y + "  wc = " + wc[0] + " " + wc[1]);
         if (isPinching || xShift0 == INIT) {
           xShift0 = graphView.getXShift();
@@ -336,9 +360,10 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           yShift0 = graphView.getYShift();
           y0 = y;
         } else {
-          if (x0 < wc[0] + 50) {
+          // when close to the axis, scroll that axis only
+          if (x0 < windowLocation[0] + 50) {
             graphView.setYShift(yShift0 + (y0 - y) / graphView.getYZoom());
-          } else if (y0 < wc[1] + 50) {
+          } else if (y0 < windowLocation[1] + 50) {
             graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
           } else {
             graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
@@ -349,15 +374,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         isPinching = false;
         break;
       default:
-        Log.i(TAG, "Invalid touch count");
+        Log.v(TAG, "Invalid touch count");
         break;
     }
   }
   
-  /**
-   * TODO: add button-specific help on long click
-   */
-
   @Override
   public boolean onLongClick(View view) {
     vibrate(300);
@@ -368,7 +389,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   // responds to layout with android:tag="select"
   @Override
   public void onClick(View v) {
-    vibrate(50);
 //    Log.i(TAG, "onClick(): " + v.toString());
     if (processClick(v)) {
       reRecur();
@@ -567,8 +587,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
       
-      // Initialize
-      // TODO: if failed, use another fallback option
       int minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
                                                   AudioFormat.ENCODING_PCM_16BIT);
       if (minBytes == AudioRecord.ERROR_BAD_VALUE) {
@@ -590,7 +608,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
       // The buffer size here seems not relate to the delay.
-      // So choose a slightly larger size (~1sec) that overrun is unlikely.
+      // So choose a larger size (~1sec) so that overrun is unlikely.
       record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
                                AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
 
@@ -605,7 +623,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
       if (record == null || record.getState() == AudioRecord.STATE_UNINITIALIZED) {
         Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()"); 
-        return ;
+        return;
       }
       
       // Signal source for testing
@@ -710,8 +728,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           // Update actual sample rate
           if (nSamplesRead > 10*sampleRate) {
             actualSampleRate = 0.9*actualSampleRate + 0.1*(nSamplesRead * 1000.0 / (timeNow - startTimeMs));
-            if (Math.abs(actualSampleRate-sampleRate) > 0.01*sampleRate) {
-              Log.w(TAG, "Looper::run(): Sample rate inaccurate !\n");
+            if (Math.abs(actualSampleRate-sampleRate) > 0.0145*sampleRate) {  // 0.0145 = 25 cent
+              Log.w(TAG, "Looper::run(): Sample rate inaccurate, possible hardware problem !\n");
               nSamplesRead = 0;
             }
           }

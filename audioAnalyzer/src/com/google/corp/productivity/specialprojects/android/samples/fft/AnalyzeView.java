@@ -522,11 +522,11 @@ public class AnalyzeView extends View {
   
   // Do the scaling according to the motion event getX() and getY() (getPointerCount()==2)
   public void setShiftScale(float x1, float y1, float x2, float y2) {
-    if (canvasWidth*0.2f < xDiffOld) {
+    if (canvasWidth*0.13f < xDiffOld) {
       xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, axisBounds.width()/200f);    // 100 sample frequency full screen
     }
     xShift = clampXShift(xShiftOld + xMidOld/xZoomOld - (x1+x2)/2f/xZoom);
-    if (canvasHeight*0.2f < yDiffOld) {
+    if (canvasHeight*0.13f < yDiffOld) {
       yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, -axisBounds.height()/6f);  // ~ 3dB full screen
     }
     yShift = clampYShift(yShiftOld + yMidOld/yZoomOld - (y1+y2)/2f/yZoom);
