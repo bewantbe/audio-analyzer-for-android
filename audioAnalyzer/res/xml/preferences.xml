@@ -23,5 +23,12 @@
       android:defaultValue="Blackman Harris"
       android:summary="Window function for STFT"
     />
-    
+    <ListPreference
+      android:title="Average Number"
+      android:key="nFFTAverage"
+      android:entries="@array/num_fft_ave"
+      android:entryValues="@array/num_fft_ave"
+      android:defaultValue="2"
+      android:summary="Number of spectrum for an average"
+    />
 </PreferenceScreen>

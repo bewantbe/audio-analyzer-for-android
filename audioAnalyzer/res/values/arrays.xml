@@ -6,6 +6,7 @@
         <item>7</item>
         <item>15</item>
     </string-array>
+    
     <string-array name="wnd_func_names">
         <item>Rectangular</item>
         <item>Bartlett</item>
@@ -14,4 +15,11 @@
         <item>Blackman Harris</item>
     </string-array>
     
+		<string-array name="num_fft_ave">
+        <item>1</item>
+        <item>2</item>
+        <item>4</item>
+        <item>8</item>
+        <item>16</item>
+    </string-array>
 </resources>

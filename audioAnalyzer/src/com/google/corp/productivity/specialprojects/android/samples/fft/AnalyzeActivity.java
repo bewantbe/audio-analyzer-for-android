@@ -72,6 +72,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private int fftLen = 2048;
   private int sampleRate = 8000;
   private String wndFuncName;
+  private int nFFTAverage = 2;
   private AnalyzeView graphView;
   private Looper samplingThread;
 
@@ -221,6 +222,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     if (pref == null || pref.equals("windowFunction")) {
       wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
+    }
+    if (pref == null || pref.equals("nFFTAverage")) {
+      nFFTAverage = Integer.parseInt(prefs.getString("nFFTAverage", "2"));
     }
   }
   
@@ -654,7 +658,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         stft.feedData(audioSamples, numOfReadShort);
 
         // If there is new spectrum data, do plot
-        if (stft.nElemSpectrumAmp() >= 2) {
+        if (stft.nElemSpectrumAmp() >= nFFTAverage) {
           // compute Root-Mean-Square
           dtRMS = stft.getRMS();
 
