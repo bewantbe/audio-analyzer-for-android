@@ -26,6 +26,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -106,6 +107,7 @@ public class AnalyzeView extends View {
     labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     labelPaint.setColor(Color.GRAY);
     labelPaint.setTextSize(14);
+    labelPaint.setTypeface(Typeface.MONOSPACE);  // or Typeface.SANS_SERIF
 
     cursorX = cursorY = 0f;
     xZoom=1f;

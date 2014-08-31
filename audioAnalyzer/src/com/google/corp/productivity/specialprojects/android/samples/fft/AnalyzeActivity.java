@@ -274,6 +274,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           isMeasure = !isMeasure;
           SelectorText st = (SelectorText) findViewById(R.id.mode);
           st.performClick();
+          Log.d(TAG, "  onDoubleTap(): ");
         } else {
           graphView.resetViewScale();
         }
@@ -456,16 +457,20 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     refreshCursorLabel();
   }
 
+  DecimalFormat dfDB= new DecimalFormat("* ####.0");
+  DecimalFormat dfFreq= new DecimalFormat("* #####.0");
+  StringBuilder sCent = new StringBuilder("");
   private void refreshCursorLabel() {
-    ((TextView) findViewById(R.id.freq_db)).setText(
-        String.format("%.1fHz\n%.1fdB", graphView.getCursorX(), graphView.getCursorY()));
+    double f1 = graphView.getCursorX();
+    freq2Cent(sCent, f1, " ");
+    ((TextView) findViewById(R.id.textview_cur))
+      .setText("Cur :" + dfFreq.format(f1)+ "Hz(" + sCent + ") " + dfDB.format(graphView.getCursorY()) + "dB");
   }
 
   /**
    * recompute the spectra "chart"
    * @param data    The normalized FFT output
    */
-
   public void recompute(double[] data) {
   	if (graphView.isBusy() == true) {
   		Log.d(TAG, "recompute(): isBusy == true");  // seems it's never busy
@@ -475,7 +480,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   }
   
   /**
-   * Verify the supplied audio rates are valid!
+   * Return a verified audio sampling rates.
    * @param requested
    */
   private static String[] validateAudioRates(String[] requested) {
@@ -490,10 +495,12 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     return validated.toArray(new String[0]);
   }
 
-  // convert frequency to pitch
+  // Convert frequency to pitch
+  // Fill with sFill until length is 6. If sFill=="", do not fill
   public void freq2Cent(StringBuilder a, double f, String sFill) {
     a.setLength(0);
     if (f<=0 || Double.isNaN(f) || Double.isInfinite(f)) {
+      a.append("      ");
       return;
     }
     // A4 = 440Hz
@@ -710,11 +717,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
           long nSamplesFromTime = (long)((timeNow - startTimeMs) * actualSampleRate / 1000);
           double f1 = (double) nSamplesRead / actualSampleRate;
           double f2 = (double) nSamplesFromTime / actualSampleRate;
-          Log.i(TAG, "Buffer"
-              + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
-              + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
-              + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
-              + " sampleRate = " + Math.round(actualSampleRate*100)/100.0);
+//          Log.i(TAG, "Buffer"
+//              + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
+//              + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
+//              + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
+//              + " sampleRate = " + Math.round(actualSampleRate*100)/100.0);
           if (nSamplesFromTime > bufferSampleSize + nSamplesRead) {
             Log.w(TAG, "Buffer Overrun occured !\n"
                 + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
@@ -741,22 +748,19 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       record = null;
     }
 
-    DecimalFormat dfDB= new DecimalFormat("* ####.0");
-    DecimalFormat dfFreq= new DecimalFormat("* #####.0");
-    StringBuilder sCent = new StringBuilder("");
     private void update(final double[] data) {
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
           AnalyzeActivity.this.recompute(data);
           // RMS
-          TextView tv = (TextView) findViewById(R.id.textview_subhead);
-          tv.setText("RMS:" + dfDB.format(20*Math.log10(dtRMSFromFT)) + "dB");
+          TextView tv = (TextView) findViewById(R.id.textview_RMS);
+          tv.setText("RMS:dB \n" + dfDB.format(20*Math.log10(dtRMSFromFT)));
           tv.invalidate();
           // peak frequency
           freq2Cent(sCent, maxAmpFreq, " ");
           tv = (TextView) findViewById(R.id.textview_peak);
-          tv.setText("Peak:" + dfFreq.format(maxAmpFreq)+ "Hz (" + sCent + ") " + dfDB.format(maxAmpDB) + "dB");
+          tv.setText("Peak:" + dfFreq.format(maxAmpFreq)+ "Hz(" + sCent + ") " + dfDB.format(maxAmpDB) + "dB");
           tv.invalidate();
         }
       });

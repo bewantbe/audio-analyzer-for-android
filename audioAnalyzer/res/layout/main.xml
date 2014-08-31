@@ -22,19 +22,38 @@
         <include layout="@layout/buttons" />
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/textview_subhead"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:typeface="monospace" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
 
-    <TextView
-        android:id="@+id/textview_peak"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:typeface="monospace" />
+        <TextView
+            android:id="@+id/textview_RMS"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:lines="2"
+            android:text="@string/textview_RMS_text"
+            android:typeface="monospace" />
+
+        <TextView
+            android:id="@+id/textview_cur"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/textview_RMS"
+            android:layout_alignParentTop="true"
+            android:text="@string/textview_cur_text"
+            android:typeface="monospace" />
+        
+        <TextView
+            android:id="@+id/textview_peak"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/textview_RMS"
+            android:layout_below="@id/textview_cur"
+            android:text="@string/textview_peak_text"
+            android:typeface="monospace" />
+        
+    </RelativeLayout>
 
     <view
         android:id="@+id/plot"

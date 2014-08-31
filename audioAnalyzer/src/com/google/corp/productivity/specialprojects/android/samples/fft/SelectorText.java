@@ -81,6 +81,7 @@ public class SelectorText extends TextView {
   
   private Animation createAnimation(boolean start, int millis) {
     RotateAnimation ra = new RotateAnimation(start?0f:180f, start?180f:360f, getWidth()/2, getHeight()/2);
+    Log.d("SelectorText", "  createAnimation(): ");
     ra.setDuration(millis);
     setAnimation(ra);
     return ra;
