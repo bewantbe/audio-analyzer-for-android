@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string-array name="fps_names">
-    <item>1</item>
-    <item>7</item>
-    <item>15</item>
-  </string-array>
+
+    <string-array name="fps_names">
+        <item>1</item>
+        <item>7</item>
+        <item>15</item>
+    </string-array>
+    <string-array name="wnd_func_names">
+        <item>Rectangular</item>
+        <item>Bartlett</item>
+        <item>Hanning</item>
+        <item>Blackman</item>
+        <item>Blackman Harris</item>
+    </string-array>
+    
 </resources>

@@ -15,4 +15,13 @@
       android:defaultValue="5"
       android:summary="screen refresh rate (frames/sec)"
     />
+    <ListPreference
+      android:title="Window Function"
+      android:key="windowFunction"
+      android:entries="@array/wnd_func_names"
+      android:entryValues="@array/wnd_func_names"
+      android:defaultValue="Blackman Harris"
+      android:summary="Window function for STFT"
+    />
+    
 </PreferenceScreen>

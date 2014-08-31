@@ -41,6 +41,42 @@ public class STFT {
     }
   }
   
+  private void initWindowFunction(int fftlen, String wndName) {
+    wnd = new double[fftlen];
+    if (wndName.equals("Bartlett")) {
+      for (int i=0; i<wnd.length; i++) {  // Bartlett
+        wnd[i] = Math.asin(Math.sin(Math.PI*i/wnd.length))/Math.PI*2;
+      }
+    } else if (wndName.equals("Hanning")) {
+      for (int i=0; i<wnd.length; i++) {  // Hanning, hw=1
+        wnd[i] = 0.5*(1-Math.cos(2*Math.PI*i/(wnd.length-1.))) *2;
+      }
+    } else if (wndName.equals("Blackman")) {
+      for (int i=0; i<wnd.length; i++) {  // Blackman, hw=2
+        wnd[i] = 0.42-0.5*Math.cos(2*Math.PI*i/(wnd.length-1))+0.08*Math.cos(4*Math.PI*i/(wnd.length-1));
+      }
+    } else if (wndName.equals("Blackman Harris")) {
+      for (int i=0; i<wnd.length; i++) {  // Blackman_Harris, hw=3
+        wnd[i] = (0.35875-0.48829*Math.cos(2*Math.PI*i/(wnd.length-1))+0.14128*Math.cos(4*Math.PI*i/(wnd.length-1))-0.01168*Math.cos(6*Math.PI*i/(wnd.length-1))) *2;
+      }
+    } else {
+      for (int i=0; i<wnd.length; i++) {
+        wnd[i] = 1;
+      }
+    }
+    double normalizeFactor = 0;
+    for (int i=0; i<wnd.length; i++) {
+      normalizeFactor += wnd[i];
+    }
+    normalizeFactor = wnd.length / normalizeFactor;
+    wndEnergyFactor = 0;
+    for (int i=0; i<wnd.length; i++) {
+      wnd[i] *= normalizeFactor;
+      wndEnergyFactor += wnd[i]*wnd[i];
+    }
+    wndEnergyFactor = wnd.length / wndEnergyFactor;
+  }
+  
   public void setAWeighting(boolean e_isAWeighting) {
     boolAWeighting = e_isAWeighting;
   }
@@ -49,7 +85,7 @@ public class STFT {
     return boolAWeighting;
   }
   
-  private void init(int fftlen, double sampleRate, int minFeedSize) {
+  private void init(int fftlen, double sampleRate, int minFeedSize, String wndName) {
     if (minFeedSize <= 0) {
       throw new IllegalArgumentException("STFT::init(): should minFeedSize >= 1.");
     }
@@ -63,41 +99,23 @@ public class STFT {
     spectrumAmpOutDB = new double[fftlen/2+1];
     spectrumAmpIn    = new double[fftlen];
     spectrumAmpInTmp = new double[fftlen];
-    wnd              = new double[fftlen];
     spectrumAmpFFT   = new RealDoubleFFT(spectrumAmpIn.length);
     spectrumAmpOutArray = new double[(int)Math.ceil((double)minFeedSize / (fftlen/2))][]; // /2 since half overlap
     for (int i = 0; i < spectrumAmpOutArray.length; i++) {
       spectrumAmpOutArray[i] = new double[fftlen/2+1];
     }
     
-    double normalizeFactor = 0;
-    for (int i=0; i<wnd.length; i++) {
-      //wnd[i] = 1;
-      // Hanning, hw=1
-      //wnd[i] = 0.5*(1-Math.cos(2*Math.PI*i/(wnd.length-1.))) *2;  // *2 to preserve the peak
-      // Blackman, hw=2
-      //wnd[i] = 0.42-0.5*Math.cos(2*Math.PI*i/(wnd.length-1))+0.08*Math.cos(4*Math.PI*i/(wnd.length-1));
-      // Blackman_Harris, hw=3
-      wnd[i] = (0.35875-0.48829*Math.cos(2*Math.PI*i/(wnd.length-1))+0.14128*Math.cos(4*Math.PI*i/(wnd.length-1))-0.01168*Math.cos(6*Math.PI*i/(wnd.length-1))) *2;
-      normalizeFactor += wnd[i];
-    }
-    normalizeFactor = wnd.length / normalizeFactor;
-    wndEnergyFactor = 0;
-    for (int i=0; i<wnd.length; i++) {
-      wnd[i] *= normalizeFactor;
-      wndEnergyFactor += wnd[i]*wnd[i];
-    }
-    wndEnergyFactor = wnd.length / wndEnergyFactor;
+    initWindowFunction(fftlen, wndName);
     initDBAFactor(fftlen, sampleRate);
     boolAWeighting = false;
   }
   
-  public STFT(int fftlen, double sampleRate, int minFeedSize) {
-    init(fftlen, sampleRate, minFeedSize);
+  public STFT(int fftlen, double sampleRate, int minFeedSize, String wndName) {
+    init(fftlen, sampleRate, minFeedSize, wndName);
   }
 
-  public STFT(int fftlen, double sampleRate) {
-    init(fftlen, sampleRate, 1);
+  public STFT(int fftlen, double sampleRate, String wndName) {
+    init(fftlen, sampleRate, 1, wndName);
   }
 
   public void feedData(short[] ds) {

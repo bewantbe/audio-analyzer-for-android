@@ -10,6 +10,7 @@ package com.google.corp.productivity.specialprojects.android.samples.fft;
 public final class R {
     public static final class array {
         public static final int fps_names=0x7f050000;
+        public static final int wnd_func_names=0x7f050001;
     }
     public static final class attr {
         /** <p>Must be an integer value, such as "<code>100</code>".

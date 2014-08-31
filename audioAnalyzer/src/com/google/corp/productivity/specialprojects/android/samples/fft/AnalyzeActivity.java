@@ -71,6 +71,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
   private int fftLen = 2048;
   private int sampleRate = 8000;
+  private String wndFuncName;
   private AnalyzeView graphView;
   private Looper samplingThread;
 
@@ -217,6 +218,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     }
     if (pref == null || pref.equals("sampleRate")) {
       sampleRate = Integer.parseInt(prefs.getString("sampleRate", "16000"));
+    }
+    if (pref == null || pref.equals("windowFunction")) {
+      wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
     }
   }
   
@@ -608,7 +612,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       short[] audioSamples = new short[readChunkSize];
       int numOfReadShort;
 
-      stft = new STFT(fftLen, sampleRate);
+      stft = new STFT(fftLen, sampleRate, wndFuncName);
       stft.setAWeighting(isAWeighting);
 
       // Variables for count FPS, and Debug
