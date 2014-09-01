@@ -5,22 +5,7 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <LinearLayout
-        android:id="@+id/linearLayout1"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content" >
-
-        <TextView
-            android:id="@+id/freq_db"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="5dip"
-            android:lines="2"
-            android:minEms="4"
-            android:text="@string/textview_freq_db" />
-
-        <include layout="@layout/buttons" />
-    </LinearLayout>
+    <include layout="@layout/buttons" />
 
     <RelativeLayout
         android:layout_width="match_parent"

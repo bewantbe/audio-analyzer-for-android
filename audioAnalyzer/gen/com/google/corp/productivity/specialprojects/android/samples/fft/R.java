@@ -61,23 +61,21 @@ containing a value of this type.
         public static final int icon=0x7f020000;
     }
     public static final class id {
-        public static final int action_settings=0x7f090010;
+        public static final int action_settings=0x7f09000e;
         public static final int bins=0x7f090002;
         public static final int dbA=0x7f090003;
-        public static final int freq_db=0x7f090008;
-        public static final int info=0x7f09000d;
-        public static final int info_recoder=0x7f09000f;
-        public static final int linearLayout1=0x7f090007;
-        public static final int mode=0x7f090004;
-        public static final int plot=0x7f09000c;
+        public static final int graph_view_mode=0x7f090004;
+        public static final int info=0x7f09000b;
+        public static final int info_recoder=0x7f09000d;
+        public static final int plot=0x7f09000a;
         public static final int run=0x7f090005;
         public static final int sampling_rate=0x7f090001;
-        public static final int settings=0x7f09000e;
+        public static final int settings=0x7f09000c;
         public static final int test=0x7f090006;
-        public static final int textview_RMS=0x7f090009;
-        public static final int textview_cur=0x7f09000a;
+        public static final int textview_RMS=0x7f090007;
+        public static final int textview_cur=0x7f090008;
         public static final int textview_info_rec=0x7f090000;
-        public static final int textview_peak=0x7f09000b;
+        public static final int textview_peak=0x7f090009;
     }
     public static final class layout {
         public static final int activity_info_rec=0x7f030000;
@@ -91,20 +89,16 @@ containing a value of this type.
         public static final int info_rec=0x7f080001;
     }
     public static final class string {
-        public static final int action_settings=0x7f070008;
+        public static final int action_settings=0x7f070005;
         public static final int app_name=0x7f070000;
         public static final int dismiss=0x7f070003;
-        public static final int hello_world=0x7f070009;
         public static final int instructions_text=0x7f070001;
         public static final int instructions_title=0x7f070002;
-        public static final int text_view_info_log_0=0x7f07000a;
-        public static final int textview_RMS_text=0x7f07000b;
-        public static final int textview_cur_text=0x7f07000c;
-        public static final int textview_freq_db=0x7f070004;
-        public static final int textview_maxfreq=0x7f070006;
-        public static final int textview_minfreq=0x7f070005;
-        public static final int textview_peak_text=0x7f07000d;
-        public static final int title_activity_info_rec=0x7f070007;
+        public static final int text_view_info_log_0=0x7f070006;
+        public static final int textview_RMS_text=0x7f070007;
+        public static final int textview_cur_text=0x7f070008;
+        public static final int textview_peak_text=0x7f070009;
+        public static final int title_activity_info_rec=0x7f070004;
     }
     public static final class xml {
         public static final int preferences=0x7f040000;

@@ -41,12 +41,8 @@
       &lt;/p&gt;</string>
     <string name="instructions_title">      Instructions</string>
     <string name="dismiss">      Dismiss</string>
-    <string name="textview_freq_db">freq\ndB</string>
-    <string name="textview_minfreq">0000Hz</string>
-    <string name="textview_maxfreq">99999Hz</string>
     <string name="title_activity_info_rec">Info of Input Audio</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
     <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
     <string name="textview_RMS_text">RMS:dB \n-123.4</string>
     <string name="textview_cur_text">Cur :XXXXX.XHz(AX#+XX) -XX.XdB)</string>

@@ -58,7 +58,7 @@ public class SelectorText extends TextView {
   
   @Override
   public boolean performClick() {
-    setText(getText());
+    setText(getText());  // fix the no-animation bug
     Animation an = createAnimation(true, ANIMATION_DELAY);
     an.setAnimationListener(new AnimationListener() {
       @Override

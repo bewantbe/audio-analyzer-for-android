@@ -272,7 +272,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       if (isInGraphView(event.getX(0), event.getY(0))) {
         if (isMeasure == false) {  // go from scale mode to measure mode (one way)
           isMeasure = !isMeasure;
-          SelectorText st = (SelectorText) findViewById(R.id.mode);
+          SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
           Log.d(TAG, "  onDoubleTap(): ");
         } else {
@@ -316,7 +316,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       case 2:
         if (isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
           isMeasure = !isMeasure;
-          SelectorText st = (SelectorText) findViewById(R.id.mode);
+          SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
         }
     }
@@ -387,7 +387,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     return true;
   }
 
-  // responds to layout with android:tag="select"
+  // Responds to layout with android:tag="select"
+  // Called from SelectorText.super.performClick()
   @Override
   public void onClick(View v) {
 //    Log.i(TAG, "onClick(): " + v.toString());
@@ -430,7 +431,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       }
       return false;
     }
-    if (v.getId() == R.id.mode) {
+    if (v.getId() == R.id.graph_view_mode) {
       isMeasure = !value.equals("scale");
       return false;
     }
@@ -465,8 +466,6 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     freq2Cent(sCent, f1, " ");
     ((TextView) findViewById(R.id.textview_cur))
       .setText("Cur :" + dfFreq.format(f1)+ "Hz(" + sCent + ") " + dfDB.format(graphView.getCursorY()) + "dB");
-//  ((TextView) findViewById(R.id.freq_db)).setText(
-//  String.format("%.1fHz\n%.1fdB", graphView.getCursorX(), graphView.getCursorY()));
   }
 
   /**
