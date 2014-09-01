@@ -23,7 +23,11 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -37,6 +41,8 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -105,8 +111,36 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       }
     }, "select");
     
+    
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
 //    Debug.startMethodTracing("calc");
+
+    TextView tv = (TextView) findViewById(R.id.textview_cur);
+
+    Paint mTestPaint = new Paint();
+    mTestPaint.set(tv.getPaint());
+    mTestPaint.setTextSize(tv.getTextSize());
+    mTestPaint.setTypeface(Typeface.MONOSPACE);
+    
+    final String text = "Peak:XXXXX.XHz(AX#+XX) -XXX.XdB";
+    Display display = getWindowManager().getDefaultDisplay();
+    Resources r = getResources();
+    float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 60, r.getDisplayMetrics());
+    px = display.getWidth() - px - 5;  // pixels left
+    
+    // At this point tv.getWidth(), tv.getLineCount() will return 0
+    Log.i(TAG, "  px = " + px);
+    Log.i(TAG, "  mTestPaint.measureText(text) = " + mTestPaint.measureText(text));
+    
+    float fs = tv.getTextSize();
+    Log.i(TAG, "  fs_0 = " + fs);
+    while (mTestPaint.measureText(text) > px && fs > 5) {
+      fs -= 0.5;
+      mTestPaint.setTextSize(fs);
+    }
+    Log.i(TAG, "  fs_1 = " + fs);
+    ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs);
+    ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs);
   }
 
   /**

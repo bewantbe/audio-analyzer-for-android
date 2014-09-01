@@ -44,8 +44,8 @@
     <string name="title_activity_info_rec">Info of Input Audio</string>
     <string name="action_settings">Settings</string>
     <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
-    <string name="textview_RMS_text">RMS:dB \n-123.4</string>
-    <string name="textview_cur_text">Cur :XXXXX.XHz(AX#+XX) -XX.XdB)</string>
-    <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XX.XdB)</string>
+    <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>
+    <string name="textview_cur_text" >Cur :XXXXX.XHz(AX#+XX) -XXX.XdB</string>
+    <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     
 </resources>

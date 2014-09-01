@@ -22,7 +22,7 @@
 
         <TextView
             android:id="@+id/textview_cur"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/textview_RMS"
             android:layout_alignParentTop="true"
@@ -31,7 +31,7 @@
         
         <TextView
             android:id="@+id/textview_peak"
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/textview_RMS"
             android:layout_below="@id/textview_cur"
