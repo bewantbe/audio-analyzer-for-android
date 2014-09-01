@@ -465,6 +465,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     freq2Cent(sCent, f1, " ");
     ((TextView) findViewById(R.id.textview_cur))
       .setText("Cur :" + dfFreq.format(f1)+ "Hz(" + sCent + ") " + dfDB.format(graphView.getCursorY()) + "dB");
+//  ((TextView) findViewById(R.id.freq_db)).setText(
+//  String.format("%.1fHz\n%.1fdB", graphView.getCursorX(), graphView.getCursorY()));
   }
 
   /**

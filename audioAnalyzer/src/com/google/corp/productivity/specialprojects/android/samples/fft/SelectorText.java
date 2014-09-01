@@ -58,6 +58,7 @@ public class SelectorText extends TextView {
   
   @Override
   public boolean performClick() {
+    setText(getText());
     Animation an = createAnimation(true, ANIMATION_DELAY);
     an.setAnimationListener(new AnimationListener() {
       @Override
