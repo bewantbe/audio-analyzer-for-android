@@ -65,10 +65,10 @@ containing a value of this type.
         public static final int bins=0x7f090002;
         public static final int dbA=0x7f090003;
         public static final int freq_db=0x7f090008;
+        public static final int graph_view_mode=0x7f090004;
         public static final int info=0x7f09000d;
         public static final int info_recoder=0x7f09000f;
         public static final int linearLayout1=0x7f090007;
-        public static final int mode=0x7f090004;
         public static final int plot=0x7f09000c;
         public static final int run=0x7f090005;
         public static final int sampling_rate=0x7f090001;

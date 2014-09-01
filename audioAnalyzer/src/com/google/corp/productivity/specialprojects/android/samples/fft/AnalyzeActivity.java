@@ -270,16 +270,17 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     @Override
     public boolean onDoubleTap(MotionEvent event) {
       if (isInGraphView(event.getX(0), event.getY(0))) {
+        Log.d(TAG, "  onDoubleTap(): isMeasure = " + isMeasure);
         if (isMeasure == false) {  // go from scale mode to measure mode (one way)
-          isMeasure = !isMeasure;
-          SelectorText st = (SelectorText) findViewById(R.id.mode);
+          SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
-          Log.d(TAG, "  onDoubleTap(): ");
+//          Log.d(TAG, "  onDoubleTap(): ");
         } else {
           graphView.resetViewScale();
         }
+        Log.d(TAG, "           then: isMeasure = " + isMeasure);
       }
-      return false;
+      return true;
     }
 
     @Override
@@ -314,9 +315,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
         }
         break;
       case 2:
-        if (isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
+        if (isMeasure && isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
           isMeasure = !isMeasure;
-          SelectorText st = (SelectorText) findViewById(R.id.mode);
+          SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
         }
     }
@@ -387,10 +388,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     return true;
   }
 
-  // responds to layout with android:tag="select"
+  // Responds to layout with android:tag="select", since we did setOnClickListener() on it
+  // Called from SelectorText::performClick(): super.performClick()
   @Override
   public void onClick(View v) {
-//    Log.i(TAG, "onClick(): " + v.toString());
+    Log.i(TAG, "onClick(): " + v.toString());
     if (processClick(v)) {
       reRecur();
       updateAllLabels();
@@ -418,6 +420,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
    */
 
   public boolean processClick(View v) {
+    Log.i(TAG, "  processClick(): begin");
     String value = ((TextView) v).getText().toString();
     if (v.getId() == R.id.test) {
       isTesting = value.equals("test");
@@ -430,8 +433,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       }
       return false;
     }
-    if (v.getId() == R.id.mode) {
+    if (v.getId() == R.id.graph_view_mode) {
       isMeasure = !value.equals("scale");
+      Log.i(TAG, "  processClick(): isMeasure = " + isMeasure);
       return false;
     }
     if (v.getId() == R.id.dbA) {

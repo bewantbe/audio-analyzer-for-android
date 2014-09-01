@@ -17,6 +17,7 @@
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -56,21 +57,44 @@ public class SelectorText extends TextView {
     setup(context, null);
   }
   
+  @SuppressLint("ClickableViewAccessibility")
   @Override
   public boolean performClick() {
+    setText(getText());
+    Log.d("SelectorText", "  performClick(): begin");
     Animation an = createAnimation(true, ANIMATION_DELAY);
-    an.setAnimationListener(new AnimationListener() {
-      @Override
-      public void onAnimationEnd(Animation animation) {
-        nextValue();
-        SelectorText.super.performClick();
-        createAnimation(false, ANIMATION_DELAY).start();
-      }
-      @Override public void onAnimationRepeat(Animation animation) {}
-      @Override public void onAnimationStart(Animation animation) {}
-    });
+    Log.d("SelectorText", "  performClick(): an.getDuration() = " + an.getDuration());
+
+//    an.setAnimationListener(new AnimationListener() {
+//      @Override
+//      public void onAnimationEnd(Animation animation) {
+//        Log.d("SelectorText", "  performClick(): Animation::onAnimationEnd()");
+////        nextValue();
+////        SelectorText.super.performClick();
+//        createAnimation(false, ANIMATION_DELAY).start();
+//      }
+//      @Override public void onAnimationRepeat(Animation animation) {}
+//      @Override public void onAnimationStart(Animation animation) {}
+//    });
+//    nextValue();
+//    Log.d("SelectorText", "  v=" + values);
+    
+//    for(int i = 0; i < values.length; i++) {
+//      if (getText().equals(values[i])) {
+//        setText(values[(i+1)%values.length]);
+//      }
+//    }
+    
+    for (int i = 0; i < values.length; i++) {
+      Log.d("SelectorText", "  v=" + values[i]);
+    }
     an.start();
     return true;
+
+//    nextValue();
+//    an.start();
+//    Log.d("SelectorText", "  performClick(): after an.start();");
+//    return super.performClick();
   }
   
   /**
@@ -80,8 +104,8 @@ public class SelectorText extends TextView {
    */
   
   private Animation createAnimation(boolean start, int millis) {
+//    Log.d("SelectorText", "  createAnimation(): ");
     RotateAnimation ra = new RotateAnimation(start?0f:180f, start?180f:360f, getWidth()/2, getHeight()/2);
-    Log.d("SelectorText", "  createAnimation(): ");
     ra.setDuration(millis);
     setAnimation(ra);
     return ra;
@@ -162,6 +186,7 @@ public class SelectorText extends TextView {
       int i;
       for(i = 0; i < values.length; i++) {
         if (getText().equals(values[i])) {
+          Log.d("SelectorText", "  nextValue(): getText() == values[i] = " + values[i]);
           setText(values[(i+1)%values.length]);
           return getText().toString();
         }
