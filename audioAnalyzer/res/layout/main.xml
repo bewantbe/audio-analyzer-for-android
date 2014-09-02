@@ -24,28 +24,47 @@
             android:id="@+id/textview_cur"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/textview_RMS"
             android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/textview_RMS"
             android:text="@string/textview_cur_text"
             android:typeface="monospace" />
-        
+
         <TextView
             android:id="@+id/textview_peak"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/textview_RMS"
             android:layout_below="@id/textview_cur"
+            android:layout_toRightOf="@id/textview_RMS"
             android:text="@string/textview_peak_text"
             android:typeface="monospace" />
-        
     </RelativeLayout>
 
     <view
         android:id="@+id/plot"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.32"
         class="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeView"
         custom:cutoffDb="-25"
         custom:sampleRate="16000" />
+
+    <LinearLayout
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:orientation="horizontal" >
+
+		    <Spinner
+		        android:id="@+id/spinner_samplerate"
+		        android:layout_width="0dp"
+		        android:layout_weight="1"
+		        android:layout_height="wrap_content"
+		        android:lines="1" />
+		
+		    <Button
+		        android:id="@+id/button1"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:text="Show Popup" />
+		</LinearLayout>
 
 </LinearLayout>
