@@ -100,6 +100,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   String popUpContents[];
   PopupWindow popupWindowDogs;
   Button buttonShowDropDown;
+  float listItemTextSize = 20;  // XXX define it in res
 
   public PopupWindow popupWindowDogs() {
     
@@ -108,18 +109,34 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
 
     // the drop down list is a list view
     ListView listViewDogs = new ListView(this);
-     
+    
     // set our adapter and pass our pop up window contents
     listViewDogs.setAdapter(dogsAdapter(popUpContents));
-     
+    
     // set the item click listener
     listViewDogs.setOnItemClickListener(new DogsDropdownOnItemClickListener());
 
+    // Get max text width
+    Paint mTestPaint = new Paint();
+    //mTestPaint.set(((TextView) listViewDogs.getItemAtPosition(0)).getPaint());
+    mTestPaint.setTextSize(listItemTextSize);
+    float w = 0;
+    for (int i = 0; i < popUpContents.length; i++) {
+      float wi = mTestPaint.measureText(popUpContents[i]);
+      if (w < wi) {
+        w = wi;
+      }
+    }
+    
     // some other visual settings
     popupWindow.setFocusable(true);
-    popupWindow.setWidth(250);
+    if (w == 0) {
+      popupWindow.setWidth(200);
+    } else {
+      popupWindow.setWidth((int)(w + 7)); // at least +7, or the whole app will stop respond, don't know why
+    }
     popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-     
+    
     // set the list view as pop up window content
     popupWindow.setContentView(listViewDogs);
 
@@ -145,10 +162,11 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   
               listItem.setText(text);
               listItem.setTag(id);
-              listItem.setTextSize(22);
-              listItem.setPadding(10, 10, 10, 10);
+              listItem.setTextSize(listItemTextSize);
+              listItem.setPadding(5, 5, 5, 5);
               listItem.setTextColor(Color.WHITE);
-               
+              listItem.setGravity(android.view.Gravity.CENTER);
+              
               return listItem;
           }
       };
@@ -223,11 +241,18 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     // add items on the array dynamically
     // format is DogName::DogID
     List<String> dogsList = new ArrayList<String>();
-    dogsList.add("Akita Inu::1");
-    dogsList.add("Alaskan Klee Kai::2");
-    dogsList.add("Papillon::3");
-    dogsList.add("Tibetan Spaniel::4");
-
+//    dogsList.add("Akita Inu::1");
+//    dogsList.add("Alaskan Klee Kai::2");
+//    dogsList.add("Papillon::3");
+//    dogsList.add("Tibetan Spaniel::4");
+    dogsList.add("8000::1");
+    dogsList.add("11025::2");
+    dogsList.add("16000::3");
+    dogsList.add("22050::4");
+    dogsList.add("32000::5");
+    dogsList.add("44100::6");
+    dogsList.add("48000::7");
+    dogsList.add("96000::8");
     // convert to simple array
     popUpContents = new String[dogsList.size()];
     dogsList.toArray(popUpContents);
@@ -241,7 +266,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
             switch (v.getId()) {
             case R.id.button2:
                 // show the list view as dropdown
+                Log.i(TAG, " showAsDropDown pressed");
                 popupWindowDogs.showAsDropDown(v, -5, 0);
+                Log.i(TAG, " showAsDropDown over");
                 break;
             }
         }
@@ -689,7 +716,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       a.append('+');
     }
     a.append(Math.round(100*(p-pi)));
-    while (a.length() < 6 && !sFill.isEmpty()) {
+    while (a.length() < 6 && sFill!=null && sFill.length()>0) {
       a.append(sFill);
     }
   }
