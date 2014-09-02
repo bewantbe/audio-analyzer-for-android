@@ -267,7 +267,13 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
             case R.id.button2:
                 // show the list view as dropdown
                 Log.i(TAG, " showAsDropDown pressed");
-                popupWindowDogs.showAsDropDown(v, -5, 0);
+//                popupWindowDogs.showAsDropDown(v, 0, 10);
+                int[] wl = new int[2];
+                v.getLocationInWindow(wl);
+                Log.i(TAG, " wl = " + wl[0] + ", " + wl[1]);
+                // partly over come the problem - show in wrong direction
+                popupWindowDogs.showAtLocation(v, android.view.Gravity.LEFT | android.view.Gravity.BOTTOM, 
+                    wl[0], getWindowManager().getDefaultDisplay().getHeight() - wl[1]);
                 Log.i(TAG, " showAsDropDown over");
                 break;
             }
