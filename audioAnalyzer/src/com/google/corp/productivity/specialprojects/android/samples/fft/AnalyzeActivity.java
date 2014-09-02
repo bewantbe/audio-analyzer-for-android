@@ -56,9 +56,11 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.support.v7.widget.PopupMenu;
 import android.widget.PopupWindow;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -92,6 +94,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private boolean isTesting = false;
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
+  
+  Button button1;
   
   String popUpContents[];
   PopupWindow popupWindowDogs;
@@ -177,6 +181,8 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       }
     }, "select");
     
+    // API Guides -> User Interface Input Controls -> Spinners
+    // http://developer.android.com/guide/topics/ui/controls/spinner.html
     Spinner spinner = (Spinner) findViewById(R.id.spinner_samplerate);
     // Create an ArrayAdapter using the string array and a default spinner layout
     ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -186,9 +192,34 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     // Apply the adapter to the spinner
     spinner.setAdapter(adapter);
     
-    
-    // initialize pop up window items list
-    
+    // stackoverflow: Android custom dropdown/popup menu
+    //   http://stackoverflow.com/questions/21329132/android-custom-dropdown-popup-menu ///
+    // Also see here to install android-support-v7-appcompat
+    //   https://developer.android.com/tools/support-library/setup.html#download
+    // For the API
+    //   https://developer.android.com/reference/android/support/v7/widget/PopupMenu.html
+    button1 = (Button) findViewById(R.id.button1);
+    button1.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        //Creating the instance of PopupMenu
+        PopupMenu popup = new PopupMenu(AnalyzeActivity.this, button1);
+        //Inflating the Popup using xml file
+        popup.getMenuInflater().inflate(R.menu.poupup_menu, popup.getMenu());
+
+        //registering popup with OnMenuItemClickListener
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+          public boolean onMenuItemClick(MenuItem item) {
+            Toast.makeText(AnalyzeActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();
+            return true;
+          }
+        });
+        popup.show();//showing popup menu
+      }
+    });//closing the setOnClickListener method
+
+    // http://www.codeofaninja.com/2013/04/show-listview-as-drop-down-android.html
+    ////////////// initialize pop up window items list ////////////////
     // add items on the array dynamically
     // format is DogName::DogID
     List<String> dogsList = new ArrayList<String>();
@@ -206,9 +237,9 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
      
     // button on click listener
     View.OnClickListener handler = new View.OnClickListener() {
-        public void onClick(View v) {                                                                                                                                                                                                                                                                                                 
+        public void onClick(View v) {
             switch (v.getId()) {
-            case R.id.button1:
+            case R.id.button2:
                 // show the list view as dropdown
                 popupWindowDogs.showAsDropDown(v, -5, 0);
                 break;
@@ -217,7 +248,7 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     };
 
     // our button
-    buttonShowDropDown = (Button) findViewById(R.id.button1);
+    buttonShowDropDown = (Button) findViewById(R.id.button2);
     buttonShowDropDown.setOnClickListener(handler);
 
 
