@@ -29,4 +29,13 @@
         android:textSize="21sp"
         custom:items="on test" />
 
+    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        android:id="@+id/dbA"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:tag="select"
+        android:text="dB"
+        android:textSize="21sp"
+        custom:items="dB dB(A)" />
+
 </merge>

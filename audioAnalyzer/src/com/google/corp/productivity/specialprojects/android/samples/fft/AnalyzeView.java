@@ -115,7 +115,7 @@ public class AnalyzeView extends View {
     yZoom=1f;
     yShift=0f;
     canvasWidth = canvasHeight = 0;
-    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -90.0f);
+    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -120.0f);
     gridDensity = 1/85f;  // every 85 pixel one grid line, on average
   }
   

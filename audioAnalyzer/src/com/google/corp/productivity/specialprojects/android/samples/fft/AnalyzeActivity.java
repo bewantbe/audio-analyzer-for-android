@@ -21,6 +21,7 @@ import com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeV
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -143,6 +144,7 @@ public class AnalyzeActivity extends Activity
     popupWindow.setWidth((int)(w));
     // also set button width
     ((Button) findViewById(resId)).setWidth((int)w);
+    // Set the text on button in updatePreferenceSaved()
     
     // set the list view as pop up window content
     popupWindow.setContentView(listView);
@@ -186,12 +188,9 @@ public class AnalyzeActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
     
-    // filter out the invalid sampling rates
-    SelectorText st = (SelectorText) findViewById(R.id.sampling_rate);
-    st.setValues(validateAudioRates(st.getValues()));
-    
     // set and get preferences in PreferenceActivity
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+    // Set variable according to the preferences
     updatePreferenceSaved();
     
     // travel Views, and attach ClickListener to the views that contain android:tag="select"  
@@ -282,6 +281,7 @@ public class AnalyzeActivity extends Activity
   }
 
   // popup menu click listener
+  // read chosen preference, save the preference, set the state.
   @Override
   public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
     // get the text and set it as the button text
@@ -289,28 +289,51 @@ public class AnalyzeActivity extends Activity
 
     int buttonId = Integer.parseInt((parent.getTag().toString()));
     Button buttonView = (Button) findViewById(buttonId);
-
     buttonView.setText(selectedItemText);
 
+    boolean b_need_restart_audio;
+    // get the tag, which is the value we are going to use
+    String selectedItemTag = ((TextView) v).getTag().toString();
+
+    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPref.edit();
+    
     // dismiss the pop up
     switch (buttonId) {
     case R.id.button_sample_rate:
       popupMenuSampleRate.dismiss();
+      sampleRate = Integer.parseInt(selectedItemTag);
+      RectF bounds = graphView.getBounds();
+      bounds.right = sampleRate / 2;
+      bounds.bottom = -120;
+      graphView.setBounds(bounds);
+      b_need_restart_audio = true;
+      editor.putInt("button_sample_rate", sampleRate);
       break;
     case R.id.button_fftlen:
       popupMenuFFTLen.dismiss();
+      fftLen = Integer.parseInt(selectedItemTag);
+      b_need_restart_audio = true;
+      editor.putInt("button_fftlen", fftLen);
       break;
     case R.id.button_average:
       popupMenuAverage.dismiss();
+      nFFTAverage = Integer.parseInt(selectedItemTag);
+      b_need_restart_audio = false;
+      editor.putInt("button_average", nFFTAverage);
       break;
+    default:
+      Log.w(TAG, "onItemClick(): no this button");
+      b_need_restart_audio = false;
     }
+
+//    Toast.makeText(this, "Dog ID is: " + selectedItemTag, Toast.LENGTH_SHORT).show();
+    editor.commit();
     
-    // get the tag, which is the value we are going to use
-    String selectedItemTag = ((TextView) v).getTag().toString();
-    Toast.makeText(this, "Dog ID is: " + selectedItemTag, Toast.LENGTH_SHORT).show();
-    
-    Log.i(TAG, "position = " + position + "  id = " + id);
-    Log.i(TAG, "parent.getTag() = " + parent.getTag());
+    if (b_need_restart_audio) {
+      reRecur();
+      updateAllLabels();
+    }
   }
 
   /**
@@ -401,18 +424,31 @@ public class AnalyzeActivity extends Activity
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     showLines   = sharedPref.getBoolean("showLines", false);
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
-    sampleRate  = Integer.parseInt(sharedPref.getString("sampleRate", "16000"));
-    fftLen      = Integer.parseInt(sharedPref.getString("fftBins", "1024"));
-    nFFTAverage = Integer.parseInt(sharedPref.getString("nFFTAverage", "2"));
+    
+    // load as key-value pair
+    sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    sampleRate  = sharedPref.getInt("button_sample_rate", 16000);
+    fftLen      = sharedPref.getInt("button_fftlen",       2048);
+    nFFTAverage = sharedPref.getInt("button_average",         2);
+    
+    Log.i(TAG, "  updatePreferenceSaved(): sampleRate  = " + sampleRate);
+    Log.i(TAG, "  updatePreferenceSaved(): fftLen      = " + fftLen);
+    Log.i(TAG, "  updatePreferenceSaved(): nFFTAverage = " + nFFTAverage);
+    ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(sampleRate));
+    ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(fftLen));
+    ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(nFFTAverage));
   }
   
   // I'm using a old cell phone -- API level 9 (android 2.3.6)
+  // http://developer.android.com/guide/topics/ui/settings.html
   @SuppressWarnings("deprecation")
   public static class MyPreferences extends PreferenceActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
       super.onCreate(savedInstanceState);
       addPreferencesFromResource(R.xml.preferences);
+      // as soon as the user modifies a preference,
+      // the system saves the changes to a default SharedPreferences file
     }
 
     SharedPreferences.OnSharedPreferenceChangeListener prefListener =
@@ -645,15 +681,6 @@ public class AnalyzeActivity extends Activity
         samplingThread.stft.setAWeighting(isAWeighting);
       }
       return false;
-    }
-    if (v.getId() == R.id.bins) {
-      fftLen = Integer.parseInt(value);
-    } else if (v.getId() == R.id.sampling_rate) {
-      sampleRate = Integer.parseInt(value);
-      RectF bounds = graphView.getBounds();
-      bounds.right = sampleRate / 2;
-      bounds.bottom = -120;
-      graphView.setBounds(bounds);
     }
     return true;
   }
