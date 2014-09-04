@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string-array name="fps_names">
-        <item>1</item>
-        <item>7</item>
-        <item>15</item>
-    </string-array>
-    
     <string-array name="wnd_func_names">
         <item>Rectangular</item>
         <item>Bartlett</item>
@@ -14,16 +8,7 @@
         <item>Blackman</item>
         <item>Blackman Harris</item>
     </string-array>
-    
-		<string-array name="num_fft_ave">
-        <item>1</item>
-        <item>2</item>
-        <item>4</item>
-        <item>8</item>
-        <item>16</item>
-    </string-array>
-
-		<string-array name="sample_rates">
+    <string-array name="sample_rates">
         <item>8000::8000</item>
         <item>11025::11025</item>
         <item>16000::16000</item>
@@ -32,16 +17,14 @@
         <item>44100::44100</item>
         <item>48000::48000</item>
     </string-array>
-
-		<string-array name="fft_len">
+    <string-array name="fft_len">
         <item>512::512</item>
         <item>1024::1024</item>
         <item>2048::2048</item>
         <item>4096::4096</item>
         <item>8192::8192</item>
     </string-array>
-
-		<string-array name="fft_ave_num">
+    <string-array name="fft_ave_num">
         <item>1::1</item>
         <item>2::2</item>
         <item>4::4</item>

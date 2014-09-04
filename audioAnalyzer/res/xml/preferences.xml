@@ -8,27 +8,11 @@
      android:summary="Use lines instead of bars for spectrogram"
     />
     <ListPreference
-      android:title="Refresh Rate"
-      android:key="refreshRate"
-      android:entries="@array/fps_names"
-      android:entryValues="@array/fps_names"
-      android:defaultValue="5"
-      android:summary="screen refresh rate (frames/sec)"
-    />
-    <ListPreference
       android:title="Window Function"
       android:key="windowFunction"
       android:entries="@array/wnd_func_names"
       android:entryValues="@array/wnd_func_names"
       android:defaultValue="Blackman Harris"
       android:summary="Window function for STFT"
-    />
-    <ListPreference
-      android:title="Average Number"
-      android:key="nFFTAverage"
-      android:entries="@array/num_fft_ave"
-      android:entryValues="@array/num_fft_ave"
-      android:defaultValue="2"
-      android:summary="Number of spectrum for an average"
     />
 </PreferenceScreen>

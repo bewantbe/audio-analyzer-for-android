@@ -458,22 +458,10 @@ public class AnalyzeActivity extends Activity
         if (key == null || key.equals("showLines")) {
           showLines = prefs.getBoolean("showLines", false);
         }
-        if (key == null || key.equals("refreshRate")) {
-//          updateMs = 1000 / Integer.parseInt(prefs.getString(pref, "25"));
-        }
-//        if (key == null || key.equals("fftBins")) {
-//          fftLen = Integer.parseInt(prefs.getString("fftBins", "1024"));
-//        }
-//        if (key == null || key.equals("sampleRate")) {
-//          sampleRate = Integer.parseInt(prefs.getString("sampleRate", "16000"));
-//        }
         if (key == null || key.equals("windowFunction")) {
           wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
           Preference connectionPref = findPreference(key);
           connectionPref.setSummary(prefs.getString(key, ""));
-        }
-        if (key == null || key.equals("nFFTAverage")) {
-          nFFTAverage = Integer.parseInt(prefs.getString("nFFTAverage", "2"));
         }
       }
     };
