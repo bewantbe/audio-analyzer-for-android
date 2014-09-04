@@ -8,6 +8,30 @@
         <item>Blackman</item>
         <item>Blackman Harris</item>
     </string-array>
+    <string-array name="audio_source">
+        <item>VOICE_RECOGNITION</item>
+        <item>DEFAULT</item>
+        <item>MIC</item>
+        <item>VOICE_UPLINK</item>
+        <item>VOICE_DOWNLINK</item>
+        <item>VOICE_CALL</item>
+        <item>CAMCORDER</item>
+        <item>test signal 1</item>
+        <item>test signal 2</item>
+        <item>white noise</item>
+    </string-array>
+    <string-array name="audio_source_id">
+        <item>6</item>
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>1000</item>
+        <item>1001</item>
+        <item>1002</item>
+    </string-array>
     <string-array name="sample_rates">
         <item>8000::8000</item>
         <item>11025::11025</item>

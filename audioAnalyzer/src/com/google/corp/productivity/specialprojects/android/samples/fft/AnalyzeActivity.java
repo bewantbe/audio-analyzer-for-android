@@ -67,6 +67,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Audio "FFT" analyzer.
@@ -92,7 +93,8 @@ public class AnalyzeActivity extends Activity
   private static int nFFTAverage = 2;
 
   private static boolean showLines;
-  private boolean isTesting = false;
+  //private boolean isTesting = false;
+  private static int audioSourceId = RECORDER_AGC_OFF;
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
   
@@ -205,6 +207,7 @@ public class AnalyzeActivity extends Activity
     }, "select");
     
     Resources res = getResources();
+    getAudioSourceNameFromIdPrepare(res);
     
     // http://www.codeofaninja.com/2013/04/show-listview-as-drop-down-android.html
     ////////////// initialize pop up window items list ////////////////
@@ -423,6 +426,7 @@ public class AnalyzeActivity extends Activity
   void updatePreferenceSaved() {
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     showLines   = sharedPref.getBoolean("showLines", false);
+    audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
     
     // load as key-value pair
@@ -437,6 +441,24 @@ public class AnalyzeActivity extends Activity
     ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(sampleRate));
     ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(fftLen));
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(nFFTAverage));
+  }
+  
+  static String[] as;
+  static String[] asid;
+  private void getAudioSourceNameFromIdPrepare(Resources res) {
+    as   = res.getStringArray(R.array.audio_source);
+    asid = res.getStringArray(R.array.audio_source_id);
+  }
+
+  // XXX, so ugly but work. Tell me if there is better way to do it.
+  private static String getAudioSourceNameFromId(String id) {
+    for (int i = 0; i < as.length; i++) {
+      if (asid[i].equals(id)) {
+        return as[i];
+      }
+    }
+    Log.e(TAG, "getAudioSourceName(): no this entry.");
+    return "";
   }
   
   // I'm using a old cell phone -- API level 9 (android 2.3.6)
@@ -462,6 +484,12 @@ public class AnalyzeActivity extends Activity
           wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
           Preference connectionPref = findPreference(key);
           connectionPref.setSummary(prefs.getString(key, ""));
+        }
+        if (key == null || key.equals("audioSource")) {
+          String asi = prefs.getString("audioSource", Integer.toString(RECORDER_AGC_OFF));
+          audioSourceId = Integer.parseInt(asi);
+          Preference connectionPref = findPreference(key);
+          connectionPref.setSummary(getAudioSourceNameFromId(asi));
         }
       }
     };
@@ -649,9 +677,6 @@ public class AnalyzeActivity extends Activity
   public boolean processClick(View v) {
     String value = ((TextView) v).getText().toString();
     switch (v.getId()) {
-      case R.id.test:
-        isTesting = value.equals("test");
-        return false;
       case R.id.run:
         boolean pause = value.equals("stop");
         if (samplingThread != null && samplingThread.getPause() != pause) {
@@ -796,20 +821,28 @@ public class AnalyzeActivity extends Activity
     DoubleSineGen sineGen1;
     DoubleSineGen sineGen2;
     double[] mdata;
+    double fq0, amp0;
     
     // generate test data
-    private int readTestData(short[] a, int offsetInShorts, int sizeInShorts) {
-      sineGen1.getSamples(mdata);  // mdata.length should be even
-      sineGen2.addSamples(mdata);
-      for (int i = 0; i < sizeInShorts; i++) {
-        a[offsetInShorts + i] = (short) Math.round(mdata[i]);
+    private int readTestData(short[] a, int offsetInShorts, int sizeInShorts, int id) {
+      Arrays.fill(mdata, 0.0);
+      switch (id - 1000) {
+        case 1:
+          sineGen2.getSamples(mdata);
+        case 0:
+          sineGen1.addSamples(mdata);
+          for (int i = 0; i < sizeInShorts; i++) {
+            a[offsetInShorts + i] = (short) Math.round(mdata[i]);
+          }
+          break;
+        case 2:
+          for (int i = 0; i < sizeInShorts; i++) {
+            a[i] = (short) (SAMPLE_VALUE_MAX * (2.0*Math.random() - 1));
+          }
+          break;
+        default:
+          Log.w(TAG, "readTestData(): No this source id = " + audioSourceId);
       }
-//      for (int i = 0; i < sizeInShorts; i++) {
-//        a[i] = (short) (32767.0 * (2.0*Math.random() - 1));
-//      }
-//      for (int i = 0; i < sizeInShorts; i++) {
-//        a[i] = (short) (32767.0 * Math.sin(625.0 * 2 * Math.PI * i/16000.0));
-//      }
       LimitFrameRate(1000.0*sizeInShorts / sampleRate);
       return sizeInShorts;
     }
@@ -841,10 +874,15 @@ public class AnalyzeActivity extends Activity
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
       // The buffer size here seems not relate to the delay.
       // So choose a larger size (~1sec) so that overrun is unlikely.
-      record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                               AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
-
+      if (audioSourceId < 1000) {
+        record = new AudioRecord(audioSourceId, sampleRate, AudioFormat.CHANNEL_IN_MONO,
+                                 AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
+      } else {
+        record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
+      }
       Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
+        "  source          : " + (audioSourceId<1000?getAudioSourceNameFromId(Integer.toString(audioSourceId)):audioSourceId) + "\n" +
         String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), sampleRate) +
         String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / BYTE_OF_SAMPLE, minBytes) +
         String.format("  buffer size     : %d samples, %d Bytes\n", bufferSampleSize, BYTE_OF_SAMPLE*bufferSampleSize) +
@@ -854,13 +892,24 @@ public class AnalyzeActivity extends Activity
       actualSampleRate = sampleRate;
 
       if (record == null || record.getState() == AudioRecord.STATE_UNINITIALIZED) {
-        Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()"); 
+        Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()");
+        // If failed somehow, leave the user a chance to change preference.
         return;
       }
       
       // Signal source for testing
-      sineGen1 = new DoubleSineGen(625.0 , sampleRate, SAMPLE_VALUE_MAX * 0.5);
-      sineGen2 = new DoubleSineGen(1875.0, sampleRate, SAMPLE_VALUE_MAX * 0.25);
+      double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
+      double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
+      double fq1 = Double.parseDouble(getString(R.string.test_signal_2_freq1));
+      double fq2 = Double.parseDouble(getString(R.string.test_signal_2_freq2));
+      double amp1 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db1)));
+      double amp2 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db2)));
+      if (audioSourceId == 1000) {
+        sineGen1 = new DoubleSineGen(fq0, sampleRate, SAMPLE_VALUE_MAX * amp0);
+      } else {
+        sineGen1 = new DoubleSineGen(fq1, sampleRate, SAMPLE_VALUE_MAX * amp1);
+      }
+      sineGen2 = new DoubleSineGen(fq2, sampleRate, SAMPLE_VALUE_MAX * amp2);
       mdata = new double[readChunkSize];
 
       short[] audioSamples = new short[readChunkSize];
@@ -875,24 +924,15 @@ public class AnalyzeActivity extends Activity
       long time4SampleCount = SystemClock.uptimeMillis();
       int frameCount = 0;
 
-      boolean isTestingOld = isTesting;
-
       // Start recording
       record.startRecording();
       long startTimeMs = SystemClock.uptimeMillis();     // time of recording start
       long nSamplesRead = 0;         // It's will overflow after millions of years of recording
 
       while (isRunning) {
-        if (isTestingOld != isTesting) {
-          isTestingOld = isTesting;
-          stft.clear();
-          startTimeMs = SystemClock.uptimeMillis();
-          nSamplesRead = 0;
-        }
-
         // Read data
-        if (isTesting) {
-          numOfReadShort = readTestData(audioSamples, 0, readChunkSize);
+        if (audioSourceId >= 1000) {  // switch test mode need restart
+          numOfReadShort = readTestData(audioSamples, 0, readChunkSize, audioSourceId);
         } else {
           numOfReadShort = record.read(audioSamples, 0, readChunkSize);   // pulling
         }

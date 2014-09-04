@@ -48,8 +48,9 @@
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        android:layout_height="50sp"
+        android:orientation="horizontal"
+        android:gravity="center" >
 
         <Button
             android:id="@+id/button_sample_rate"
@@ -81,12 +82,14 @@
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:gravity="center" >
 
         <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
 		        android:id="@+id/graph_view_mode"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
+		        android:layout_margin="4dp"
 		        android:tag="select"
 		        android:text="view"
 		        android:textSize="21sp"
@@ -96,24 +99,17 @@
 		        android:id="@+id/run"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
+		        android:layout_margin="4dp"
 		        android:tag="select"
 		        android:text="run"
 		        android:textSize="21sp"
 		        custom:items="run stop" />
 		
 		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-		        android:id="@+id/test"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:tag="select"
-		        android:text="on"
-		        android:textSize="21sp"
-		        custom:items="on test" />
-		
-		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
 		        android:id="@+id/dbA"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
+		        android:layout_margin="4dp"
 		        android:tag="select"
 		        android:text="dB"
 		        android:textSize="21sp"

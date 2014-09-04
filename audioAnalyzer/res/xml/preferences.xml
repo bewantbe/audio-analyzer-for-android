@@ -5,7 +5,15 @@
      android:title="Graph style"
      android:key="showLines"
      android:defaultValue="false"
-     android:summary="Use lines instead of bars for spectrogram"
+     android:summary="Use lines instead of bars for spectrum"
+    />
+    <ListPreference
+      android:title="Audio source"
+      android:key="audioSource"
+      android:entries="@array/audio_source"
+      android:entryValues="@array/audio_source_id"
+      android:defaultValue="0"
+      android:summary="Audio source for spectrum"
     />
     <ListPreference
       android:title="Window Function"
