@@ -17,9 +17,12 @@ public final class R {
         public static final int abc_slide_out_top=0x7f040005;
     }
     public static final class array {
+        public static final int fft_ave_num=0x7f0d0005;
+        public static final int fft_len=0x7f0d0004;
         public static final int fps_names=0x7f0d0000;
         public static final int num_fft_ave=0x7f0d0002;
-        public static final int planets_array=0x7f0d0003;
+        public static final int planets_array=0x7f0d0006;
+        public static final int sample_rates=0x7f0d0003;
         public static final int wnd_func_names=0x7f0d0001;
     }
     public static final class attr {

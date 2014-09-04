@@ -125,7 +125,6 @@ public class AnalyzeActivity extends Activity
     for (int i = 0; i < popUpContents.length; i++) {
       String st = popUpContents[i].split("::")[0];
       float wi = mTestPaint.measureText(st);
-      Log.i(TAG, "  st = " + st + "  wi = " + wi);
       if (w < wi) {
         w = wi;
       }
@@ -181,9 +180,9 @@ public class AnalyzeActivity extends Activity
     return adapter;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void onCreate(Bundle savedInstanceState) {
+//  Debug.startMethodTracing("calc");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
     
@@ -206,40 +205,26 @@ public class AnalyzeActivity extends Activity
       }
     }, "select");
     
+    Resources res = getResources();
+    
     // http://www.codeofaninja.com/2013/04/show-listview-as-drop-down-android.html
     ////////////// initialize pop up window items list ////////////////
-    String[] popUpList = {
-    "8000::8000",
-    "11025::11025",
-    "16000::16000",
-    "22050::22050",
-    "32000::32000",
-    "44100::44100",
-    "48000::48000",
-    "96000::96000"};
-    // TODO: verify the list
-    popupMenuSampleRate = popupMenuCreate(popUpList, R.id.button_sample_rate);
-
-    String[] popUpList2 = {
-    "512::512",
-    "1024::1024",
-    "2048::2048",
-    "4096::4096",
-    "8192::8192"};
-    popupMenuFFTLen = popupMenuCreate(popUpList2, R.id.button_fftlen);
-    
-    String[] popUpList3 = {
-    "1::1",
-    "2::2",
-    "4::4",
-    "8::8",
-    "16::16"};
-    popupMenuAverage = popupMenuCreate(popUpList3, R.id.button_average);
-    
+    popupMenuSampleRate = popupMenuCreate( validateAudioRates(
+        res.getStringArray(R.array.sample_rates)), R.id.button_sample_rate);
+    popupMenuFFTLen = popupMenuCreate(
+        res.getStringArray(R.array.fft_len), R.id.button_fftlen);
+    popupMenuAverage = popupMenuCreate(
+        res.getStringArray(R.array.fft_ave_num), R.id.button_average);
     
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
-//    Debug.startMethodTracing("calc");
 
+    setTextViewFontSize();
+  }
+
+  // Set text font size of textview_cur and textview_peak
+  // according to space left
+  @SuppressWarnings("deprecation")
+  private void setTextViewFontSize() {
     TextView tv = (TextView) findViewById(R.id.textview_cur);
 
     Paint mTestPaint = new Paint();
@@ -266,6 +251,7 @@ public class AnalyzeActivity extends Activity
     Log.i(TAG, "  fs_1 = " + fs);
     ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs);
     ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs);
+
   }
   
   @SuppressWarnings("deprecation")
@@ -413,10 +399,10 @@ public class AnalyzeActivity extends Activity
 
   void updatePreferenceSaved() {
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    showLines = sharedPref.getBoolean("showLines", false);
-//    fftLen = Integer.parseInt(sharedPref.getString("fftBins", "1024"));
-//    sampleRate = Integer.parseInt(sharedPref.getString("sampleRate", "16000"));
+    showLines   = sharedPref.getBoolean("showLines", false);
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
+    sampleRate  = Integer.parseInt(sharedPref.getString("sampleRate", "16000"));
+    fftLen      = Integer.parseInt(sharedPref.getString("fftBins", "1024"));
     nFFTAverage = Integer.parseInt(sharedPref.getString("nFFTAverage", "2"));
   }
   
@@ -705,7 +691,13 @@ public class AnalyzeActivity extends Activity
   private static String[] validateAudioRates(String[] requested) {
     ArrayList<String> validated = new ArrayList<String>();
     for (String s : requested) {
-      int rate = Integer.parseInt(s);
+      int rate;
+      String[] sv = s.split("::");
+      if (sv.length == 1) {
+        rate = Integer.parseInt(sv[0]);
+      } else {
+        rate = Integer.parseInt(sv[1]);
+      }
       if (AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT) != AudioRecord.ERROR_BAD_VALUE) {
         validated.add(s);
