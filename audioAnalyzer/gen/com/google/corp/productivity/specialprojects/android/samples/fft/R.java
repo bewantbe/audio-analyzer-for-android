@@ -1133,8 +1133,9 @@ containing a value of this type.
         public static final int always=0x7f06000b;
         public static final int beginning=0x7f060011;
         public static final int bins=0x7f06003e;
-        public static final int button1=0x7f060048;
-        public static final int button2=0x7f060049;
+        public static final int button_average=0x7f060049;
+        public static final int button_fftlen=0x7f060048;
+        public static final int button_sample_rate=0x7f060047;
         public static final int checkbox=0x7f06002d;
         public static final int collapseActionView=0x7f06000d;
         public static final int dbA=0x7f06003f;
@@ -1182,7 +1183,6 @@ containing a value of this type.
         public static final int showCustom=0x7f060007;
         public static final int showHome=0x7f060004;
         public static final int showTitle=0x7f060006;
-        public static final int spinner_samplerate=0x7f060047;
         public static final int split_action_bar=0x7f06001e;
         public static final int submit_area=0x7f060039;
         public static final int tabMode=0x7f060002;

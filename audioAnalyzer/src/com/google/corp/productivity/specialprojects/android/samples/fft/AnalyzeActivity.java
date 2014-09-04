@@ -56,9 +56,9 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
-import android.support.v7.widget.PopupMenu;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView;
 import android.widget.PopupWindow;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,15 +66,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Audio "FFT" analyzer.
  * @author suhler@google.com (Stephen Uhler)
  */
 
-public class AnalyzeActivity extends Activity implements OnLongClickListener, OnClickListener,
-      Ready {
+public class AnalyzeActivity extends Activity
+    implements OnLongClickListener, OnClickListener,
+               OnItemClickListener, Ready {
   static final String TAG="AnalyzeActivity";
 
   private AnalyzeView graphView;
@@ -95,83 +95,90 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
   
-  Button button1;
-  
-  String popUpContents[];
-  PopupWindow popupWindowDogs;
-  Button buttonShowDropDown;
   float listItemTextSize = 20;  // XXX define it in res
 
-  public PopupWindow popupWindowDogs() {
+  PopupWindow popupMenuSampleRate;
+  PopupWindow popupMenuFFTLen;
+  PopupWindow popupMenuAverage;
+  
+  public PopupWindow popupMenuCreate(String[] popUpContents, int resId) {
     
     // initialize a pop up window type
     PopupWindow popupWindow = new PopupWindow(this);
 
     // the drop down list is a list view
-    ListView listViewDogs = new ListView(this);
+    ListView listView = new ListView(this);
     
     // set our adapter and pass our pop up window contents
-    listViewDogs.setAdapter(dogsAdapter(popUpContents));
+    ArrayAdapter<String> aa = popupMenuAdapter(popUpContents);
+    listView.setAdapter(aa);
     
     // set the item click listener
-    listViewDogs.setOnItemClickListener(new DogsDropdownOnItemClickListener());
+    listView.setOnItemClickListener(this);
 
-    // Get max text width
+    listView.setTag(resId);  // button res ID, so we can trace back which button is pressed
+    
+    // get max text width
     Paint mTestPaint = new Paint();
-    //mTestPaint.set(((TextView) listViewDogs.getItemAtPosition(0)).getPaint());
     mTestPaint.setTextSize(listItemTextSize);
     float w = 0;
     for (int i = 0; i < popUpContents.length; i++) {
-      float wi = mTestPaint.measureText(popUpContents[i]);
+      String st = popUpContents[i].split("::")[0];
+      float wi = mTestPaint.measureText(st);
+      Log.i(TAG, "  st = " + st + "  wi = " + wi);
       if (w < wi) {
         w = wi;
       }
     }
     
+    // left and right padding, at least +7, or the whole app will stop respond, don't know why
+    w = w + 25;
+    if (w < 60) {
+      w = 60;
+    }
+
     // some other visual settings
     popupWindow.setFocusable(true);
-    if (w == 0) {
-      popupWindow.setWidth(200);
-    } else {
-      popupWindow.setWidth((int)(w + 7)); // at least +7, or the whole app will stop respond, don't know why
-    }
     popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+    // Set window width according to max text width
+    popupWindow.setWidth((int)(w));
+    // also set button width
+    ((Button) findViewById(resId)).setWidth((int)w);
     
     // set the list view as pop up window content
-    popupWindow.setContentView(listViewDogs);
-
+    popupWindow.setContentView(listView);
+    
     return popupWindow;
   }
   
   /*
    * adapter where the list values will be set
    */
-  private ArrayAdapter<String> dogsAdapter(String dogsArray[]) {
-      ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, dogsArray) {
-          @Override
-          public View getView(int position, View convertView, ViewGroup parent) {
-  
-              // setting the ID and text for every items in the list
-              String item = getItem(position);
-              String[] itemArr = item.split("::");
-              String text = itemArr[0];
-              String id = itemArr[1];
-  
-              // visual settings for the list item
-              TextView listItem = new TextView(AnalyzeActivity.this);
-  
-              listItem.setText(text);
-              listItem.setTag(id);
-              listItem.setTextSize(listItemTextSize);
-              listItem.setPadding(5, 5, 5, 5);
-              listItem.setTextColor(Color.WHITE);
-              listItem.setGravity(android.view.Gravity.CENTER);
-              
-              return listItem;
-          }
+  private ArrayAdapter<String> popupMenuAdapter(String itemTagArray[]) {
+    ArrayAdapter<String> adapter =
+      new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, itemTagArray) {
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+          // setting the ID and text for every items in the list
+          String item = getItem(position);
+          String[] itemArr = item.split("::");
+          String text = itemArr[0];
+          String id = itemArr[1];
+
+          // visual settings for the list item
+          TextView listItem = new TextView(AnalyzeActivity.this);
+
+          listItem.setText(text);
+          listItem.setTag(id);
+          listItem.setTextSize(listItemTextSize);
+          listItem.setPadding(5, 5, 5, 5);
+          listItem.setTextColor(Color.WHITE);
+          listItem.setGravity(android.view.Gravity.CENTER);
+          
+          return listItem;
+        }
       };
-       
-      return adapter;
+    return adapter;
   }
 
   @SuppressWarnings("deprecation")
@@ -199,92 +206,37 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
       }
     }, "select");
     
-    // API Guides -> User Interface Input Controls -> Spinners
-    // http://developer.android.com/guide/topics/ui/controls/spinner.html
-    Spinner spinner = (Spinner) findViewById(R.id.spinner_samplerate);
-    // Create an ArrayAdapter using the string array and a default spinner layout
-    ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-            R.array.planets_array, android.R.layout.simple_spinner_item);
-    // Specify the layout to use when the list of choices appears
-    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    // Apply the adapter to the spinner
-    spinner.setAdapter(adapter);
-    
-    // stackoverflow: Android custom dropdown/popup menu
-    //   http://stackoverflow.com/questions/21329132/android-custom-dropdown-popup-menu ///
-    // Also see here to install android-support-v7-appcompat
-    //   https://developer.android.com/tools/support-library/setup.html#download
-    // For the API
-    //   https://developer.android.com/reference/android/support/v7/widget/PopupMenu.html
-    button1 = (Button) findViewById(R.id.button1);
-    button1.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        //Creating the instance of PopupMenu
-        PopupMenu popup = new PopupMenu(AnalyzeActivity.this, button1);
-        //Inflating the Popup using xml file
-        popup.getMenuInflater().inflate(R.menu.poupup_menu, popup.getMenu());
-
-        //registering popup with OnMenuItemClickListener
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-          public boolean onMenuItemClick(MenuItem item) {
-            Toast.makeText(AnalyzeActivity.this,"You Clicked : " + item.getTitle(),Toast.LENGTH_SHORT).show();
-            return true;
-          }
-        });
-        popup.show();//showing popup menu
-      }
-    });//closing the setOnClickListener method
-
     // http://www.codeofaninja.com/2013/04/show-listview-as-drop-down-android.html
     ////////////// initialize pop up window items list ////////////////
-    // add items on the array dynamically
-    // format is DogName::DogID
-    List<String> dogsList = new ArrayList<String>();
-//    dogsList.add("Akita Inu::1");
-//    dogsList.add("Alaskan Klee Kai::2");
-//    dogsList.add("Papillon::3");
-//    dogsList.add("Tibetan Spaniel::4");
-    dogsList.add("8000::1");
-    dogsList.add("11025::2");
-    dogsList.add("16000::3");
-    dogsList.add("22050::4");
-    dogsList.add("32000::5");
-    dogsList.add("44100::6");
-    dogsList.add("48000::7");
-    dogsList.add("96000::8");
-    // convert to simple array
-    popUpContents = new String[dogsList.size()];
-    dogsList.toArray(popUpContents);
+    String[] popUpList = {
+    "8000::8000",
+    "11025::11025",
+    "16000::16000",
+    "22050::22050",
+    "32000::32000",
+    "44100::44100",
+    "48000::48000",
+    "96000::96000"};
+    // TODO: verify the list
+    popupMenuSampleRate = popupMenuCreate(popUpList, R.id.button_sample_rate);
 
-    // initialize pop up window
-    popupWindowDogs = popupWindowDogs();
-     
-    // button on click listener
-    View.OnClickListener handler = new View.OnClickListener() {
-        public void onClick(View v) {
-            switch (v.getId()) {
-            case R.id.button2:
-                // show the list view as dropdown
-                Log.i(TAG, " showAsDropDown pressed");
-//                popupWindowDogs.showAsDropDown(v, 0, 10);
-                int[] wl = new int[2];
-                v.getLocationInWindow(wl);
-                Log.i(TAG, " wl = " + wl[0] + ", " + wl[1]);
-                // partly over come the problem - show in wrong direction
-                popupWindowDogs.showAtLocation(v, android.view.Gravity.LEFT | android.view.Gravity.BOTTOM, 
-                    wl[0], getWindowManager().getDefaultDisplay().getHeight() - wl[1]);
-                Log.i(TAG, " showAsDropDown over");
-                break;
-            }
-        }
-    };
-
-    // our button
-    buttonShowDropDown = (Button) findViewById(R.id.button2);
-    buttonShowDropDown.setOnClickListener(handler);
-
-
+    String[] popUpList2 = {
+    "512::512",
+    "1024::1024",
+    "2048::2048",
+    "4096::4096",
+    "8192::8192"};
+    popupMenuFFTLen = popupMenuCreate(popUpList2, R.id.button_fftlen);
+    
+    String[] popUpList3 = {
+    "1::1",
+    "2::2",
+    "4::4",
+    "8::8",
+    "16::16"};
+    popupMenuAverage = popupMenuCreate(popUpList3, R.id.button_average);
+    
+    
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
 //    Debug.startMethodTracing("calc");
 
@@ -314,6 +266,65 @@ public class AnalyzeActivity extends Activity implements OnLongClickListener, On
     Log.i(TAG, "  fs_1 = " + fs);
     ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs);
     ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs);
+  }
+  
+  @SuppressWarnings("deprecation")
+  public void showPopupMenu(View view) {
+    // popup menu position
+    // In API 19, we can use showAsDropDown(View anchor, int xoff, int yoff, int gravity)
+    // The problem in showAsDropDown (View anchor, int xoff, int yoff) is
+    // it may show the window in wrong direction (so that we can't see it)
+    int[] wl = new int[2];
+    view.getLocationInWindow(wl);
+    int x_left = wl[0];
+    int y_bottom = getWindowManager().getDefaultDisplay().getHeight() - wl[1];
+    int gravity = android.view.Gravity.LEFT | android.view.Gravity.BOTTOM;
+    Log.i(TAG, " showPupupMenu()");
+    Log.i(TAG, " wl = " + wl[0] + ", " + wl[1]);
+    
+    switch (view.getId()) {
+    case R.id.button_sample_rate:
+      popupMenuSampleRate.showAtLocation(view, gravity, x_left, y_bottom);
+      break;
+    case R.id.button_fftlen:
+      popupMenuFFTLen.showAtLocation(view, gravity, x_left, y_bottom);
+      break;
+    case R.id.button_average:
+      popupMenuAverage.showAtLocation(view, gravity, x_left, y_bottom);
+      break;
+    }
+  }
+
+  // popup menu click listener
+  @Override
+  public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+    // get the text and set it as the button text
+    String selectedItemText = ((TextView) v).getText().toString();
+
+    int buttonId = Integer.parseInt((parent.getTag().toString()));
+    Button buttonView = (Button) findViewById(buttonId);
+
+    buttonView.setText(selectedItemText);
+
+    // dismiss the pop up
+    switch (buttonId) {
+    case R.id.button_sample_rate:
+      popupMenuSampleRate.dismiss();
+      break;
+    case R.id.button_fftlen:
+      popupMenuFFTLen.dismiss();
+      break;
+    case R.id.button_average:
+      popupMenuAverage.dismiss();
+      break;
+    }
+    
+    // get the tag, which is the value we are going to use
+    String selectedItemTag = ((TextView) v).getTag().toString();
+    Toast.makeText(this, "Dog ID is: " + selectedItemTag, Toast.LENGTH_SHORT).show();
+    
+    Log.i(TAG, "position = " + position + "  id = " + id);
+    Log.i(TAG, "parent.getTag() = " + parent.getTag());
   }
 
   /**
