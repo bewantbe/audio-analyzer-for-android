@@ -648,29 +648,28 @@ public class AnalyzeActivity extends Activity
 
   public boolean processClick(View v) {
     String value = ((TextView) v).getText().toString();
-    if (v.getId() == R.id.test) {
-      isTesting = value.equals("test");
-      return false;
+    switch (v.getId()) {
+      case R.id.test:
+        isTesting = value.equals("test");
+        return false;
+      case R.id.run:
+        boolean pause = value.equals("stop");
+        if (samplingThread != null && samplingThread.getPause() != pause) {
+          samplingThread.setPause(pause);
+        }
+        return false;
+      case R.id.graph_view_mode:
+        isMeasure = !value.equals("scale");
+        return false;
+      case R.id.dbA:
+        isAWeighting = !value.equals("dB");
+        if (samplingThread != null && samplingThread.stft != null) {
+          samplingThread.stft.setAWeighting(isAWeighting);
+        }
+        return false;
+      default:
+        return true;
     }
-    if (v.getId() == R.id.run) {
-      boolean pause = value.equals("stop");
-      if (samplingThread != null && samplingThread.getPause() != pause) {
-        samplingThread.setPause(pause);
-      }
-      return false;
-    }
-    if (v.getId() == R.id.graph_view_mode) {
-      isMeasure = !value.equals("scale");
-      return false;
-    }
-    if (v.getId() == R.id.dbA) {
-      isAWeighting = !value.equals("dB");
-      if (samplingThread != null && samplingThread.stft != null) {
-        samplingThread.stft.setAWeighting(isAWeighting);
-      }
-      return false;
-    }
-    return true;
   }
 
   private void updateAllLabels() {
