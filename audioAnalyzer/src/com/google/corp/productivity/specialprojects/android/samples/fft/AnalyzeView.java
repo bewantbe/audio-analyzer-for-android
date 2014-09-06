@@ -67,6 +67,8 @@ public class AnalyzeView extends View {
   private StringBuffer[] gridPoints2Str = new StringBuffer[0];
   private StringBuffer[] gridPoints2StrDB = new StringBuffer[0];
   
+  private static Object lockObject = new Object();
+  
   public boolean isBusy() {
     return isBusy;
   }
@@ -603,25 +605,27 @@ public class AnalyzeView extends View {
     return cma[(int)(cma.length * d / dBLowerBound)];
   }
   
-//  public void add2Spectrogram(double[] db) {
-//    // Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
-//    for (int i = 1; i < db.length; i++) {  // no direct current term
-//      spectrogramColors[spectrogramColorsPt*nFreqPoints-1 + i] = colorFromDB(db[i]);
-//    }
-//    spectrogramColorsPt++;
-//    if (spectrogramColorsPt >= nTimePoints) {
-//      spectrogramColorsPt = 0;
-//    }
-//  }
-  
   public void add2Spectrogram(double[] db) {
-  //  Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
-    System.arraycopy(spectrogramColors, nFreqPoints,
-                     spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
-    for (int i = 1; i < db.length; i++) {  // no direct current term
-      spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
+    // Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
+    synchronized (AnalyzeView.lockObject) {
+      for (int i = 1; i < db.length; i++) {  // no direct current term
+        spectrogramColors[spectrogramColorsPt*nFreqPoints-1 + i] = colorFromDB(db[i]);
+      }
+      spectrogramColorsPt++;
+      if (spectrogramColorsPt >= nTimePoints) {
+        spectrogramColorsPt = 0;
+      }
     }
   }
+  
+//  public void add2Spectrogram(double[] db) {
+//  //  Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
+//    System.arraycopy(spectrogramColors, nFreqPoints,
+//                     spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
+//    for (int i = 1; i < db.length; i++) {  // no direct current term
+//      spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
+//    }
+//  }
 
   public void switch2Spectrum() {
     showMode = 0;
@@ -657,16 +661,20 @@ public class AnalyzeView extends View {
     // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
     //                         int width, int height, boolean hasAlpha, Paint paint)
     float x = 0;
-    float y = canvasHeight - nTimePoints;
-    c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-                 nFreqPoints, nTimePoints, false, null);
-//    if (spectrogramColorsPt > 0) {
-//      c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-//                   nFreqPoints, spectrogramColorsPt, false, null);
-//    }
+    float y;
 //    y = canvasHeight - nTimePoints;
-//    c.drawBitmap(spectrogramColors, spectrogramColorsPt*nFreqPoints, nFreqPoints, x, y,
-//                 nFreqPoints, nTimePoints-spectrogramColorsPt, false, null);
+//    c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
+//                 nFreqPoints, nTimePoints, false, null);
+    synchronized (AnalyzeView.lockObject) {
+      y = canvasHeight - spectrogramColorsPt;
+      if (spectrogramColorsPt > 0) {
+        c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
+                     nFreqPoints, spectrogramColorsPt, false, null);
+      }
+      y = canvasHeight - nTimePoints;
+      c.drawBitmap(spectrogramColors, spectrogramColorsPt*nFreqPoints, nFreqPoints, x, y,
+                   nFreqPoints, nTimePoints-spectrogramColorsPt, false, null);
+    }
     isBusy = false;
   }
   
