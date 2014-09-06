@@ -566,11 +566,12 @@ public class AnalyzeView extends View {
   
   int[] spectrogramColors;  // int:ARGB, nFreqPoints columns, nTimePoints rows
   int showMode = 0;  // 0: Spectrum, 1:Spectrogram
+  int showModeSpectrogram = 1;  // 0: moving spectrogram, 1: overwriting in loop
   int nFreqPoints;
   double timeInc;
   int nTimePoints;
   int spectrogramColorsPt;
-  Matrix matrixSpectrogram = new Matrix();;
+  Matrix matrixSpectrogram = new Matrix();
   
   public int getShowMode() {
     return showMode;
@@ -607,10 +608,20 @@ public class AnalyzeView extends View {
   }
   
   public void add2Spectrogram(double[] db) {
-    System.arraycopy(spectrogramColors, nFreqPoints,
-                     spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
-    for (int i = 1; i < db.length; i++) {  // no direct current term
-      spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
+    if (showModeSpectrogram == 0) {
+      System.arraycopy(spectrogramColors, nFreqPoints,
+                       spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
+      for (int i = 1; i < db.length; i++) {  // no direct current term
+        spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
+      }
+    } else {
+      for (int i = 1; i < db.length; i++) {  // no direct current term
+        spectrogramColors[spectrogramColorsPt*nFreqPoints - 1 + i] = colorFromDB(db[i]);
+      }
+      spectrogramColorsPt++;
+      if (spectrogramColorsPt >= nTimePoints) {
+        spectrogramColorsPt = 0;
+      }
     }
   }
 
@@ -651,9 +662,11 @@ public class AnalyzeView extends View {
       //                         int width, int height, boolean hasAlpha, Paint paint)
       float x = 0;
       float y = 0;
-//      y = canvasHeight - nTimePoints;
       c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
                    nFreqPoints, nTimePoints, false, null);
+      if (showModeSpectrogram == 1) {
+        c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint);
+      }
     }
     isBusy = false;
   }
