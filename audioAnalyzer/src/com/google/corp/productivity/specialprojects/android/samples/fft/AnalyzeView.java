@@ -358,7 +358,7 @@ public class AnalyzeView extends View {
     path.reset();
     if (bars) {
       for (int i = start; i < end; i++) {
-        float x = (float) i / db.length * canvasWidth;
+        float x = (float) i / (db.length-1) * canvasWidth;
         float y = canvasY4axis(clampDB((float)db[i]));
         if (y != canvasHeight) {
           //path.moveTo(x, canvasHeight);
@@ -368,9 +368,9 @@ public class AnalyzeView extends View {
       }
     } else {
       // (0,0) is the upper left of the View, in pixel unit
-      path.moveTo((float) start / db.length * canvasWidth, canvasY4axis(clampDB((float)db[start])));
+      path.moveTo((float) start / (db.length-1) * canvasWidth, canvasY4axis(clampDB((float)db[start])));
       for (int i = start+1; i < end; i++) {
-        float x = (float) i / db.length * canvasWidth;
+        float x = (float) i / (db.length-1) * canvasWidth;
         float y = canvasY4axis(clampDB((float)db[i]));
         path.lineTo(x, y);
       }
@@ -567,6 +567,7 @@ public class AnalyzeView extends View {
   double timeInc;
   int nTimePoints;
   int spectrogramColorsPt;
+  Matrix matrixSpectrogram = new Matrix();;
   
   public int getShowMode() {
     return showMode;
@@ -574,7 +575,7 @@ public class AnalyzeView extends View {
   
   public void switch2Spectrogram(double timeWatch, int sampleRate, int fftLen) {
     showMode = 1;
-    nFreqPoints = fftLen/2 + 1;
+    nFreqPoints = fftLen/2;  // no direct current term
     timeInc     = fftLen / 2.0 / sampleRate;  // /2.0 due to overlap window
     nTimePoints = (int)Math.round(timeWatch / timeInc);
     spectrogramColorsPt = 0;  // pointer to the row to be filled (row major)
@@ -582,9 +583,9 @@ public class AnalyzeView extends View {
       spectrogramColors = new int[nFreqPoints * nTimePoints];
       Arrays.fill(spectrogramColors, 0);
     }
-    for (int i = 0; i < spectrogramColors.length; i++) {
-      spectrogramColors[i] = (int)(Math.random()*0xFFFFFF);
-    }
+//    for (int i = 0; i < spectrogramColors.length; i++) {
+//      spectrogramColors[i] = (int)(Math.random()*0xFFFFFF);
+//    }
   }
   
   final int[] cma = ColorMapArray.hot;
@@ -602,17 +603,26 @@ public class AnalyzeView extends View {
     return cma[(int)(cma.length * d / dBLowerBound)];
   }
   
+//  public void add2Spectrogram(double[] db) {
+//    // Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
+//    for (int i = 1; i < db.length; i++) {  // no direct current term
+//      spectrogramColors[spectrogramColorsPt*nFreqPoints-1 + i] = colorFromDB(db[i]);
+//    }
+//    spectrogramColorsPt++;
+//    if (spectrogramColorsPt >= nTimePoints) {
+//      spectrogramColorsPt = 0;
+//    }
+//  }
+  
   public void add2Spectrogram(double[] db) {
-//    Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
+  //  Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
+    System.arraycopy(spectrogramColors, nFreqPoints,
+                     spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
     for (int i = 1; i < db.length; i++) {  // no direct current term
-      spectrogramColors[spectrogramColorsPt*nFreqPoints-1 + i] = colorFromDB(db[i]);
-    }
-    spectrogramColorsPt++;
-    if (spectrogramColorsPt >= nTimePoints) {
-      spectrogramColorsPt = 0;
+      spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
     }
   }
-  
+
   public void switch2Spectrum() {
     showMode = 0;
   }
@@ -638,23 +648,25 @@ public class AnalyzeView extends View {
     c.restore();
     drawGridLabels(c);
     
+    matrixSpectrogram.reset();
+//    matrixSpectrogram.setTranslate(-xShift, -yShift);
+    matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, 1);
+    c.concat(matrixSpectrogram);
+
     // show Spectrogram
     // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
     //                         int width, int height, boolean hasAlpha, Paint paint)
     float x = 0;
-    //float y = canvasHeight - (float)spectrogramColorsPt/nTimePoints;
-    float y = canvasHeight - spectrogramColorsPt;
-    if (spectrogramColorsPt > 0) {
-      c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-                   nFreqPoints, spectrogramColorsPt, false, null);
-    }
-    y = canvasHeight - nTimePoints;
-    c.drawBitmap(spectrogramColors, spectrogramColorsPt*nFreqPoints, nFreqPoints, x, y,
-                 nFreqPoints, nTimePoints-spectrogramColorsPt, false, null);
-//    spectrogramColorsPt++;
-//    if (spectrogramColorsPt >= nTimePoints) {
-//      spectrogramColorsPt = 0;
+    float y = canvasHeight - nTimePoints;
+    c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
+                 nFreqPoints, nTimePoints, false, null);
+//    if (spectrogramColorsPt > 0) {
+//      c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
+//                   nFreqPoints, spectrogramColorsPt, false, null);
 //    }
+//    y = canvasHeight - nTimePoints;
+//    c.drawBitmap(spectrogramColors, spectrogramColorsPt*nFreqPoints, nFreqPoints, x, y,
+//                 nFreqPoints, nTimePoints-spectrogramColorsPt, false, null);
     isBusy = false;
   }
   

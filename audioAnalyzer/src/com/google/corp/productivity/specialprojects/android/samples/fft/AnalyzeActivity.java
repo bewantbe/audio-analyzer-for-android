@@ -728,6 +728,45 @@ public class AnalyzeActivity extends Activity
    * recompute the spectra "chart"
    * @param data    The normalized FFT output
    */
+  double[] cmpDB;
+  public void sameTest(double[] data) {
+    // test
+    if (cmpDB == null || cmpDB.length != data.length) {
+      Log.i(TAG, "sameTest(): new");
+      cmpDB = new double[data.length];
+    } else {
+      boolean same = true;
+      for (int i=0; i<data.length; i++) {
+        if (!Double.isNaN(cmpDB[i]) && !Double.isInfinite(cmpDB[i]) && cmpDB[i] != data[i]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) {
+        Log.i(TAG, "sameTest(): same data row!!");
+      }
+      for (int i=0; i<data.length; i++) {
+        cmpDB[i] = data[i];
+      }
+    }
+  }
+  
+  long timeToUpdate = SystemClock.uptimeMillis();; 
+  public void rePlot() {
+    long t = SystemClock.uptimeMillis();
+    if (t >= timeToUpdate) {
+      timeToUpdate += 80;
+      if (timeToUpdate < t) {
+        timeToUpdate = t+80;
+        Log.d(TAG, "recompute(): refresh rate too high");
+      }
+      if (graphView.isBusy() == true) {
+        Log.d(TAG, "recompute(): isBusy == true");
+      }
+      graphView.invalidate();
+    }
+  }
+
   public void recompute(double[] data) {
   	if (graphView.isBusy() == true) {
   		Log.d(TAG, "recompute(): isBusy == true");  // seems it's never busy
@@ -787,6 +826,9 @@ public class AnalyzeActivity extends Activity
    * @author suhler@google.com
    *         xyy82148@gmail.com
    */
+  double[] spectrumDBcopy;
+  private static Object lockObject = new Object();
+  
   public class Looper extends Thread {
     AudioRecord record;
     boolean isRunning = true;
@@ -931,6 +973,7 @@ public class AnalyzeActivity extends Activity
 
       stft = new STFT(fftLen, sampleRate, wndFuncName);
       stft.setAWeighting(isAWeighting);
+      spectrumDBcopy = new double[fftLen/2+1];
 
       // Variables for count FPS, and Debug
       long timeNow;
@@ -968,7 +1011,20 @@ public class AnalyzeActivity extends Activity
 
           // Update graph plot
           final double[] spectrumDB = stft.getSpectrumAmpDB();
-          update(spectrumDB);
+          boolean same = true;
+          for (int i = 0; i < spectrumDB.length; i++) {
+            if (!Double.isNaN(spectrumDB[i]) && !Double.isInfinite(spectrumDB[i]) && spectrumDBcopy[i] != spectrumDB[i]) {
+              same = false;
+              break;
+            }
+          }
+          if (same) {
+            Log.i(TAG, "run(): same data frame !!!");
+          }
+          synchronized (lockObject) {
+            System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
+          }
+          update(spectrumDBcopy);
           frameCount++;
 
           // Count and show peak amplitude
@@ -1028,10 +1084,15 @@ public class AnalyzeActivity extends Activity
     }
 
     private void update(final double[] data) {
+      graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          AnalyzeActivity.this.recompute(data);
+//          synchronized (AnalyzeActivity.lockObject) {
+//            sameTest(data);
+//            AnalyzeActivity.this.recompute(data);
+//          }
+          AnalyzeActivity.this.rePlot();
           // RMS
           TextView tv = (TextView) findViewById(R.id.textview_RMS);
           tv.setText("RMS:dB \n" + dfDB.format(20*Math.log10(dtRMSFromFT)));
