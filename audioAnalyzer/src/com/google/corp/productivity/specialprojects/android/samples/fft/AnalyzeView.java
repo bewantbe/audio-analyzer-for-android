@@ -67,8 +67,6 @@ public class AnalyzeView extends View {
   private StringBuffer[] gridPoints2Str = new StringBuffer[0];
   private StringBuffer[] gridPoints2StrDB = new StringBuffer[0];
   
-  private static Object lockObject = new Object();
-  
   public boolean isBusy() {
     return isBusy;
   }
@@ -94,7 +92,7 @@ public class AnalyzeView extends View {
   }
   
   private void setup(AttributeSet attrs) {
-    // Log.i(AnalyzeActivity.TAG, "Setup plot view");
+    Log.v(TAG, "setup():");
     path = new Path();
     
     linePaint = new Paint();
@@ -135,7 +133,7 @@ public class AnalyzeView extends View {
   private void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue,
                                    double gridDensity, int scale_mode) {
     if (startValue == endValue || Double.isInfinite(startValue+endValue) || Double.isNaN(startValue+endValue)) {
-      Log.e(AnalyzeActivity.TAG, "genLinearGridPoints(): startValue == endValue !");
+      Log.e(TAG, "genLinearGridPoints(): startValue == endValue !");
       return;
     }
     if (startValue > endValue) {
@@ -189,7 +187,7 @@ public class AnalyzeView extends View {
 //    Log.i(AnalyzeActivity.TAG, "  gridIntervalGuess = " + Double.toString(gridIntervalGuess) + "  gridIntervalBig = " + Double.toString(gridIntervalBig));
 
     if (gridPointsArray == null || gridPointsArray.length != 2) {
-      Log.e(AnalyzeActivity.TAG, " genLinearGridPoints(): empty array!!");
+      Log.e(TAG, " genLinearGridPoints(): empty array!!");
       return;
     }
 
@@ -356,28 +354,31 @@ public class AnalyzeView extends View {
       return;
     }
     isBusy = true;
-    float minYcanvas = canvasY4axis(minDB);
-    path.reset();
-    if (bars) {
-      for (int i = start; i < end; i++) {
-        float x = (float) i / (db.length-1) * canvasWidth;
-        float y = canvasY4axis(clampDB((float)db[i]));
-        if (y != canvasHeight) {
-          //path.moveTo(x, canvasHeight);
-          path.moveTo(x, minYcanvas);
+    if (showMode == 0) {
+      float minYcanvas = canvasY4axis(minDB);
+      path.reset();
+      if (bars) {
+        for (int i = start; i < end; i++) {
+          float x = (float) i / (db.length-1) * canvasWidth;
+          float y = canvasY4axis(clampDB((float)db[i]));
+          if (y != canvasHeight) {
+            //path.moveTo(x, canvasHeight);
+            path.moveTo(x, minYcanvas);
+            path.lineTo(x, y);
+          }
+        }
+      } else {
+        // (0,0) is the upper left of the View, in pixel unit
+        path.moveTo((float) start / (db.length-1) * canvasWidth, canvasY4axis(clampDB((float)db[start])));
+        for (int i = start+1; i < end; i++) {
+          float x = (float) i / (db.length-1) * canvasWidth;
+          float y = canvasY4axis(clampDB((float)db[i]));
           path.lineTo(x, y);
         }
       }
     } else {
-      // (0,0) is the upper left of the View, in pixel unit
-      path.moveTo((float) start / (db.length-1) * canvasWidth, canvasY4axis(clampDB((float)db[start])));
-      for (int i = start+1; i < end; i++) {
-        float x = (float) i / (db.length-1) * canvasWidth;
-        float y = canvasY4axis(clampDB((float)db[i]));
-        path.lineTo(x, y);
-      }
+      add2Spectrogram(db);
     }
-    add2Spectrogram(db);
     isBusy = false;
   }
   
@@ -556,7 +557,7 @@ public class AnalyzeView extends View {
     isBusy = true;
     this.canvasHeight = h;
     this.canvasWidth = w;
-    Log.i(AnalyzeActivity.TAG, "  onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
+    Log.i(TAG, "onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
     if (oldh == 0 && h > 0 && readyCallback != null) {
       readyCallback.ready();
     }
@@ -606,26 +607,12 @@ public class AnalyzeView extends View {
   }
   
   public void add2Spectrogram(double[] db) {
-    // Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
-    synchronized (AnalyzeView.lockObject) {
-      for (int i = 1; i < db.length; i++) {  // no direct current term
-        spectrogramColors[spectrogramColorsPt*nFreqPoints-1 + i] = colorFromDB(db[i]);
-      }
-      spectrogramColorsPt++;
-      if (spectrogramColorsPt >= nTimePoints) {
-        spectrogramColorsPt = 0;
-      }
+    System.arraycopy(spectrogramColors, nFreqPoints,
+                     spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
+    for (int i = 1; i < db.length; i++) {  // no direct current term
+      spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
     }
   }
-  
-//  public void add2Spectrogram(double[] db) {
-//  //  Log.i(TAG, "add2Spectrogram(): cma id = " + (int)(cma.length * db[1] / dBLowerBound));
-//    System.arraycopy(spectrogramColors, nFreqPoints,
-//                     spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
-//    for (int i = 1; i < db.length; i++) {  // no direct current term
-//      spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
-//    }
-//  }
 
   public void switch2Spectrum() {
     showMode = 0;
@@ -636,44 +623,37 @@ public class AnalyzeView extends View {
     isBusy = true;
     c.concat(matrix0);
     c.save();
-    drawGridLines(c, canvasWidth * gridDensity, canvasHeight * gridDensity);
-    c.concat(matrix);
-    c.drawPath(path, linePaint);
-    if (xShift <= cursorX && cursorX <= xShift + canvasWidth/xZoom) {
-      c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
-    }
-    if (yShift <= cursorY && cursorY <= yShift + canvasHeight/yZoom) {
-      c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
-    }
-    if (mark > 0f) {
-      c.drawLine(mark - 3, 0, mark, 25, cursorPaint);
-      c.drawLine(mark + 3, 0, mark, 25, cursorPaint);
-    }
-    c.restore();
-    drawGridLabels(c);
-    
-    matrixSpectrogram.reset();
-//    matrixSpectrogram.setTranslate(-xShift, -yShift);
-    matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, 1);
-    c.concat(matrixSpectrogram);
-
-    // show Spectrogram
-    // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
-    //                         int width, int height, boolean hasAlpha, Paint paint)
-    float x = 0;
-    float y;
-//    y = canvasHeight - nTimePoints;
-//    c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-//                 nFreqPoints, nTimePoints, false, null);
-    synchronized (AnalyzeView.lockObject) {
-      y = canvasHeight - spectrogramColorsPt;
-      if (spectrogramColorsPt > 0) {
-        c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-                     nFreqPoints, spectrogramColorsPt, false, null);
+    if (showMode == 0) {
+      drawGridLines(c, canvasWidth * gridDensity, canvasHeight * gridDensity);
+      c.concat(matrix);
+      c.drawPath(path, linePaint);
+      if (xShift <= cursorX && cursorX <= xShift + canvasWidth/xZoom) {
+        c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
       }
-      y = canvasHeight - nTimePoints;
-      c.drawBitmap(spectrogramColors, spectrogramColorsPt*nFreqPoints, nFreqPoints, x, y,
-                   nFreqPoints, nTimePoints-spectrogramColorsPt, false, null);
+      if (yShift <= cursorY && cursorY <= yShift + canvasHeight/yZoom) {
+        c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
+      }
+      if (mark > 0f) {
+        c.drawLine(mark - 3, 0, mark, 25, cursorPaint);
+        c.drawLine(mark + 3, 0, mark, 25, cursorPaint);
+      }
+      c.restore();
+      drawGridLabels(c);
+    } else {
+      // show Spectrogram
+      matrixSpectrogram.reset();
+      // matrixSpectrogram.setTranslate(-xShift, -yShift);
+      matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, (float)canvasHeight/nTimePoints);
+//      matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, 1f);
+      c.concat(matrixSpectrogram);
+      
+      // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
+      //                         int width, int height, boolean hasAlpha, Paint paint)
+      float x = 0;
+      float y = 0;
+//      y = canvasHeight - nTimePoints;
+      c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
+                   nFreqPoints, nTimePoints, false, null);
     }
     isBusy = false;
   }

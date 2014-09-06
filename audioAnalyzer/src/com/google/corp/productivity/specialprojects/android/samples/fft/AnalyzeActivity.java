@@ -61,7 +61,6 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -754,11 +753,10 @@ public class AnalyzeActivity extends Activity
   long timeToUpdate = SystemClock.uptimeMillis();; 
   public void rePlot() {
     long t = SystemClock.uptimeMillis();
-    if (t >= timeToUpdate) {
-      timeToUpdate += 80;
+    if (t >= timeToUpdate) {  // limit frame rate
+      timeToUpdate += 40;
       if (timeToUpdate < t) {
-        timeToUpdate = t+80;
-        Log.d(TAG, "recompute(): refresh rate too high");
+        timeToUpdate = t+40;
       }
       if (graphView.isBusy() == true) {
         Log.d(TAG, "recompute(): isBusy == true");
@@ -827,7 +825,6 @@ public class AnalyzeActivity extends Activity
    *         xyy82148@gmail.com
    */
   double[] spectrumDBcopy;
-  private static Object lockObject = new Object();
   
   public class Looper extends Thread {
     AudioRecord record;
@@ -1011,19 +1008,7 @@ public class AnalyzeActivity extends Activity
 
           // Update graph plot
           final double[] spectrumDB = stft.getSpectrumAmpDB();
-          boolean same = true;
-          for (int i = 0; i < spectrumDB.length; i++) {
-            if (!Double.isNaN(spectrumDB[i]) && !Double.isInfinite(spectrumDB[i]) && spectrumDBcopy[i] != spectrumDB[i]) {
-              same = false;
-              break;
-            }
-          }
-          if (same) {
-            Log.i(TAG, "run(): same data frame !!!");
-          }
-          synchronized (lockObject) {
-            System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
-          }
+          System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
           update(spectrumDBcopy);
           frameCount++;
 
@@ -1084,14 +1069,12 @@ public class AnalyzeActivity extends Activity
     }
 
     private void update(final double[] data) {
+      // data is synchronized here
       graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
-//          synchronized (AnalyzeActivity.lockObject) {
-//            sameTest(data);
-//            AnalyzeActivity.this.recompute(data);
-//          }
+          // data will get out of synchronize here
           AnalyzeActivity.this.rePlot();
           // RMS
           TextView tv = (TextView) findViewById(R.id.textview_RMS);
