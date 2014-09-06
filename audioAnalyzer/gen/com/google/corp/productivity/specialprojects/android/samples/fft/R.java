@@ -1163,7 +1163,7 @@ containing a value of this type.
         public static final int none=0x7f060010;
         public static final int normal=0x7f060000;
         public static final int one=0x7f06004b;
-        public static final int plot=0x7f060040;
+        public static final int plot=0x7f06003d;
         public static final int progress_circular=0x7f060018;
         public static final int progress_horizontal=0x7f060019;
         public static final int radio=0x7f06002f;
@@ -1186,10 +1186,10 @@ containing a value of this type.
         public static final int split_action_bar=0x7f06001e;
         public static final int submit_area=0x7f060039;
         public static final int tabMode=0x7f060002;
-        public static final int textview_RMS=0x7f06003d;
-        public static final int textview_cur=0x7f06003e;
+        public static final int textview_RMS=0x7f06003e;
+        public static final int textview_cur=0x7f06003f;
         public static final int textview_info_rec=0x7f06003c;
-        public static final int textview_peak=0x7f06003f;
+        public static final int textview_peak=0x7f060040;
         public static final int three=0x7f06004d;
         public static final int title=0x7f06002b;
         public static final int top_action_bar=0x7f060020;

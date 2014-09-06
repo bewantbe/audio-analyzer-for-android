@@ -190,13 +190,17 @@ public class AnalyzeActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
     
+    final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+    Log.i(TAG, " max mem = " + maxMemory + "k");
+    
     // set and get preferences in PreferenceActivity
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     // Set variable according to the preferences
     updatePreferenceSaved();
     
-    // travel Views, and attach ClickListener to the views that contain android:tag="select"  
     graphView = (AnalyzeView) findViewById(R.id.plot);
+
+    // travel Views, and attach ClickListener to the views that contain android:tag="select"  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -221,6 +225,8 @@ public class AnalyzeActivity extends Activity
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
 
     setTextViewFontSize();
+    
+    graphView.switch2Spectrogram(4.0, sampleRate, fftLen);
   }
 
   // Set text font size of textview_cur and textview_peak
@@ -273,12 +279,15 @@ public class AnalyzeActivity extends Activity
     switch (view.getId()) {
     case R.id.button_sample_rate:
       popupMenuSampleRate.showAtLocation(view, gravity, x_left, y_bottom);
+//      popupMenuSampleRate.showAsDropDown(view, 0, 0);
       break;
     case R.id.button_fftlen:
       popupMenuFFTLen.showAtLocation(view, gravity, x_left, y_bottom);
+//      popupMenuFFTLen.showAsDropDown(view, 0, 0);
       break;
     case R.id.button_average:
       popupMenuAverage.showAtLocation(view, gravity, x_left, y_bottom);
+//      popupMenuAverage.showAsDropDown(view, 0, 0);
       break;
     }
   }
@@ -444,16 +453,20 @@ public class AnalyzeActivity extends Activity
   }
   
   static String[] as;
-  static String[] asid;
+  static int[] asid;
   private void getAudioSourceNameFromIdPrepare(Resources res) {
     as   = res.getStringArray(R.array.audio_source);
-    asid = res.getStringArray(R.array.audio_source_id);
-  }
-
-  // XXX, so ugly but work. Tell me if there is better way to do it.
-  private static String getAudioSourceNameFromId(String id) {
+    String[] sasid = res.getStringArray(R.array.audio_source_id);
+    asid = new int[as.length];
     for (int i = 0; i < as.length; i++) {
-      if (asid[i].equals(id)) {
+      asid[i] = Integer.parseInt(sasid[i]);
+    }
+  }
+  
+  // XXX, so ugly but work. Tell me if there is better way to do it.
+  private static String getAudioSourceNameFromId(int id) {
+    for (int i = 0; i < as.length; i++) {
+      if (asid[i] == id) {
         return as[i];
       }
     }
@@ -489,7 +502,7 @@ public class AnalyzeActivity extends Activity
           String asi = prefs.getString("audioSource", Integer.toString(RECORDER_AGC_OFF));
           audioSourceId = Integer.parseInt(asi);
           Preference connectionPref = findPreference(key);
-          connectionPref.setSummary(getAudioSourceNameFromId(asi));
+          connectionPref.setSummary(getAudioSourceNameFromId(audioSourceId));
         }
       }
     };
@@ -747,6 +760,7 @@ public class AnalyzeActivity extends Activity
 
   // Convert frequency to pitch
   // Fill with sFill until length is 6. If sFill=="", do not fill
+  final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
   public void freq2Cent(StringBuilder a, double f, String sFill) {
     a.setLength(0);
     if (f<=0 || Double.isNaN(f) || Double.isInfinite(f)) {
@@ -757,8 +771,7 @@ public class AnalyzeActivity extends Activity
     double p = 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
     int pi = (int) Math.round(p);
     int po = (int) Math.floor(pi/12.0);
-    final String[] L = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-    a.append(L[pi-po*12]);
+    a.append(LP[pi-po*12]);
     a.append(po-1);
     if (p-pi>0) {
       a.append('+');
@@ -849,6 +862,7 @@ public class AnalyzeActivity extends Activity
     
     @Override
     public void run() {
+      setupView();
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
       
@@ -882,7 +896,7 @@ public class AnalyzeActivity extends Activity
             AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
       }
       Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
-        "  source          : " + (audioSourceId<1000?getAudioSourceNameFromId(Integer.toString(audioSourceId)):audioSourceId) + "\n" +
+        "  source          : " + (audioSourceId<1000?getAudioSourceNameFromId(audioSourceId):audioSourceId) + "\n" +
         String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), sampleRate) +
         String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / BYTE_OF_SAMPLE, minBytes) +
         String.format("  buffer size     : %d samples, %d Bytes\n", bufferSampleSize, BYTE_OF_SAMPLE*bufferSampleSize) +
@@ -1029,6 +1043,12 @@ public class AnalyzeActivity extends Activity
           tv.invalidate();
         }
       });
+    }
+    
+    private void setupView() {
+      if (graphView.getShowMode() == 1) {
+        graphView.switch2Spectrogram(4.0, sampleRate, fftLen);
+      }
     }
 
     public void setPause(boolean pause) {
