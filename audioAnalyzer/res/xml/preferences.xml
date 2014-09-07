@@ -2,10 +2,45 @@
 <PreferenceScreen
   xmlns:android="http://schemas.android.com/apk/res/android">
     <CheckBoxPreference
-     android:title="Graph style"
+     android:title="Keep screen on"
+     android:key="keepScreenOn"
+     android:defaultValue="true"
+    />
+    <CheckBoxPreference
+     android:title="Spectrum use bars"
      android:key="showLines"
      android:defaultValue="false"
      android:summary="Use lines instead of bars for spectrum"
+    />
+    <ListPreference
+      android:title="Spectrum range"
+      android:key="spectrumRange"
+      android:entries="@array/dbRangeArray"
+      android:entryValues="@array/dbRangeArray"
+      android:defaultValue="-120"
+      android:summary="Show range of spectrum in dB"
+    />
+    <CheckBoxPreference
+     android:title="Spectrogram shifting"
+     android:key="spectrogramShifting"
+     android:defaultValue="false"
+     android:summary="Make whole spectrogram shifting as time go"
+    />
+    <ListPreference
+      android:title="Spectrogram range"
+      android:key="spectrogramRange"
+      android:entries="@array/dbRangeArray"
+      android:entryValues="@array/dbRangeArray"
+      android:defaultValue="-120"
+      android:summary="Show range of spectrogram in dB"
+    />
+    <ListPreference
+     android:title="Spectrogram duration"
+     android:key="spectrogramDuration"
+     android:entries="@array/spectrogram_duration_array"
+     android:entryValues="@array/spectrogram_duration_array"
+     android:defaultValue="4.0"
+     android:summary="Duration of spectrogram shown (when average number is 1)"
     />
     <ListPreference
       android:title="Audio source"

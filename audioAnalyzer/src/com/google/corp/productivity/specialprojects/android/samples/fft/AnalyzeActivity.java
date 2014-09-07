@@ -13,6 +13,7 @@
  *limitations under the License.
  *
  * @author Stephen Uhler
+ * @author bewantbe@gmail.com
  */
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
@@ -61,6 +62,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -212,8 +214,8 @@ public class AnalyzeActivity extends Activity
     Resources res = getResources();
     getAudioSourceNameFromIdPrepare(res);
     
+    /// initialize pop up window items list
     // http://www.codeofaninja.com/2013/04/show-listview-as-drop-down-android.html
-    ////////////// initialize pop up window items list ////////////////
     popupMenuSampleRate = popupMenuCreate( validateAudioRates(
         res.getStringArray(R.array.sample_rates)), R.id.button_sample_rate);
     popupMenuFFTLen = popupMenuCreate(
@@ -225,7 +227,8 @@ public class AnalyzeActivity extends Activity
 
     setTextViewFontSize();
     
-    graphView.switch2Spectrogram(4.0, sampleRate, fftLen);
+    // XXX :
+    graphView.switch2Spectrogram(sampleRate, fftLen);
   }
 
   // Set text font size of textview_cur and textview_peak
@@ -316,7 +319,6 @@ public class AnalyzeActivity extends Activity
       sampleRate = Integer.parseInt(selectedItemTag);
       RectF bounds = graphView.getBounds();
       bounds.right = sampleRate / 2;
-      bounds.bottom = -120;
       graphView.setBounds(bounds);
       b_need_restart_audio = true;
       editor.putInt("button_sample_rate", sampleRate);
@@ -355,6 +357,24 @@ public class AnalyzeActivity extends Activity
   @Override
   protected void onResume() {
     super.onResume();
+    
+    // load preferences
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    boolean keepScreenOn = sharedPref.getBoolean("keepScreenOn", true);
+    if (keepScreenOn) {
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    } else {
+      getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+    float b = graphView.getBounds().bottom;
+    b = Float.parseFloat(sharedPref.getString("spectrumRange",
+                         Double.toString(b)));
+    graphView.setBoundsBottom(b);
+    double d = graphView.getLowerBound();
+    d = Double.parseDouble(sharedPref.getString("spectrogramRange",
+                           Double.toString(d)));
+    graphView.setLowerBound(d);
+
     // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
@@ -366,7 +386,6 @@ public class AnalyzeActivity extends Activity
 
     samplingThread = new Looper();
     samplingThread.start();
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
   }
 
   @Override
@@ -1049,7 +1068,8 @@ public class AnalyzeActivity extends Activity
                 + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
                 + " sampleRate = " + Math.round(actualSampleRate*100)/100.0
                 + "\n Overrun counter reseted.");
-            // XXX log somewhere to the file
+            // XXX log somewhere to the file or notify the user
+            notifyOverrun();
             nSamplesRead = 0;  // start over
           }
           // Update actual sample rate
@@ -1066,6 +1086,23 @@ public class AnalyzeActivity extends Activity
       record.stop();
       record.release();
       record = null;
+    }
+    
+    long lastTimeNotifyOverrun = 0;
+    private void notifyOverrun() {
+      long t = SystemClock.uptimeMillis();
+      if (t - lastTimeNotifyOverrun > 6000) {
+        lastTimeNotifyOverrun = t;
+        AnalyzeActivity.this.runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+            Context context = getApplicationContext();
+            String text = "Recorder buffer overrun!\nYour cell phone is too slow.\nTry lower sampling rate or higher average number.";
+            Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
+            toast.show();
+          }
+        });
+      }
     }
 
     private void update(final double[] data) {
@@ -1091,7 +1128,7 @@ public class AnalyzeActivity extends Activity
     
     private void setupView() {
       if (graphView.getShowMode() == 1) {
-        graphView.switch2Spectrogram(4.0, sampleRate, fftLen);
+        graphView.switch2Spectrogram(sampleRate, fftLen);
       }
     }
 

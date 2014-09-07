@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string-array name="dbRangeArray">
+        <item>-30</item>
+        <item>-60</item>
+        <item>-90</item>
+        <item>-120</item>
+        <item>-150</item>
+    </string-array>
+    <string-array name="spectrogram_duration_array">
+        <item>2.0</item>
+        <item>4.0</item>
+        <item>6.0</item>
+        <item>8.0</item>
+        <item>10.0</item>
+    </string-array>
     <string-array name="wnd_func_names">
         <item>Rectangular</item>
         <item>Bartlett</item>

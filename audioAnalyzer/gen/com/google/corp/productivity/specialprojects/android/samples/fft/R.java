@@ -17,12 +17,14 @@ public final class R {
         public static final int abc_slide_out_top=0x7f040005;
     }
     public static final class array {
-        public static final int audio_source=0x7f0d0001;
-        public static final int audio_source_id=0x7f0d0002;
-        public static final int fft_ave_num=0x7f0d0005;
-        public static final int fft_len=0x7f0d0004;
-        public static final int sample_rates=0x7f0d0003;
-        public static final int wnd_func_names=0x7f0d0000;
+        public static final int audio_source=0x7f0d0003;
+        public static final int audio_source_id=0x7f0d0004;
+        public static final int dbRangeArray=0x7f0d0000;
+        public static final int fft_ave_num=0x7f0d0007;
+        public static final int fft_len=0x7f0d0006;
+        public static final int sample_rates=0x7f0d0005;
+        public static final int spectrogram_duration_array=0x7f0d0001;
+        public static final int wnd_func_names=0x7f0d0002;
     }
     public static final class attr {
         /**  Custom divider drawable to use for elements in the action bar. 
@@ -1303,12 +1305,13 @@ containing a value of this type.
         public static final int dismiss=0x7f0b0010;
         public static final int instructions_text=0x7f0b000e;
         public static final int instructions_title=0x7f0b000f;
-        public static final int test_signal_1_db1=0x7f0b0018;
-        public static final int test_signal_1_freq1=0x7f0b0017;
-        public static final int test_signal_2_db1=0x7f0b001a;
-        public static final int test_signal_2_db2=0x7f0b001c;
-        public static final int test_signal_2_freq1=0x7f0b0019;
-        public static final int test_signal_2_freq2=0x7f0b001b;
+        public static final int max_DB_range=0x7f0b0017;
+        public static final int test_signal_1_db1=0x7f0b0019;
+        public static final int test_signal_1_freq1=0x7f0b0018;
+        public static final int test_signal_2_db1=0x7f0b001b;
+        public static final int test_signal_2_db2=0x7f0b001d;
+        public static final int test_signal_2_freq1=0x7f0b001a;
+        public static final int test_signal_2_freq2=0x7f0b001c;
         public static final int text_view_info_log_0=0x7f0b0013;
         public static final int textview_RMS_text=0x7f0b0014;
         public static final int textview_cur_text=0x7f0b0015;

@@ -13,6 +13,7 @@
  *limitations under the License.
  *
  * @author Stephen Uhler
+ * @author bewantbe@gmail.com
  */
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
@@ -21,6 +22,8 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Matrix;
@@ -30,6 +33,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -45,7 +49,7 @@ public class AnalyzeView extends View {
   private float xShift;    // horizontal translation
   private float yZoom;     // vertical scaling
   private float yShift;    // vertical translation
-  private float minDB = -144f;
+  private float minDB = -144f;  // hard lower bound limit
   private RectF axisBounds;
   private Ready readyCallback = null;      // callback to caller when rendering is complete
   
@@ -65,6 +69,7 @@ public class AnalyzeView extends View {
   private double[][] gridPoints2dB = new double[2][0];
   private StringBuffer[] gridPoints2Str = new StringBuffer[0];
   private StringBuffer[] gridPoints2StrDB = new StringBuffer[0];
+  SharedPreferences sharedPref;  // read preference automatically
   
   public boolean isBusy() {
     return isBusy;
@@ -72,17 +77,17 @@ public class AnalyzeView extends View {
   
   public AnalyzeView(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
-    setup(attrs);
+    setup(attrs, context);
   }
   
   public AnalyzeView(Context context, AttributeSet attrs) {
     super(context, attrs);
-    setup(attrs);
+    setup(attrs, context);
   }
   
   public AnalyzeView(Context context) {
     super(context);
-    setup(null);
+    setup(null, context);
   }
   
   public void setReady(Ready ready) {
@@ -90,7 +95,7 @@ public class AnalyzeView extends View {
     this.readyCallback = ready;
   }
   
-  private void setup(AttributeSet attrs) {
+  private void setup(AttributeSet attrs, Context context) {
     Log.v(TAG, "setup():");
     path = new Path();
     
@@ -118,14 +123,33 @@ public class AnalyzeView extends View {
     canvasWidth = canvasHeight = 0;
     axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -120.0f);
     gridDensity = 1/85f;  // every 85 pixel one grid line, on average
+    Resources res = getResources();
+    minDB = Float.parseFloat(res.getString(R.string.max_DB_range));
+    sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
+    dBLowerBound = Double.parseDouble(sharedPref.getString("spectrogramRange",
+                   Double.toString(dBLowerBound)));
+    axisBounds.bottom = Float.parseFloat(sharedPref.getString("spectrumRange",
+                        Double.toString(axisBounds.bottom)));
   }
   
   public void setBounds(RectF bounds) {
     this.axisBounds = bounds;
   }
   
+  public void setBoundsBottom(float b) {
+    this.axisBounds.bottom = b;
+  }
+  
+  public void setLowerBound(double b) {
+    this.dBLowerBound = b;
+  }
+  
   public RectF getBounds() {
     return new RectF(axisBounds);
+  }
+  
+  public double getLowerBound() {
+    return dBLowerBound;
   }
   
   // return position of grid lines, there are roughly gridDensity lines for the bigger grid
@@ -608,16 +632,33 @@ public class AnalyzeView extends View {
   int nTimePoints;
   int spectrogramColorsPt;
   Matrix matrixSpectrogram = new Matrix();
+  final int[] cma = ColorMapArray.hot;
+  public double dBLowerBound = -120;
   
   public int getShowMode() {
     return showMode;
   }
   
-  public void switch2Spectrogram(double timeWatch, int sampleRate, int fftLen) {
+  public void switch2Spectrogram(int sampleRate, int fftLen, double timeWatch) {
+    showMode = 1;
+    setupSpectrogram(sampleRate, fftLen, timeWatch);
+  }
+  
+  public void switch2Spectrogram(int sampleRate, int fftLen) {
+    double timeWatch = 4.0;
+    showMode = 1;
+    if (sharedPref != null) {
+      timeWatch = Double.parseDouble(sharedPref.getString("spectrogramDuration",
+                  Double.toString(4.0)));
+    }
+    setupSpectrogram(sampleRate, fftLen, timeWatch);
+  }
+  
+  public void setupSpectrogram(int sampleRate, int fftLen, double timeWatch) {
     showMode = 1;
     nFreqPoints = fftLen / 2;                 // no direct current term
     timeInc     = fftLen / 2.0 / sampleRate;  // /2.0 due to overlap window
-    nTimePoints = (int)Math.round(timeWatch / timeInc);
+    nTimePoints = (int)Math.ceil(timeWatch / timeInc);
     spectrogramColorsPt = 0;                  // pointer to the row to be filled (row major)
     synchronized (this) {
       if (spectrogramColors == null || spectrogramColors.length != nFreqPoints * nTimePoints) {
@@ -629,9 +670,6 @@ public class AnalyzeView extends View {
 //      spectrogramColors[i] = (int)(Math.random()*0xFFFFFF);
 //    }
   }
-  
-  final int[] cma = ColorMapArray.hot;
-  double dBLowerBound = -120;
   
   public int colorFromDB(double d) {
     if (Double.isInfinite(d) || Double.isNaN(d)) {
