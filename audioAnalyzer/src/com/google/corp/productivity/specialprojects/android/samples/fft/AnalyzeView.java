@@ -46,7 +46,6 @@ public class AnalyzeView extends View {
   private float yZoom;     // vertical scaling
   private float yShift;    // vertical translation
   private float minDB = -144f;
-  private float mark;
   private RectF axisBounds;
   private Ready readyCallback = null;      // callback to caller when rendering is complete
   
@@ -310,6 +309,41 @@ public class AnalyzeView extends View {
       c.drawLine(0, yPos, 0.02f * canvasWidth, yPos, gridPaint);
     }
   }
+
+  // Draw frequency axis for spectrogram
+  // work in the original canvas frame
+  private float drawFreqAxis(Canvas c, float nx) {
+    updateGridLabels(getMinX(), getMaxX(), nx, GridScaleType.FREQ);
+    
+    // plot axis mark
+    float labelLaegeLen = 0.03f * canvasHeight;
+    float labelSmallLen = 0.02f * canvasHeight;
+    float textHeigh     = labelPaint.getFontMetrics(null);
+    float labelBeginY   = canvasHeight - 0.6f*labelLaegeLen - textHeigh;
+    for(int i = 0; i < gridPoints2[0].length; i++) {
+      float xPos = canvasViewX4axis((float)gridPoints2[0][i]);
+      c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelLaegeLen, gridPaint);
+    }
+    for(int i = 0; i < gridPoints2[1].length; i++) {
+      float xPos = canvasViewX4axis((float)gridPoints2[1][i]);
+      c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelSmallLen, gridPaint);
+    }
+    c.drawLine(0, labelBeginY, canvasWidth, labelBeginY, labelPaint);
+
+    // plot labels
+    float widthHz   = labelPaint.measureText("Hz");
+    float xPos, yPos;
+    yPos = labelBeginY + 0.5f*labelLaegeLen + textHeigh;
+    for(int i = 0; i < gridPoints2Str.length; i++) {
+      xPos = canvasViewX4axis((float)gridPoints2[0][i]);
+      if (xPos + labelPaint.measureText(gridPoints2Str[i].toString()) + 1.5f*widthHz> canvasWidth) {
+        continue;
+      }
+      c.drawText(gridPoints2Str[i].toString(), xPos, yPos, labelPaint);
+    }
+    c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
+    return labelBeginY;  // lower boundary of ruler
+  }
   
   // The coordinate frame of this function is identical to its view (id=plot).
   private void drawGridLabels(Canvas c) {
@@ -323,8 +357,8 @@ public class AnalyzeView extends View {
         continue;
       }
       c.drawText(gridPoints2Str[i].toString(), xPos, yPos, labelPaint);
-      c.drawLine(0, 0, canvasWidth, 0, labelPaint);
     }
+    c.drawLine(0, 0, canvasWidth, 0, labelPaint);
     
     c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
     xPos = 0.4f*widthHz;
@@ -332,8 +366,8 @@ public class AnalyzeView extends View {
       yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
       if (yPos + 1.3f*widthHz > canvasHeight) continue;
       c.drawText(gridPoints2StrDB[i].toString(), xPos, yPos, labelPaint);
-      c.drawLine(0, 0, 0, canvasHeight, labelPaint);
     }
+    c.drawLine(0, 0, 0, canvasHeight, labelPaint);
     c.drawText("dB", xPos, canvasHeight - 0.4f*widthHz, labelPaint);
   }
   
@@ -406,20 +440,22 @@ public class AnalyzeView extends View {
     }
   }
   
-  // XXX this doesn't reset on size changes
-  
-  public void setMark(double hz) {
-    float x = (float) (hz / axisBounds.width() * canvasWidth);
-    mark = (x + myLocation[0]) / xZoom + xShift; 
-    // Log.i(AnalyzeActivity.TAG, "mark=" + mark);
-  }
-  
   public float getCursorX() {
     return  canvasWidth == 0 ? 0 : axisBounds.width() * cursorX / canvasWidth;
   }
   
   public float getCursorY() {
     return  canvasHeight == 0 ? 0 : axisBounds.height() * cursorY / canvasHeight;
+  }
+  
+  // in the axisBounds frame
+  private void drawCursor(Canvas c) {
+    if (xShift <= cursorX && cursorX <= xShift + canvasWidth/xZoom) {
+      c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
+    }
+    if (yShift <= cursorY && cursorY <= yShift + canvasHeight/yZoom) {
+      c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
+    }
   }
   
   // In axis frame
@@ -643,24 +679,16 @@ public class AnalyzeView extends View {
       drawGridLines(c, canvasWidth * gridDensity, canvasHeight * gridDensity);
       c.concat(matrix);
       c.drawPath(path, linePaint);
-      if (xShift <= cursorX && cursorX <= xShift + canvasWidth/xZoom) {
-        c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
-      }
-      if (yShift <= cursorY && cursorY <= yShift + canvasHeight/yZoom) {
-        c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
-      }
-      if (mark > 0f) {
-        c.drawLine(mark - 3, 0, mark, 25, cursorPaint);
-        c.drawLine(mark + 3, 0, mark, 25, cursorPaint);
-      }
+      drawCursor(c);
       c.restore();
       drawGridLabels(c);
     } else {
+      float canvasViewYaxis = drawFreqAxis(c, canvasWidth * gridDensity);
       // show Spectrogram
       matrixSpectrogram.reset();
-      // matrixSpectrogram.setTranslate(-xShift, -yShift);
-      matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, (float)canvasHeight/nTimePoints);
-//      matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, 1f);
+      matrixSpectrogram.setTranslate(-xShift/((float)canvasWidth/nFreqPoints), 0f);
+      matrixSpectrogram.postScale((float)canvasWidth/nFreqPoints, (float)canvasViewYaxis/nTimePoints);
+      matrixSpectrogram.postScale((float)xZoom, 1f);
       c.concat(matrixSpectrogram);
       
       // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
