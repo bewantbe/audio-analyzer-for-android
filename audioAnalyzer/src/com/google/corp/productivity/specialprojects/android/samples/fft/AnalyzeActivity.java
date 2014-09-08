@@ -34,7 +34,6 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.SystemClock;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -64,8 +63,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -887,8 +884,6 @@ public class AnalyzeActivity extends Activity
     double maxAmpDB;
     double maxAmpFreq;
     double actualSampleRate;   // sample rate based on SystemClock.uptimeMillis()
-    File filePathDebug;
-    FileWriter fileDebug;
     public STFT stft;   // use with care
 
     public Looper() {
@@ -1002,7 +997,10 @@ public class AnalyzeActivity extends Activity
         // If failed somehow, leave the user a chance to change preference.
         return;
       }
-      
+
+      WavWriter ww = new WavWriter(sampleRate);
+      ww.start();
+
       // Signal source for testing
       double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
       double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
@@ -1049,6 +1047,7 @@ public class AnalyzeActivity extends Activity
           startTimeMs = timeNow - numOfReadShort*1000/sampleRate;
         }
         nSamplesRead += numOfReadShort;
+        ww.pushAudioShort(audioSamples);
         if (isPaused1) {
           continue;  // keep reading data, so overrun checker data still valid
         }
@@ -1121,6 +1120,7 @@ public class AnalyzeActivity extends Activity
           }
         }
       }
+      ww.stop();
       Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
       record.stop();
       record.release();
@@ -1187,15 +1187,6 @@ public class AnalyzeActivity extends Activity
     public void finish() {
       isRunning = false;
       interrupt();
-    }
-    
-    /* Checks if external storage is available for read and write */
-    public boolean isExternalStorageWritable() {
-      String state = Environment.getExternalStorageState();
-      if (Environment.MEDIA_MOUNTED.equals(state)) {
-        return true;
-      }
-      return false;
     }
   }
 
