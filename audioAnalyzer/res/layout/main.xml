@@ -85,7 +85,27 @@
         android:layout_height="wrap_content"
         android:gravity="center" >
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+		        android:id="@+id/spectrum_spectrogram_mode"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_margin="4dp"
+		        android:tag="select"
+		        android:text="Sptr"
+		        android:textSize="21sp"
+		        custom:items="Sptr Sptrgr" />
+
+		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+		        android:id="@+id/dbA"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_margin="4dp"
+		        android:tag="select"
+		        android:text="dB"
+		        android:textSize="21sp"
+		        custom:items="dB dB(A)" />
+
+		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
 		        android:id="@+id/graph_view_mode"
 		        android:layout_width="wrap_content"
 		        android:layout_height="wrap_content"
@@ -105,16 +125,6 @@
 		        android:textSize="21sp"
 		        custom:items="run stop" />
 		
-		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
-		        android:id="@+id/dbA"
-		        android:layout_width="wrap_content"
-		        android:layout_height="wrap_content"
-		        android:layout_margin="4dp"
-		        android:tag="select"
-		        android:text="dB"
-		        android:textSize="21sp"
-		        custom:items="dB dB(A)" />
-
     </LinearLayout>
     
 </LinearLayout>

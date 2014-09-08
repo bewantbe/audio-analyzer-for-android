@@ -317,9 +317,6 @@ public class AnalyzeActivity extends Activity
     case R.id.button_sample_rate:
       popupMenuSampleRate.dismiss();
       sampleRate = Integer.parseInt(selectedItemTag);
-      RectF bounds = graphView.getBounds();
-      bounds.right = sampleRate / 2;
-      graphView.setBounds(bounds);
       b_need_restart_audio = true;
       editor.putInt("button_sample_rate", sampleRate);
       break;
@@ -374,6 +371,7 @@ public class AnalyzeActivity extends Activity
     d = Double.parseDouble(sharedPref.getString("spectrogramRange",
                            Double.toString(d)));
     graphView.setLowerBound(d);
+    graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
 
     // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
@@ -723,6 +721,12 @@ public class AnalyzeActivity extends Activity
           samplingThread.stft.setAWeighting(isAWeighting);
         }
         return false;
+      case R.id.spectrum_spectrogram_mode:
+        if (value.equals("Sptr")) {
+          graphView.switch2Spectrum();
+        } else {
+          graphView.switch2Spectrogram(sampleRate, fftLen);
+        }
       default:
         return true;
     }
@@ -773,12 +777,15 @@ public class AnalyzeActivity extends Activity
   public void rePlot() {
     long t = SystemClock.uptimeMillis();
     if (t >= timeToUpdate) {  // limit frame rate
-      timeToUpdate += 40;
+      timeToUpdate += 60;
       if (timeToUpdate < t) {
-        timeToUpdate = t+40;
+        timeToUpdate = t+60;
       }
       if (graphView.isBusy() == true) {
         Log.d(TAG, "recompute(): isBusy == true");
+      }
+      if (graphView.getShowMode() == 0) {
+        graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
       }
       graphView.invalidate();
     }
@@ -959,7 +966,8 @@ public class AnalyzeActivity extends Activity
         String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / BYTE_OF_SAMPLE, minBytes) +
         String.format("  buffer size     : %d samples, %d Bytes\n", bufferSampleSize, BYTE_OF_SAMPLE*bufferSampleSize) +
         String.format("  read chunk size : %d samples, %d Bytes\n", readChunkSize, BYTE_OF_SAMPLE*readChunkSize) +
-        String.format("  FFT length      : %d\n", fftLen));
+        String.format("  FFT length      : %d\n", fftLen) +
+        String.format("  nFFTAverage     : %d\n", nFFTAverage));
       sampleRate = record.getSampleRate();
       actualSampleRate = sampleRate;
 
@@ -1107,7 +1115,9 @@ public class AnalyzeActivity extends Activity
 
     private void update(final double[] data) {
       // data is synchronized here
-      graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
+      if (graphView.getShowMode() == 1) {
+        graphView.pushRawSpectrum(spectrumDBcopy);
+      }
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
@@ -1127,9 +1137,11 @@ public class AnalyzeActivity extends Activity
     }
     
     private void setupView() {
-      if (graphView.getShowMode() == 1) {
-        graphView.switch2Spectrogram(sampleRate, fftLen);
-      }
+      // Maybe move these out of this class
+      RectF bounds = graphView.getBounds();
+      bounds.right = sampleRate / 2;
+      graphView.setBounds(bounds);
+      graphView.setupSpectrogram(sampleRate, fftLen);
     }
 
     public void setPause(boolean pause) {

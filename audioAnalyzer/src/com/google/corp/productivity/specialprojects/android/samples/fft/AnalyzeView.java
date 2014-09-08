@@ -435,7 +435,7 @@ public class AnalyzeView extends View {
         }
       }
     } else {
-      add2Spectrogram(db);
+      //use pushRawSpectrogram(db);
     }
     isBusy = false;
   }
@@ -625,7 +625,7 @@ public class AnalyzeView extends View {
   }
   
   int[] spectrogramColors;  // int:ARGB, nFreqPoints columns, nTimePoints rows
-  int showMode = 0;  // 0: Spectrum, 1:Spectrogram
+  int showMode = 0;         // 0: Spectrum, 1:Spectrogram
   int showModeSpectrogram = 1;  // 0: moving spectrogram, 1: overwriting in loop
   int nFreqPoints;
   double timeInc;
@@ -633,29 +633,37 @@ public class AnalyzeView extends View {
   int spectrogramColorsPt;
   Matrix matrixSpectrogram = new Matrix();
   final int[] cma = ColorMapArray.hot;
-  public double dBLowerBound = -120;
+  double dBLowerBound = -120;
   
   public int getShowMode() {
     return showMode;
   }
   
-  public void switch2Spectrogram(int sampleRate, int fftLen, double timeWatch) {
-    showMode = 1;
-    setupSpectrogram(sampleRate, fftLen, timeWatch);
+  public void setSpectrogramModeShifting(boolean b) {
+    if (b) {
+      showModeSpectrogram = 0;
+    } else {
+      showModeSpectrogram = 1;
+    }
+  }
+  
+  float oldYShift = 0;
+  float oldYZoom = 1;
+
+  public void switch2Spectrum() {
+    yShift = oldYShift;
+    yZoom = oldYZoom;
+    showMode = 0;
   }
   
   public void switch2Spectrogram(int sampleRate, int fftLen) {
-    double timeWatch = 4.0;
     showMode = 1;
-    if (sharedPref != null) {
-      timeWatch = Double.parseDouble(sharedPref.getString("spectrogramDuration",
-                  Double.toString(4.0)));
-    }
-    setupSpectrogram(sampleRate, fftLen, timeWatch);
+    setupSpectrogram(sampleRate, fftLen);
   }
   
   public void setupSpectrogram(int sampleRate, int fftLen, double timeWatch) {
-    showMode = 1;
+    oldYShift = yShift;
+    oldYZoom  = yZoom;
     nFreqPoints = fftLen / 2;                 // no direct current term
     timeInc     = fftLen / 2.0 / sampleRate;  // /2.0 due to overlap window
     nTimePoints = (int)Math.ceil(timeWatch / timeInc);
@@ -671,6 +679,15 @@ public class AnalyzeView extends View {
 //    }
   }
   
+  public void setupSpectrogram(int sampleRate, int fftLen) {
+    double timeWatch = 4.0;
+    if (sharedPref != null) {
+      timeWatch = Double.parseDouble(sharedPref.getString("spectrogramDuration",
+                  Double.toString(4.0)));
+    }
+    setupSpectrogram(sampleRate, fftLen, timeWatch);
+  }
+  
   public int colorFromDB(double d) {
     if (Double.isInfinite(d) || Double.isNaN(d)) {
       return cma[cma.length-1];
@@ -684,7 +701,7 @@ public class AnalyzeView extends View {
     return cma[(int)(cma.length * d / dBLowerBound)];
   }
   
-  public void add2Spectrogram(double[] db) {
+  public void pushRawSpectrum(double[] db) {
     synchronized (this) {
       if (showModeSpectrogram == 0) {
         System.arraycopy(spectrogramColors, nFreqPoints,
@@ -704,10 +721,6 @@ public class AnalyzeView extends View {
     }
   }
 
-  public void switch2Spectrum() {
-    showMode = 0;
-  }
-  
   @Override
   protected void onDraw(Canvas c) {
     isBusy = true;

@@ -48,7 +48,7 @@
     <string name="textview_cur_text" >Cur :XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     
-    <string name="max_DB_range">180</string>
+    <string name="max_DB_range">-150</string>
     
     <string name="test_signal_1_freq1">440.0</string>
     <string name="test_signal_1_db1">-6.0</string>
