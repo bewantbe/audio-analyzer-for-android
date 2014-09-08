@@ -474,10 +474,10 @@ public class AnalyzeView extends View {
   
   // in the axisBounds frame
   private void drawCursor(Canvas c) {
-    if (xShift <= cursorX && cursorX <= xShift + canvasWidth/xZoom) {
+    if (xShift < cursorX && cursorX <= xShift + canvasWidth/xZoom) {
       c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
     }
-    if (yShift <= cursorY && cursorY <= yShift + canvasHeight/yZoom) {
+    if (yShift < cursorY && cursorY <= yShift + canvasHeight/yZoom) {
       c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
     }
   }

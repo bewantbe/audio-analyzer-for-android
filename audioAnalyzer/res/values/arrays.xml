@@ -47,6 +47,7 @@
         <item>1002</item>
     </string-array>
     <string-array name="sample_rates">
+        <item>SAMPLE RATE::0</item>
         <item>8000::8000</item>
         <item>11025::11025</item>
         <item>16000::16000</item>
@@ -56,6 +57,7 @@
         <item>48000::48000</item>
     </string-array>
     <string-array name="fft_len">
+        <item>FFT LENGTH::0</item>
         <item>512::512</item>
         <item>1024::1024</item>
         <item>2048::2048</item>
@@ -63,6 +65,7 @@
         <item>8192::8192</item>
     </string-array>
     <string-array name="fft_ave_num">
+        <item>N AVERAGE::0</item>
         <item>1::1</item>
         <item>2::2</item>
         <item>4::4</item>

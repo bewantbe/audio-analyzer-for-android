@@ -100,6 +100,7 @@ public class AnalyzeActivity extends Activity
   private boolean isAWeighting = false;
   
   float listItemTextSize = 20;  // XXX define it in res
+  float listItemTitleTextSize = 12;
 
   PopupWindow popupMenuSampleRate;
   PopupWindow popupMenuFFTLen;
@@ -126,9 +127,17 @@ public class AnalyzeActivity extends Activity
     Paint mTestPaint = new Paint();
     mTestPaint.setTextSize(listItemTextSize);
     float w = 0;
+    float wi;
     for (int i = 0; i < popUpContents.length; i++) {
-      String st = popUpContents[i].split("::")[0];
-      float wi = mTestPaint.measureText(st);
+      String sts[] = popUpContents[i].split("::");
+      String st = sts[0];
+      if (sts.length == 2 && sts[1].equals("0")) {
+        mTestPaint.setTextSize(listItemTitleTextSize);
+        wi = mTestPaint.measureText(st);
+        mTestPaint.setTextSize(listItemTextSize);
+      } else {
+        wi = mTestPaint.measureText(st);
+      }
       if (w < wi) {
         w = wi;
       }
@@ -172,12 +181,21 @@ public class AnalyzeActivity extends Activity
           // visual settings for the list item
           TextView listItem = new TextView(AnalyzeActivity.this);
 
-          listItem.setText(text);
-          listItem.setTag(id);
-          listItem.setTextSize(listItemTextSize);
-          listItem.setPadding(5, 5, 5, 5);
-          listItem.setTextColor(Color.WHITE);
-          listItem.setGravity(android.view.Gravity.CENTER);
+          if (id.equals("0")) {
+            listItem.setText(text);
+            listItem.setTag(id);
+            listItem.setTextSize(listItemTitleTextSize);
+            listItem.setPadding(5, 5, 5, 5);
+            listItem.setTextColor(Color.GREEN);
+            listItem.setGravity(android.view.Gravity.CENTER);
+          } else {
+            listItem.setText(text);
+            listItem.setTag(id);
+            listItem.setTextSize(listItemTextSize);
+            listItem.setPadding(5, 5, 5, 5);
+            listItem.setTextColor(Color.WHITE);
+            listItem.setGravity(android.view.Gravity.CENTER);
+          }
           
           return listItem;
         }
@@ -298,6 +316,13 @@ public class AnalyzeActivity extends Activity
   // read chosen preference, save the preference, set the state.
   @Override
   public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+    // get the tag, which is the value we are going to use
+    String selectedItemTag = ((TextView) v).getTag().toString();
+    // if tag() is "0" then do not update anything (it is a title)
+    if (selectedItemTag.equals("0")) {
+      return ;
+    }
+
     // get the text and set it as the button text
     String selectedItemText = ((TextView) v).getText().toString();
 
@@ -306,8 +331,6 @@ public class AnalyzeActivity extends Activity
     buttonView.setText(selectedItemText);
 
     boolean b_need_restart_audio;
-    // get the tag, which is the value we are going to use
-    String selectedItemTag = ((TextView) v).getTag().toString();
 
     SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
     SharedPreferences.Editor editor = sharedPref.edit();
@@ -337,7 +360,6 @@ public class AnalyzeActivity extends Activity
       b_need_restart_audio = false;
     }
 
-//    Toast.makeText(this, "Dog ID is: " + selectedItemTag, Toast.LENGTH_SHORT).show();
     editor.commit();
     
     if (b_need_restart_audio) {
@@ -813,8 +835,12 @@ public class AnalyzeActivity extends Activity
       } else {
         rate = Integer.parseInt(sv[1]);
       }
-      if (AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT) != AudioRecord.ERROR_BAD_VALUE) {
+      if (rate != 0) {
+        if (AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
+              AudioFormat.ENCODING_PCM_16BIT) != AudioRecord.ERROR_BAD_VALUE) {
+          validated.add(s);
+        }
+      } else {
         validated.add(s);
       }
     }
@@ -1070,7 +1096,7 @@ public class AnalyzeActivity extends Activity
 //              + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
 //              + " sampleRate = " + Math.round(actualSampleRate*100)/100.0);
           if (nSamplesFromTime > bufferSampleSize + nSamplesRead) {
-            Log.w(TAG, "Buffer Overrun occured !\n"
+            Log.w(TAG, "Looper::run(): Buffer Overrun occured !\n"
                 + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
                 + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
                 + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
@@ -1084,7 +1110,12 @@ public class AnalyzeActivity extends Activity
           if (nSamplesRead > 10*sampleRate) {
             actualSampleRate = 0.9*actualSampleRate + 0.1*(nSamplesRead * 1000.0 / (timeNow - startTimeMs));
             if (Math.abs(actualSampleRate-sampleRate) > 0.0145*sampleRate) {  // 0.0145 = 25 cent
-              Log.w(TAG, "Looper::run(): Sample rate inaccurate, possible hardware problem !\n");
+              Log.w(TAG, "Looper::run(): Sample rate inaccurate, possible hardware problem !\n"
+                  + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
+                  + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
+                  + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
+                  + " sampleRate = " + Math.round(actualSampleRate*100)/100.0
+                  + "\n Overrun counter reseted.");
               nSamplesRead = 0;
             }
           }

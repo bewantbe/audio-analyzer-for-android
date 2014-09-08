@@ -111,9 +111,9 @@
 		        android:layout_height="wrap_content"
 		        android:layout_margin="4dp"
 		        android:tag="select"
-		        android:text="view"
+		        android:text="cur"
 		        android:textSize="21sp"
-		        custom:items="view scale" />
+		        custom:items="cur scale" />
 		
 		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
 		        android:id="@+id/run"
