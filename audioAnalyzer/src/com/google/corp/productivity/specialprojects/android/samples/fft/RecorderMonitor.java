@@ -19,7 +19,8 @@ public class RecorderMonitor {
     timeUpdateInterval = 2000;
     TAG = TAG1 + TAG0;
   }
-  
+
+  // When start recording, call this
   public void start() {
     nSamplesRead = 0;
     lastOverrunTime = 0;
@@ -28,7 +29,8 @@ public class RecorderMonitor {
     sampleRateReal = sampleRate;
   }
 
-  // return if is overrun
+  // Input number of audio frames read
+  // Return if overrun is occured
   public boolean updateState(int numOfReadShort) {
     long timeNow = SystemClock.uptimeMillis();
     if (nSamplesRead == 0) {      // get overrun checker synchronized
@@ -58,8 +60,6 @@ public class RecorderMonitor {
           + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
           + " sampleRate = " + Math.round(sampleRateReal*100)/100.0
           + "\n Overrun counter reseted.");
-      // XXX log somewhere to the file or notify the user
-      //notifyOverrun();
       lastOverrunTime = timeNow;
       nSamplesRead = 0;  // start over
     }

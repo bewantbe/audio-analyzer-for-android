@@ -16,12 +16,13 @@ public class FramesPerSecondCounter {
     timeOld = SystemClock.uptimeMillis();
   }
   
+  // call this when number of frames plus one
   public void inc() {
     frameCount++;
     long timeNow = SystemClock.uptimeMillis();
     if (timeOld + timeUpdateInterval <= timeNow) {
       fps = 1000 * (double) frameCount / (timeNow - timeOld);
-      Log.i(TAG_OUTSIDE, "FPS: " + Math.round(10*fps)/10.0 +
+      Log.i(TAG_OUTSIDE, "FPS: " + Math.round(100*fps)/100.0 +
             " (" + frameCount + "/" + (timeNow - timeOld) + "ms)");
       timeOld = timeNow;
       frameCount = 0;

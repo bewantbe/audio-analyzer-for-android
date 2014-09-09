@@ -86,9 +86,9 @@ public class AnalyzeActivity extends Activity
   private final static int BYTE_OF_SAMPLE = 2;
   
   private static int fftLen = 2048;
-  private static int sampleRate = 8000;
-  private static String wndFuncName;
+  private static int sampleRate = 16000;
   private static int nFFTAverage = 2;
+  private static String wndFuncName;
 
   private static boolean showLines;
   private static boolean bSaveWav;
@@ -97,110 +97,13 @@ public class AnalyzeActivity extends Activity
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
   
-  float listItemTextSize = 20;  // XXX define it in res
+  float listItemTextSize = 20;
   float listItemTitleTextSize = 12;
 
   PopupWindow popupMenuSampleRate;
   PopupWindow popupMenuFFTLen;
   PopupWindow popupMenuAverage;
   
-  public PopupWindow popupMenuCreate(String[] popUpContents, int resId) {
-    
-    // initialize a pop up window type
-    PopupWindow popupWindow = new PopupWindow(this);
-
-    // the drop down list is a list view
-    ListView listView = new ListView(this);
-    
-    // set our adapter and pass our pop up window contents
-    ArrayAdapter<String> aa = popupMenuAdapter(popUpContents);
-    listView.setAdapter(aa);
-    
-    // set the item click listener
-    listView.setOnItemClickListener(this);
-
-    listView.setTag(resId);  // button res ID, so we can trace back which button is pressed
-    
-    // get max text width
-    Paint mTestPaint = new Paint();
-    mTestPaint.setTextSize(listItemTextSize);
-    float w = 0;
-    float wi;
-    for (int i = 0; i < popUpContents.length; i++) {
-      String sts[] = popUpContents[i].split("::");
-      String st = sts[0];
-      if (sts.length == 2 && sts[1].equals("0")) {
-        mTestPaint.setTextSize(listItemTitleTextSize);
-        wi = mTestPaint.measureText(st);
-        mTestPaint.setTextSize(listItemTextSize);
-      } else {
-        wi = mTestPaint.measureText(st);
-      }
-      if (w < wi) {
-        w = wi;
-      }
-    }
-    
-    // left and right padding, at least +7, or the whole app will stop respond, don't know why
-    w = w + 25;
-    if (w < 60) {
-      w = 60;
-    }
-
-    // some other visual settings
-    popupWindow.setFocusable(true);
-    popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
-    // Set window width according to max text width
-    popupWindow.setWidth((int)(w));
-    // also set button width
-    ((Button) findViewById(resId)).setWidth((int)w);
-    // Set the text on button in updatePreferenceSaved()
-    
-    // set the list view as pop up window content
-    popupWindow.setContentView(listView);
-    
-    return popupWindow;
-  }
-  
-  /*
-   * adapter where the list values will be set
-   */
-  private ArrayAdapter<String> popupMenuAdapter(String itemTagArray[]) {
-    ArrayAdapter<String> adapter =
-      new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, itemTagArray) {
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-          // setting the ID and text for every items in the list
-          String item = getItem(position);
-          String[] itemArr = item.split("::");
-          String text = itemArr[0];
-          String id = itemArr[1];
-
-          // visual settings for the list item
-          TextView listItem = new TextView(AnalyzeActivity.this);
-
-          if (id.equals("0")) {
-            listItem.setText(text);
-            listItem.setTag(id);
-            listItem.setTextSize(listItemTitleTextSize);
-            listItem.setPadding(5, 5, 5, 5);
-            listItem.setTextColor(Color.GREEN);
-            listItem.setGravity(android.view.Gravity.CENTER);
-          } else {
-            listItem.setText(text);
-            listItem.setTag(id);
-            listItem.setTextSize(listItemTextSize);
-            listItem.setPadding(5, 5, 5, 5);
-            listItem.setTextColor(Color.WHITE);
-            listItem.setGravity(android.view.Gravity.CENTER);
-          }
-          
-          return listItem;
-        }
-      };
-    return adapter;
-  }
-
   @Override
   public void onCreate(Bundle savedInstanceState) {
 //  Debug.startMethodTracing("calc");
@@ -242,9 +145,6 @@ public class AnalyzeActivity extends Activity
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
 
     setTextViewFontSize();
-    
-    // XXX :
-    graphView.switch2Spectrogram(sampleRate, fftLen);
   }
 
   // Set text font size of textview_cur and textview_peak
@@ -278,92 +178,6 @@ public class AnalyzeActivity extends Activity
 
   }
   
-  @SuppressWarnings("deprecation")
-  public void showPopupMenu(View view) {
-    // popup menu position
-    // In API 19, we can use showAsDropDown(View anchor, int xoff, int yoff, int gravity)
-    // The problem in showAsDropDown (View anchor, int xoff, int yoff) is
-    // it may show the window in wrong direction (so that we can't see it)
-    int[] wl = new int[2];
-    view.getLocationInWindow(wl);
-    int x_left = wl[0];
-    int y_bottom = getWindowManager().getDefaultDisplay().getHeight() - wl[1];
-    int gravity = android.view.Gravity.LEFT | android.view.Gravity.BOTTOM;
-    Log.i(TAG, " showPupupMenu()");
-    Log.i(TAG, " wl = " + wl[0] + ", " + wl[1]);
-    
-    switch (view.getId()) {
-    case R.id.button_sample_rate:
-      popupMenuSampleRate.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuSampleRate.showAsDropDown(view, 0, 0);
-      break;
-    case R.id.button_fftlen:
-      popupMenuFFTLen.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuFFTLen.showAsDropDown(view, 0, 0);
-      break;
-    case R.id.button_average:
-      popupMenuAverage.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuAverage.showAsDropDown(view, 0, 0);
-      break;
-    }
-  }
-
-  // popup menu click listener
-  // read chosen preference, save the preference, set the state.
-  @Override
-  public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-    // get the tag, which is the value we are going to use
-    String selectedItemTag = ((TextView) v).getTag().toString();
-    // if tag() is "0" then do not update anything (it is a title)
-    if (selectedItemTag.equals("0")) {
-      return ;
-    }
-
-    // get the text and set it as the button text
-    String selectedItemText = ((TextView) v).getText().toString();
-
-    int buttonId = Integer.parseInt((parent.getTag().toString()));
-    Button buttonView = (Button) findViewById(buttonId);
-    buttonView.setText(selectedItemText);
-
-    boolean b_need_restart_audio;
-
-    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
-    SharedPreferences.Editor editor = sharedPref.edit();
-    
-    // dismiss the pop up
-    switch (buttonId) {
-    case R.id.button_sample_rate:
-      popupMenuSampleRate.dismiss();
-      sampleRate = Integer.parseInt(selectedItemTag);
-      b_need_restart_audio = true;
-      editor.putInt("button_sample_rate", sampleRate);
-      break;
-    case R.id.button_fftlen:
-      popupMenuFFTLen.dismiss();
-      fftLen = Integer.parseInt(selectedItemTag);
-      b_need_restart_audio = true;
-      editor.putInt("button_fftlen", fftLen);
-      break;
-    case R.id.button_average:
-      popupMenuAverage.dismiss();
-      nFFTAverage = Integer.parseInt(selectedItemTag);
-      b_need_restart_audio = false;
-      editor.putInt("button_average", nFFTAverage);
-      break;
-    default:
-      Log.w(TAG, "onItemClick(): no this button");
-      b_need_restart_audio = false;
-    }
-
-    editor.commit();
-    
-    if (b_need_restart_audio) {
-      reRecur();
-      updateAllLabels();
-    }
-  }
-
   /**
    * Run processClick() for views, transferring the state in the textView to our
    * internal state, then begin sampling and processing audio data
@@ -466,6 +280,190 @@ public class AnalyzeActivity extends Activity
       .create().show();
   }
 
+  @SuppressWarnings("deprecation")
+  public void showPopupMenu(View view) {
+    // popup menu position
+    // In API 19, we can use showAsDropDown(View anchor, int xoff, int yoff, int gravity)
+    // The problem in showAsDropDown (View anchor, int xoff, int yoff) is
+    // it may show the window in wrong direction (so that we can't see it)
+    int[] wl = new int[2];
+    view.getLocationInWindow(wl);
+    int x_left = wl[0];
+    int y_bottom = getWindowManager().getDefaultDisplay().getHeight() - wl[1];
+    int gravity = android.view.Gravity.LEFT | android.view.Gravity.BOTTOM;
+    Log.i(TAG, " showPupupMenu()");
+    Log.i(TAG, " wl = " + wl[0] + ", " + wl[1]);
+    
+    switch (view.getId()) {
+    case R.id.button_sample_rate:
+      popupMenuSampleRate.showAtLocation(view, gravity, x_left, y_bottom);
+//      popupMenuSampleRate.showAsDropDown(view, 0, 0);
+      break;
+    case R.id.button_fftlen:
+      popupMenuFFTLen.showAtLocation(view, gravity, x_left, y_bottom);
+//      popupMenuFFTLen.showAsDropDown(view, 0, 0);
+      break;
+    case R.id.button_average:
+      popupMenuAverage.showAtLocation(view, gravity, x_left, y_bottom);
+//      popupMenuAverage.showAsDropDown(view, 0, 0);
+      break;
+    }
+  }
+
+  // XXX, Maybe put this PopupWindow into a class
+  public PopupWindow popupMenuCreate(String[] popUpContents, int resId) {
+    
+    // initialize a pop up window type
+    PopupWindow popupWindow = new PopupWindow(this);
+
+    // the drop down list is a list view
+    ListView listView = new ListView(this);
+    
+    // set our adapter and pass our pop up window contents
+    ArrayAdapter<String> aa = popupMenuAdapter(popUpContents);
+    listView.setAdapter(aa);
+    
+    // set the item click listener
+    listView.setOnItemClickListener(this);
+
+    listView.setTag(resId);  // button res ID, so we can trace back which button is pressed
+    
+    // get max text width
+    Paint mTestPaint = new Paint();
+    mTestPaint.setTextSize(listItemTextSize);
+    float w = 0;
+    float wi;
+    for (int i = 0; i < popUpContents.length; i++) {
+      String sts[] = popUpContents[i].split("::");
+      String st = sts[0];
+      if (sts.length == 2 && sts[1].equals("0")) {
+        mTestPaint.setTextSize(listItemTitleTextSize);
+        wi = mTestPaint.measureText(st);
+        mTestPaint.setTextSize(listItemTextSize);
+      } else {
+        wi = mTestPaint.measureText(st);
+      }
+      if (w < wi) {
+        w = wi;
+      }
+    }
+    
+    // left and right padding, at least +7, or the whole app will stop respond, don't know why
+    w = w + 25;
+    if (w < 60) {
+      w = 60;
+    }
+
+    // some other visual settings
+    popupWindow.setFocusable(true);
+    popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+    // Set window width according to max text width
+    popupWindow.setWidth((int)(w));
+    // also set button width
+    ((Button) findViewById(resId)).setWidth((int)w);
+    // Set the text on button in updatePreferenceSaved()
+    
+    // set the list view as pop up window content
+    popupWindow.setContentView(listView);
+    
+    return popupWindow;
+  }
+  
+  /*
+   * adapter where the list values will be set
+   */
+  private ArrayAdapter<String> popupMenuAdapter(String itemTagArray[]) {
+    ArrayAdapter<String> adapter =
+      new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, itemTagArray) {
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+          // setting the ID and text for every items in the list
+          String item = getItem(position);
+          String[] itemArr = item.split("::");
+          String text = itemArr[0];
+          String id = itemArr[1];
+
+          // visual settings for the list item
+          TextView listItem = new TextView(AnalyzeActivity.this);
+
+          if (id.equals("0")) {
+            listItem.setText(text);
+            listItem.setTag(id);
+            listItem.setTextSize(listItemTitleTextSize);
+            listItem.setPadding(5, 5, 5, 5);
+            listItem.setTextColor(Color.GREEN);
+            listItem.setGravity(android.view.Gravity.CENTER);
+          } else {
+            listItem.setText(text);
+            listItem.setTag(id);
+            listItem.setTextSize(listItemTextSize);
+            listItem.setPadding(5, 5, 5, 5);
+            listItem.setTextColor(Color.WHITE);
+            listItem.setGravity(android.view.Gravity.CENTER);
+          }
+          
+          return listItem;
+        }
+      };
+    return adapter;
+  }
+
+  // popup menu click listener
+  // read chosen preference, save the preference, set the state.
+  @Override
+  public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+    // get the tag, which is the value we are going to use
+    String selectedItemTag = ((TextView) v).getTag().toString();
+    // if tag() is "0" then do not update anything (it is a title)
+    if (selectedItemTag.equals("0")) {
+      return ;
+    }
+
+    // get the text and set it as the button text
+    String selectedItemText = ((TextView) v).getText().toString();
+
+    int buttonId = Integer.parseInt((parent.getTag().toString()));
+    Button buttonView = (Button) findViewById(buttonId);
+    buttonView.setText(selectedItemText);
+
+    boolean b_need_restart_audio;
+
+    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPref.edit();
+    
+    // dismiss the pop up
+    switch (buttonId) {
+    case R.id.button_sample_rate:
+      popupMenuSampleRate.dismiss();
+      sampleRate = Integer.parseInt(selectedItemTag);
+      b_need_restart_audio = true;
+      editor.putInt("button_sample_rate", sampleRate);
+      break;
+    case R.id.button_fftlen:
+      popupMenuFFTLen.dismiss();
+      fftLen = Integer.parseInt(selectedItemTag);
+      b_need_restart_audio = true;
+      editor.putInt("button_fftlen", fftLen);
+      break;
+    case R.id.button_average:
+      popupMenuAverage.dismiss();
+      nFFTAverage = Integer.parseInt(selectedItemTag);
+      b_need_restart_audio = false;
+      editor.putInt("button_average", nFFTAverage);
+      break;
+    default:
+      Log.w(TAG, "onItemClick(): no this button");
+      b_need_restart_audio = false;
+    }
+
+    editor.commit();
+    
+    if (b_need_restart_audio) {
+      reRecur();
+      updateAllLabels();
+    }
+  }
+
   void updatePreferenceSaved() {
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     showLines   = sharedPref.getBoolean("showLines", false);
@@ -497,7 +495,8 @@ public class AnalyzeActivity extends Activity
     }
   }
   
-  // XXX, so ugly but work. Tell me if there is better way to do it.
+  // Get audio source name from its ID
+  // Tell me if there is better way to do it.
   private static String getAudioSourceNameFromId(int id) {
     for (int i = 0; i < as.length; i++) {
       if (asid[i] == id) {
@@ -577,7 +576,6 @@ public class AnalyzeActivity extends Activity
           isMeasure = !isMeasure;
           SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
-          Log.d(TAG, "  onDoubleTap(): ");
         } else {
           graphView.resetViewScale();
         }
@@ -588,7 +586,7 @@ public class AnalyzeActivity extends Activity
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2, 
             float velocityX, float velocityY) {
-      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
+//      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
       // Fly the canvas in graphView when in scale mode
       return true;
     }
@@ -639,7 +637,7 @@ public class AnalyzeActivity extends Activity
       xShift0 = INIT;
       yShift0 = INIT;
       isPinching = false;
-      Log.i(TAG, "scaleEvent(): Skip event " + event.getAction());
+//      Log.i(TAG, "scaleEvent(): Skip event " + event.getAction());
       return;
     }
 //    Log.i(TAG, "scaleEvent(): switch " + event.getAction());
@@ -694,7 +692,6 @@ public class AnalyzeActivity extends Activity
   // Called from SelectorText.super.performClick()
   @Override
   public void onClick(View v) {
-//    Log.i(TAG, "onClick(): " + v.toString());
     if (processClick(v)) {
       reRecur();
       updateAllLabels();
@@ -771,6 +768,7 @@ public class AnalyzeActivity extends Activity
       .setText("Cur :" + dfFreq.format(f1)+ "Hz(" + sCent + ") " + dfDB.format(graphView.getCursorY()) + "dB");
   }
 
+  // used to detect if the data is unchanged
   double[] cmpDB;
   public void sameTest(double[] data) {
     // test
@@ -794,10 +792,7 @@ public class AnalyzeActivity extends Activity
     }
   }
   
-  /**
-   * recompute the spectra "chart"
-   * @param data    The normalized FFT output
-   */
+  // Replot spectrum
   long timeToUpdate = SystemClock.uptimeMillis();; 
   public void rePlot() {
     long t = SystemClock.uptimeMillis();
@@ -816,6 +811,7 @@ public class AnalyzeActivity extends Activity
     }
   }
 
+  // Replot spectrum, do not limit frame rate 
   public void recompute(double[] data) {
   	if (graphView.isBusy() == true) {
   		Log.d(TAG, "recompute(): isBusy == true");  // seems it's never busy
@@ -825,8 +821,8 @@ public class AnalyzeActivity extends Activity
   }
   
   /**
-   * Return a verified audio sampling rates.
-   * @param requested
+   * Return a array of verified audio sampling rates.
+   * @param requested: the sampling rates to be verified
    */
   private static String[] validateAudioRates(String[] requested) {
     ArrayList<String> validated = new ArrayList<String>();
@@ -877,9 +873,9 @@ public class AnalyzeActivity extends Activity
   /**
    * Read a snapshot of audio data at a regular interval, and compute the FFT
    * @author suhler@google.com
-   *         xyy82148@gmail.com
+   *         bewantbe@gmail.com
    */
-  double[] spectrumDBcopy;
+  double[] spectrumDBcopy;   // XXX, transfers data from Looper to AnalyzeView
   
   public class Looper extends Thread {
     AudioRecord record;
@@ -889,10 +885,26 @@ public class AnalyzeActivity extends Activity
     double dtRMSFromFT = 0;
     double maxAmpDB;
     double maxAmpFreq;
-    double actualSampleRate;   // sample rate based on SystemClock.uptimeMillis()
     public STFT stft;   // use with care
 
+    DoubleSineGen sineGen1;
+    DoubleSineGen sineGen2;
+    double[] mdata;
+    
     public Looper() {
+      // Signal sources for testing
+      double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
+      double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
+      double fq1 = Double.parseDouble(getString(R.string.test_signal_2_freq1));
+      double fq2 = Double.parseDouble(getString(R.string.test_signal_2_freq2));
+      double amp1 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db1)));
+      double amp2 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db2)));
+      if (audioSourceId == 1000) {
+        sineGen1 = new DoubleSineGen(fq0, sampleRate, SAMPLE_VALUE_MAX * amp0);
+      } else {
+        sineGen1 = new DoubleSineGen(fq1, sampleRate, SAMPLE_VALUE_MAX * amp1);
+      }
+      sineGen2 = new DoubleSineGen(fq2, sampleRate, SAMPLE_VALUE_MAX * amp2);
     }
 
     private void SleepWithoutInterrupt(long millis) {
@@ -923,13 +935,11 @@ public class AnalyzeActivity extends Activity
       }
     }
     
-    DoubleSineGen sineGen1;
-    DoubleSineGen sineGen2;
-    double[] mdata;
-    double fq0, amp0;
-    
     // generate test data
     private int readTestData(short[] a, int offsetInShorts, int sizeInShorts, int id) {
+      if (mdata == null || mdata.length != sizeInShorts) {
+        mdata = new double[sizeInShorts];
+      }
       Arrays.fill(mdata, 0.0);
       switch (id - 1000) {
         case 1:
@@ -970,11 +980,11 @@ public class AnalyzeActivity extends Activity
        *    Data should be read from the audio hardware in chunks of sizes
        *    inferior to the total recording buffer size.
        */
-      // Determine size of each read() operation
+      // Determine size of buffers for AudioRecord and AudioRecord::read()
       int readChunkSize    = fftLen/2;  // /2 due to overlapped analyze window
-      readChunkSize = Math.min(readChunkSize, 2048);
+      readChunkSize        = Math.min(readChunkSize, 2048);  // read in a smaller chunk, hopefully smaller delay
       int bufferSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen/2) * 2;
-      // tolerate up to 1 sec.
+      // tolerate up to about 1 sec.
       bufferSampleSize = (int)Math.ceil(1.0 * sampleRate / bufferSampleSize) * bufferSampleSize; 
 
       // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
@@ -985,7 +995,7 @@ public class AnalyzeActivity extends Activity
                                  AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
       } else {
         record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
+                                 AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
       }
       Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
         "  source          : " + (audioSourceId<1000?getAudioSourceNameFromId(audioSourceId):audioSourceId) + "\n" +
@@ -996,28 +1006,12 @@ public class AnalyzeActivity extends Activity
         String.format("  FFT length      : %d\n", fftLen) +
         String.format("  nFFTAverage     : %d\n", nFFTAverage));
       sampleRate = record.getSampleRate();
-      actualSampleRate = sampleRate;
 
-      if (record == null || record.getState() == AudioRecord.STATE_UNINITIALIZED) {
+      if (record.getState() == AudioRecord.STATE_UNINITIALIZED) {
         Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()");
-        // If failed somehow, leave the user a chance to change preference.
+        // If failed somehow, leave user a chance to change preference.
         return;
       }
-
-      // Signal source for testing
-      double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
-      double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
-      double fq1 = Double.parseDouble(getString(R.string.test_signal_2_freq1));
-      double fq2 = Double.parseDouble(getString(R.string.test_signal_2_freq2));
-      double amp1 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db1)));
-      double amp2 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db2)));
-      if (audioSourceId == 1000) {
-        sineGen1 = new DoubleSineGen(fq0, sampleRate, SAMPLE_VALUE_MAX * amp0);
-      } else {
-        sineGen1 = new DoubleSineGen(fq1, sampleRate, SAMPLE_VALUE_MAX * amp1);
-      }
-      sineGen2 = new DoubleSineGen(fq2, sampleRate, SAMPLE_VALUE_MAX * amp2);
-      mdata = new double[readChunkSize];
 
       short[] audioSamples = new short[readChunkSize];
       int numOfReadShort;
@@ -1032,9 +1026,10 @@ public class AnalyzeActivity extends Activity
       FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
       
       WavWriter wavWriter = new WavWriter(sampleRate);
-      boolean bSaveWavLoop = bSaveWav;
+      boolean bSaveWavLoop = bSaveWav;  // change of bSaveWav during loop will only affect next enter.
       if (bSaveWavLoop) {
         wavWriter.start();
+        Log.i(TAG, "PCM Write to file " + wavWriter.getPath());
         isPaused1 = true;
       }
 
@@ -1042,8 +1037,9 @@ public class AnalyzeActivity extends Activity
       record.startRecording();
 
       // Main loop
-      // When running in this loop (including when paused), you can not
-      // change properties related to recorder: e.g. audioSourceId, sampleRate, bufferSampleSize
+      // When running in this loop (including when paused), you can not change properties
+      // related to recorder: e.g. audioSourceId, sampleRate, bufferSampleSize
+      // TODO: allow change of FFT length on the fly.
       while (isRunning) {
         // Read data
         if (audioSourceId >= 1000) {
@@ -1057,10 +1053,10 @@ public class AnalyzeActivity extends Activity
         if (bSaveWavLoop) {
           wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // XXX, Maybe move this to another thread?
         }
-
         if (isPaused1) {
           fpsCounter.inc();
-          continue;  // keep reading data, so overrun checker data still valid
+          // keep reading data, for overrun checker and for write wav data
+          continue;
         }
 
         stft.feedData(audioSamples, numOfReadShort);
@@ -1149,7 +1145,6 @@ public class AnalyzeActivity extends Activity
 
     public void setPause(boolean pause) {
       this.isPaused1 = pause;
-      // Note: When paused (or not), it is not allowed to change the recorder (sample rate, fftLen etc.)
     }
 
     public boolean getPause() {

@@ -17,6 +17,7 @@
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -24,7 +25,6 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.RotateAnimation;
@@ -56,6 +56,7 @@ public class SelectorText extends TextView {
     setup(context, null);
   }
   
+  @SuppressLint("ClickableViewAccessibility")
   @Override
   public boolean performClick() {
     setText(getText());  // fix the no-animation bug
@@ -82,7 +83,7 @@ public class SelectorText extends TextView {
   
   private Animation createAnimation(boolean start, int millis) {
     RotateAnimation ra = new RotateAnimation(start?0f:180f, start?180f:360f, getWidth()/2, getHeight()/2);
-    Log.d("SelectorText", "  createAnimation(): ");
+//    Log.d("SelectorText", "  createAnimation(): ");
     ra.setDuration(millis);
     setAnimation(ra);
     return ra;
@@ -136,7 +137,7 @@ public class SelectorText extends TextView {
       String items = a.getString(R.styleable.SelectorText_items);
       String delim = getValue(a, R.styleable.SelectorText_itemDelim, " ");
       if (items != null) {
-        Log.i(AnalyzeActivity.TAG, "items: " + items);
+//        Log.i(AnalyzeActivity.TAG, "items: " + items);
         setValues(items.split(delim));
       }
       a.recycle();

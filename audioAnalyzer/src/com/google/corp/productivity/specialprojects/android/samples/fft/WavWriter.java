@@ -115,7 +115,7 @@ public class WavWriter {
       Log.w(TAG, "stop(): Error closing " + outPath, e);
     }
     out = null;
-    // XXX, modify totalDataLen and totalAudioLen
+    // Modify totalDataLen and totalAudioLen to match data
     RandomAccessFile raf;
     try {
       totalAudioLen = framesWrited * RECORDER_BPP / 8 * channels;
@@ -167,6 +167,10 @@ public class WavWriter {
       return true;
     }
     return false;
+  }
+  
+  public String getPath() {
+    return outPath.getPath();
   }
   
 }
