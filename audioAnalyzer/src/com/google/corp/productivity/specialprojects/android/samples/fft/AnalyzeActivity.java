@@ -291,8 +291,6 @@ public class AnalyzeActivity extends Activity
     int x_left = wl[0];
     int y_bottom = getWindowManager().getDefaultDisplay().getHeight() - wl[1];
     int gravity = android.view.Gravity.LEFT | android.view.Gravity.BOTTOM;
-    Log.i(TAG, " showPupupMenu()");
-    Log.i(TAG, " wl = " + wl[0] + ", " + wl[1]);
     
     switch (view.getId()) {
     case R.id.button_sample_rate:
@@ -796,10 +794,16 @@ public class AnalyzeActivity extends Activity
   long timeToUpdate = SystemClock.uptimeMillis();; 
   public void rePlot() {
     long t = SystemClock.uptimeMillis();
+    long frameTime;
+    if (graphView.getShowMode() != 0) {
+      frameTime = 200;  // use a much lower frame rate for spectrogram
+    } else {
+      frameTime = 50;
+    }
     if (t >= timeToUpdate) {  // limit frame rate
-      timeToUpdate += 60;
+      timeToUpdate += frameTime;
       if (timeToUpdate < t) {
-        timeToUpdate = t+60;
+        timeToUpdate = t+frameTime;
       }
       if (graphView.isBusy() == true) {
         Log.d(TAG, "recompute(): isBusy == true");
