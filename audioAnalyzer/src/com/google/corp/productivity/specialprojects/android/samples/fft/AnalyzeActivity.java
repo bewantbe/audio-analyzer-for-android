@@ -741,7 +741,7 @@ public class AnalyzeActivity extends Activity
         }
         return false;
       case R.id.spectrum_spectrogram_mode:
-        if (value.equals("Sptr")) {
+        if (value.equals("spum")) {
           graphView.switch2Spectrum();
         } else {
           graphView.switch2Spectrogram(sampleRate, fftLen);
@@ -998,9 +998,6 @@ public class AnalyzeActivity extends Activity
         return;
       }
 
-      WavWriter ww = new WavWriter(sampleRate);
-      ww.start();
-
       // Signal source for testing
       double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
       double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
@@ -1023,48 +1020,48 @@ public class AnalyzeActivity extends Activity
       stft.setAWeighting(isAWeighting);
       spectrumDBcopy = new double[fftLen/2+1];
 
-      // Variables for count FPS, and Debug
-      long timeNow;
-      long timeDebugInterval = 2000;                     // output debug information per timeDebugInterval ms 
-      long time4SampleCount = SystemClock.uptimeMillis();
-      int frameCount = 0;
+      RecorderMonitor recorderMonitor = new RecorderMonitor(sampleRate, bufferSampleSize, "Looper::run()");
+      recorderMonitor.start();
+      
+      FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
+      
+      WavWriter wavWriter = new WavWriter(sampleRate);
+      wavWriter.start();
 
       // Start recording
       record.startRecording();
-      long startTimeMs = SystemClock.uptimeMillis();     // time of recording start
-      long nSamplesRead = 0;         // It's will overflow after millions of years of recording
 
+      // Main loop
+      // When running in this loop (including when paused), you can not
+      // change properties related to recorder: e.g. audioSourceId, sampleRate, bufferSampleSize
       while (isRunning) {
         // Read data
-        if (audioSourceId >= 1000) {  // switch test mode need restart
+        if (audioSourceId >= 1000) {
           numOfReadShort = readTestData(audioSamples, 0, readChunkSize, audioSourceId);
         } else {
           numOfReadShort = record.read(audioSamples, 0, readChunkSize);   // pulling
         }
-        // Log.i(TAG, "Read: " + Integer.toString(numOfReadShort) + " samples");
-        timeNow = SystemClock.uptimeMillis();
-        if (nSamplesRead == 0) {      // get overrun checker synchronized
-          startTimeMs = timeNow - numOfReadShort*1000/sampleRate;
+        if ( recorderMonitor.updateState(numOfReadShort) ) {
+          notifyOverrun();
         }
-        nSamplesRead += numOfReadShort;
-        ww.pushAudioShort(audioSamples);
+        //wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // XXX, Maybe move this to another thread?
+
         if (isPaused1) {
+          fpsCounter.inc();
           continue;  // keep reading data, so overrun checker data still valid
         }
+
         stft.feedData(audioSamples, numOfReadShort);
 
         // If there is new spectrum data, do plot
         if (stft.nElemSpectrumAmp() >= nFFTAverage) {
-          // compute Root-Mean-Square
-          dtRMS = stft.getRMS();
-
-          // Update graph plot
+          // Update spectrum or spectrogram
           final double[] spectrumDB = stft.getSpectrumAmpDB();
           System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
           update(spectrumDBcopy);
-          frameCount++;
+          fpsCounter.inc();
 
-          // Count and show peak amplitude
+          // Find and show peak amplitude
           maxAmpDB  = 20 * Math.log10(0.5/32768);
           maxAmpFreq = 0;
           for (int i = 1; i < spectrumDB.length; i++) {  // skip the direct current term
@@ -1074,53 +1071,14 @@ public class AnalyzeActivity extends Activity
             }
           }
           maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
+
+          // get RMS
+          dtRMS = stft.getRMS();
           dtRMSFromFT = stft.getRMSFromFT();
         }
-
-        // Show debug information
-        if (time4SampleCount + timeDebugInterval <= timeNow) {
-          // Count and show FPS
-          double fps = 1000 * (double) frameCount / (timeNow - time4SampleCount);
-          Log.i(TAG, "FPS: " + Math.round(10*fps)/10.0 +
-                " (" + frameCount + "/" + (timeNow - time4SampleCount) + "ms)");
-          time4SampleCount += timeDebugInterval;
-          frameCount = 0;
-          // Check whether buffer overrun occur
-          long nSamplesFromTime = (long)((timeNow - startTimeMs) * actualSampleRate / 1000);
-          double f1 = (double) nSamplesRead / actualSampleRate;
-          double f2 = (double) nSamplesFromTime / actualSampleRate;
-//          Log.i(TAG, "Buffer"
-//              + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
-//              + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
-//              + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
-//              + " sampleRate = " + Math.round(actualSampleRate*100)/100.0);
-          if (nSamplesFromTime > bufferSampleSize + nSamplesRead) {
-            Log.w(TAG, "Looper::run(): Buffer Overrun occured !\n"
-                + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
-                + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
-                + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
-                + " sampleRate = " + Math.round(actualSampleRate*100)/100.0
-                + "\n Overrun counter reseted.");
-            // XXX log somewhere to the file or notify the user
-            notifyOverrun();
-            nSamplesRead = 0;  // start over
-          }
-          // Update actual sample rate
-          if (nSamplesRead > 10*sampleRate) {
-            actualSampleRate = 0.9*actualSampleRate + 0.1*(nSamplesRead * 1000.0 / (timeNow - startTimeMs));
-            if (Math.abs(actualSampleRate-sampleRate) > 0.0145*sampleRate) {  // 0.0145 = 25 cent
-              Log.w(TAG, "Looper::run(): Sample rate inaccurate, possible hardware problem !\n"
-                  + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
-                  + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
-                  + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
-                  + " sampleRate = " + Math.round(actualSampleRate*100)/100.0
-                  + "\n Overrun counter reseted.");
-              nSamplesRead = 0;
-            }
-          }
-        }
       }
-      ww.stop();
+      wavWriter.stop();
+      Log.i(TAG, "Looper::Run(): Actual sample rate: " + recorderMonitor.getSampleRate());
       Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
       record.stop();
       record.release();

@@ -137,14 +137,14 @@ public class WavWriter {
     }
   }
 
-  public void pushAudioShort(short[] ss) {
+  public void pushAudioShort(short[] ss, int numOfReadShort) {
     if (out == null) {
       Log.w(TAG, "pushAudioShort(): Error writing " + outPath + "  null pointer");
       return;
     }
     try {
-      framesWrited += ss.length;
-      for (int i = 0; i < ss.length; i++) {
+      framesWrited += numOfReadShort;
+      for (int i = 0; i < numOfReadShort; i++) {
         out.write((byte)(ss[i] & 0xff));
         out.write((byte)((ss[i]>>8) & 0xff));
       }
