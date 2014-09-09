@@ -52,6 +52,16 @@
         android:orientation="horizontal"
         android:gravity="center" >
 
+		    <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+		        android:id="@+id/button_recording"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:layout_margin="4dp"
+		        android:tag="select"
+		        android:text="Mon"
+		        android:textSize="20sp"
+		        custom:items="Mon Rec" />
+
         <Button
             android:id="@+id/button_sample_rate"
             android:layout_width="wrap_content"

@@ -137,17 +137,23 @@ public class WavWriter {
     }
   }
 
+  byte[] byteBuffer;
   public void pushAudioShort(short[] ss, int numOfReadShort) {
     if (out == null) {
       Log.w(TAG, "pushAudioShort(): Error writing " + outPath + "  null pointer");
       return;
     }
+    if (byteBuffer == null || byteBuffer.length != ss.length*2) {
+      byteBuffer = new byte[ss.length*2];
+    }
+    for (int i = 0; i < numOfReadShort; i++) {
+      byteBuffer[2*i+0] = (byte)(ss[i] & 0xff);
+      byteBuffer[2*i+1] = (byte)((ss[i]>>8) & 0xff);
+    }
+    framesWrited += numOfReadShort;
     try {
-      framesWrited += numOfReadShort;
-      for (int i = 0; i < numOfReadShort; i++) {
-        out.write((byte)(ss[i] & 0xff));
-        out.write((byte)((ss[i]>>8) & 0xff));
-      }
+      out.write(byteBuffer, 0, numOfReadShort*2);
+      // if use out.write(byte), then a lot of GC will generated
     } catch (IOException e) {
       Log.w(TAG, "pushAudioShort(): Error writing " + outPath, e);
       out = null;

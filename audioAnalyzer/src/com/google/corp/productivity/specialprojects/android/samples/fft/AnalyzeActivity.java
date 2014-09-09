@@ -91,6 +91,7 @@ public class AnalyzeActivity extends Activity
   private static int nFFTAverage = 2;
 
   private static boolean showLines;
+  private static boolean bSaveWav;
   //private boolean isTesting = false;
   private static int audioSourceId = RECORDER_AGC_OFF;
   private boolean isMeasure = true;
@@ -264,16 +265,14 @@ public class AnalyzeActivity extends Activity
     px = display.getWidth() - px - 5;  // pixels left
     
     // At this point tv.getWidth(), tv.getLineCount() will return 0
-    Log.i(TAG, "  px = " + px);
-    Log.i(TAG, "  mTestPaint.measureText(text) = " + mTestPaint.measureText(text));
     
     float fs = tv.getTextSize();
-    Log.i(TAG, "  fs_0 = " + fs);
+    Log.i(TAG, "  font size before = " + fs);
     while (mTestPaint.measureText(text) > px && fs > 5) {
       fs -= 0.5;
       mTestPaint.setTextSize(fs);
     }
-    Log.i(TAG, "  fs_1 = " + fs);
+    Log.i(TAG, "  font size after = " + fs);
     ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs);
     ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs);
 
@@ -725,6 +724,13 @@ public class AnalyzeActivity extends Activity
   public boolean processClick(View v) {
     String value = ((TextView) v).getText().toString();
     switch (v.getId()) {
+      case R.id.button_recording:
+        bSaveWav = value.equals("Rec");
+        SelectorText st = (SelectorText) findViewById(R.id.run);
+        if (bSaveWav && ! st.getText().toString().equals("stop")) {
+          st.nextValue();
+        }
+        return true;
       case R.id.run:
         boolean pause = value.equals("stop");
         if (samplingThread != null && samplingThread.getPause() != pause) {
@@ -765,10 +771,6 @@ public class AnalyzeActivity extends Activity
       .setText("Cur :" + dfFreq.format(f1)+ "Hz(" + sCent + ") " + dfDB.format(graphView.getCursorY()) + "dB");
   }
 
-  /**
-   * recompute the spectra "chart"
-   * @param data    The normalized FFT output
-   */
   double[] cmpDB;
   public void sameTest(double[] data) {
     // test
@@ -792,6 +794,10 @@ public class AnalyzeActivity extends Activity
     }
   }
   
+  /**
+   * recompute the spectra "chart"
+   * @param data    The normalized FFT output
+   */
   long timeToUpdate = SystemClock.uptimeMillis();; 
   public void rePlot() {
     long t = SystemClock.uptimeMillis();
@@ -1026,7 +1032,11 @@ public class AnalyzeActivity extends Activity
       FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
       
       WavWriter wavWriter = new WavWriter(sampleRate);
-      wavWriter.start();
+      boolean bSaveWavLoop = bSaveWav;
+      if (bSaveWavLoop) {
+        wavWriter.start();
+        isPaused1 = true;
+      }
 
       // Start recording
       record.startRecording();
@@ -1044,7 +1054,9 @@ public class AnalyzeActivity extends Activity
         if ( recorderMonitor.updateState(numOfReadShort) ) {
           notifyOverrun();
         }
-        //wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // XXX, Maybe move this to another thread?
+        if (bSaveWavLoop) {
+          wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // XXX, Maybe move this to another thread?
+        }
 
         if (isPaused1) {
           fpsCounter.inc();
@@ -1077,12 +1089,14 @@ public class AnalyzeActivity extends Activity
           dtRMSFromFT = stft.getRMSFromFT();
         }
       }
-      wavWriter.stop();
       Log.i(TAG, "Looper::Run(): Actual sample rate: " + recorderMonitor.getSampleRate());
       Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
       record.stop();
       record.release();
       record = null;
+      if (bSaveWavLoop) {
+        wavWriter.stop();
+      }
     }
     
     long lastTimeNotifyOverrun = 0;

@@ -4,40 +4,34 @@
     <string name="app_name">Audio Spectrum Analyzer 0.2</string>
     <string name="instructions_text">      &lt;h2&gt;Important notes&lt;/h2&gt;
       All the dB in this software are Decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustics dB (e.g. dB SPL or dBA).
+      &lt;br/&gt;
       A full-scale sine wave is designated 0 dBFS.
+      &lt;br/&gt;
       The dBA in this software is a simple minded A-weighting dBFS.
-      &lt;h2&gt;Select button operation&lt;/h2&gt;
-      Click on a button to cycle through a set of possible values.  The buttons are:
+      &lt;br/&gt;
+      The calculation of spectrum (and spectrogram) is done through FFT with chosen window function and with a 50% data overlap.
+      &lt;br/&gt;
+      This software have a high power consumption.
+      &lt;br/&gt;
+      &lt;h2&gt;Button operation&lt;/h2&gt;
+      &lt;font color=&quot;red&quot;&gt;spum/spam&lt;/font&gt;
+      &lt;br/&gt;&lt;b&gt;spum&lt;/b&gt;: Show the &lt;b&gt;sp&lt;/b&gt;ectr&lt;b&gt;um&lt;/b&gt; at each time point.
+      &lt;br/&gt;&lt;b&gt;spam&lt;/b&gt;: Show the &lt;b&gt;sp&lt;/b&gt;ectrogr&lt;b&gt;am&lt;/b&gt; in a duration. The color represent strength of the sound at certain frequency and certain time. 
       &lt;p/&gt;
-      &lt;font color=&quot;red&quot;&gt;Sampling Rate&lt;/font&gt;
-      &lt;br/&gt;Selects the sampling rate, in samples/second
+      Note: &lt;b&gt;spam&lt;/b&gt; mode cost more power than &lt;b&gt;spum&lt;/b&gt; mode, and counld exhaust all you computing power(CPU/GPU) at high sampling rate (you will receive a &quot;Recorder buffer overrun&quot; warning).
       &lt;p/&gt;
-      &lt;font color=&quot;red&quot;&gt;Sample Resolution&lt;/font&gt;
-      &lt;br/&gt;Selects the number of frequency bins. More bins provides better resolution, but takes more compute power and slower responds.
+      &lt;font color=&quot;red&quot;&gt;dB/dBA&lt;/font&gt;
+      &lt;br/&gt;Switch between dBFS and A-weighting dBFS. dBA is widely used in environmental noise measurement. But here dBA is only for reference (simple minded A-weighting dBFS, instead of acoustics dBA).
       &lt;p/&gt;
-      &lt;font color=&quot;red&quot;&gt;Magnitude Scale&lt;/font&gt;
-      &lt;br/&gt;Selects minimum value displayed (in dB)
-      &lt;p/&gt;
-      &lt;font color=&quot;red&quot;&gt;View/scale&lt;/font&gt;
-      &lt;br/&gt;In &lt;b&gt;view&lt;/b&gt; mode, touching the plot area moves the cursor
-      &lt;br/&gt;In &lt;b&gt;scale&lt;/b&gt; mode, moving or &quot;pinching&quot; scales and zooms the x axis.
+      &lt;font color=&quot;red&quot;&gt;cursor/scale&lt;/font&gt;
+      &lt;br/&gt;In &lt;b&gt;cursor&lt;/b&gt; mode, touching the plot area moves the cursor
+      &lt;br/&gt;In &lt;b&gt;scale&lt;/b&gt; mode, moving or &quot;pinching&quot; scales and zooms the x axis. Double click the plot area to switch to &lt;b&gt;cursor&lt;/b&gt; mode.
       &lt;p/&gt;
       &lt;font color=&quot;red&quot;&gt;run/stop&lt;/font&gt;
-      &lt;br/&gt;&lt;b&gt;stop&lt;/b&gt; freezes the display, making it easier to inspect the waveform.
+      &lt;br/&gt;&lt;b&gt;stop&lt;/b&gt; freezes the display(paused), making it easier to inspect the waveform. The recorder is still working when paused.
       &lt;br/&gt;&lt;b&gt;run&lt;/b&gt; resumes analyzing samples.
       &lt;p/&gt;
-      &lt;font color=&quot;red&quot;&gt;on/test&lt;/font&gt;
-      &lt;br/&gt;&lt;b&gt;test&lt;/b&gt; mode displays an algoritmically generated waveform.
-      &lt;br/&gt;&lt;b&gt;on&lt;/b&gt; analyzes the microphone input signal.
-      &lt;p/&gt;
-      &lt;h2&gt;Other Features&lt;/h2&gt;
-      &lt;font color=&quot;red&quot;&gt;Instrument tuner&lt;/font&gt;
-      &lt;br/&gt;(removed from this version)
-      &lt;p/&gt;
-      &lt;font color=&quot;red&quot;&gt;Set Test Frequencies&lt;/font&gt;
-      &lt;br/&gt;(removed from this version)
-      &lt;p&gt;
-      by S A Uhler
+      by S A Uhler and xyy
       &lt;/p&gt;</string>
     <string name="instructions_title">      Instructions</string>
     <string name="dismiss">      Dismiss</string>

@@ -12,10 +12,6 @@ public class FramesPerSecondCounter {
   FramesPerSecondCounter(String TAG) {
     timeUpdateInterval = 2000;
     TAG_OUTSIDE = TAG;
-  }
-  
-  // you may not need call this
-  public void start() {
     frameCount = 0;
     timeOld = SystemClock.uptimeMillis();
   }
