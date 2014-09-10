@@ -63,7 +63,6 @@ import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -756,14 +755,24 @@ public class AnalyzeActivity extends Activity
     refreshCursorLabel();
   }
 
-  DecimalFormat dfDB= new DecimalFormat("* ####.0");
-  DecimalFormat dfFreq= new DecimalFormat("* #####.0");
-  StringBuilder sCent = new StringBuilder("");
+  StringBuilder textCur = new StringBuilder("");
+  char[] textCurChar = new char["Cur :XXXXX.XHz(AX#+XX) -XXX.XdB".length()];
+  
   private void refreshCursorLabel() {
     double f1 = graphView.getCursorX();
-    freq2Cent(sCent, f1, " ");
+    
+    textCur.setLength(0);
+    textCur.append("Cur :");
+    SBNumFormat.fillInNumFixedWidthPositive(textCur, f1, 5, 1);
+    textCur.append("Hz(");
+    freq2Cent(textCur, f1, " ");
+    textCur.append(") ");
+    SBNumFormat.fillInNumFixedWidth(textCur, graphView.getCursorY(), 3, 1);
+    textCur.append("dB");
+    textCur.getChars(0, Math.min(textCur.length(), textCurChar.length), textCurChar, 0);
+
     ((TextView) findViewById(R.id.textview_cur))
-      .setText("Cur :" + dfFreq.format(f1)+ "Hz(" + sCent + ") " + dfDB.format(graphView.getCursorY()) + "dB");
+      .setText(textCurChar, 0, Math.min(textCur.length(), textCurChar.length));
   }
 
   // used to detect if the data is unchanged
@@ -854,22 +863,23 @@ public class AnalyzeActivity extends Activity
   // Fill with sFill until length is 6. If sFill=="", do not fill
   final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
   public void freq2Cent(StringBuilder a, double f, String sFill) {
-    a.setLength(0);
     if (f<=0 || Double.isNaN(f) || Double.isInfinite(f)) {
       a.append("      ");
       return;
     }
+    int len0 = a.length();
     // A4 = 440Hz
     double p = 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
     int pi = (int) Math.round(p);
     int po = (int) Math.floor(pi/12.0);
-    a.append(LP[pi-po*12]);
-    a.append(po-1);
-    if (p-pi>0) {
-      a.append('+');
+    int pm = pi-po*12;
+    a.append(LP[pm]);
+    SBNumFormat.fillInInt(a, po-1);
+    if (LP[pm].length() == 1) {
+      a.append(' ');
     }
-    a.append(Math.round(100*(p-pi)));
-    while (a.length() < 6 && sFill!=null && sFill.length()>0) {
+    SBNumFormat.fillInNumFixedWidthSignedFirst(a, Math.round(100*(p-pi)), 2, 0);
+    while (a.length()-len0 < 6 && sFill!=null && sFill.length()>0) {
       a.append(sFill);
     }
   }
@@ -1116,9 +1126,27 @@ public class AnalyzeActivity extends Activity
       }
     }
 
+    StringBuilder textRMS  = new StringBuilder("");
+    StringBuilder textPeak = new StringBuilder("");
+    char[] textRMSChar = new char[getString(R.string.textview_RMS_text).length()];
+    char[] textPeakChar = new char[getString(R.string.textview_peak_text).length()];
+    
     private void update(final double[] data) {
-      // data is synchronized here
+      textRMS.setLength(0);
+      textRMS.append("RMS:dB \n");
+      SBNumFormat.fillInNumFixedWidth(textRMS, 20*Math.log10(dtRMSFromFT), 3, 1);
+      textRMS.getChars(0, Math.min(textRMS.length(), textRMSChar.length), textRMSChar, 0);
+      textPeak.setLength(0);
+      textPeak.append("Peak:");
+      SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
+      textPeak.append("Hz(");
+      freq2Cent(textPeak, maxAmpFreq, " ");
+      textPeak.append(") ");
+      SBNumFormat.fillInNumFixedWidth(textPeak, maxAmpDB, 3, 1);
+      textPeak.append("dB");
+      textPeak.getChars(0, Math.min(textPeak.length(), textPeakChar.length), textPeakChar, 0);
       if (graphView.getShowMode() == 1) {
+        // data is synchronized here
         graphView.pushRawSpectrum(spectrumDBcopy);
       }
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
@@ -1128,12 +1156,11 @@ public class AnalyzeActivity extends Activity
           AnalyzeActivity.this.rePlot();
           // RMS
           TextView tv = (TextView) findViewById(R.id.textview_RMS);
-          tv.setText("RMS:dB \n" + dfDB.format(20*Math.log10(dtRMSFromFT)));
+          tv.setText(textRMSChar, 0, Math.min(textRMS.length(), textRMSChar.length));
           tv.invalidate();
           // peak frequency
-          freq2Cent(sCent, maxAmpFreq, " ");
           tv = (TextView) findViewById(R.id.textview_peak);
-          tv.setText("Peak:" + dfFreq.format(maxAmpFreq)+ "Hz(" + sCent + ") " + dfDB.format(maxAmpDB) + "dB");
+          tv.setText(textPeakChar, 0, Math.min(textPeak.length(), textPeakChar.length));
           tv.invalidate();
         }
       });

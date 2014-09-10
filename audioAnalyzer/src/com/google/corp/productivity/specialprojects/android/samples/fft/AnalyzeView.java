@@ -67,8 +67,8 @@ public class AnalyzeView extends View {
   private float gridDensity;
   private double[][] gridPoints2   = new double[2][0];
   private double[][] gridPoints2dB = new double[2][0];
-  private StringBuffer[] gridPoints2Str = new StringBuffer[0];
-  private StringBuffer[] gridPoints2StrDB = new StringBuffer[0];
+  private StringBuilder[] gridPoints2Str = new StringBuilder[0];
+  private StringBuilder[] gridPoints2StrDB = new StringBuilder[0];
   SharedPreferences sharedPref;  // read preference automatically
   
   public boolean isBusy() {
@@ -242,7 +242,7 @@ public class AnalyzeView extends View {
   double[][] oldGridPointBoundaryArray = new double[2][2];
   
   double[][][] gridPointsArray = {gridPoints2, gridPoints2dB};
-  StringBuffer[][] gridPointsStrArray = new StringBuffer[2][0];
+  StringBuilder[][] gridPointsStrArray = new StringBuilder[2][0];
   
   public enum GridScaleType {
     FREQ(0), DB(1);
@@ -257,17 +257,17 @@ public class AnalyzeView extends View {
   void updateGridLabels(double startValue, double endValue, double gridDensity, GridScaleType scale_mode) {
     int scale_mode_id = scale_mode.getValue();
     double[][] gridPoints = gridPointsArray[scale_mode_id];
-    StringBuffer[] gridPointsStr = gridPointsStrArray[scale_mode_id];
+    StringBuilder[] gridPointsStr = gridPointsStrArray[scale_mode_id];
     double[] oldGridPointBoundary = oldGridPointBoundaryArray[scale_mode_id];
 
     genLinearGridPoints(gridPoints, startValue, endValue, gridDensity, scale_mode_id);
     double[] gridPointsBig = gridPoints[0];
     boolean needUpdate = false;
     if (gridPointsBig.length != gridPointsStr.length) {
-      gridPointsStrArray[scale_mode_id] = new StringBuffer[gridPointsBig.length];
+      gridPointsStrArray[scale_mode_id] = new StringBuilder[gridPointsBig.length];
       gridPointsStr = gridPointsStrArray[scale_mode_id];
       for (int i = 0; i < gridPointsBig.length; i++) {
-        gridPointsStr[i] = new StringBuffer();
+        gridPointsStr[i] = new StringBuilder();
       }
       if (scale_mode_id == 0) {
         gridPoints2Str = gridPointsStr;

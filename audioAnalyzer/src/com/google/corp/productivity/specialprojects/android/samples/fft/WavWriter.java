@@ -14,7 +14,7 @@ import android.os.Environment;
 import android.util.Log;
 
 public class WavWriter {
-  final String TAG = "WavWriter::";
+  static final String TAG = "WavWriter::";
   File outPath;
   OutputStream out;
   private byte[] header = new byte[44];
@@ -138,6 +138,8 @@ public class WavWriter {
   }
 
   byte[] byteBuffer;
+  
+  // Assume RECORDER_BPP == 16 and channels == 1
   public void pushAudioShort(short[] ss, int numOfReadShort) {
     if (out == null) {
       Log.w(TAG, "pushAudioShort(): Error writing " + outPath + "  null pointer");
