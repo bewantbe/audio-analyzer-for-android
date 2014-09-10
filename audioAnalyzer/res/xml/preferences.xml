@@ -1,61 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen
-  xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
     <CheckBoxPreference
-     android:title="Keep screen on"
-     android:key="keepScreenOn"
-     android:defaultValue="true"
-    />
-    <CheckBoxPreference
-     android:title="Spectrum use bars"
-     android:key="showLines"
-     android:defaultValue="false"
-     android:summary="Use lines instead of bars for spectrum"
-    />
-    <ListPreference
-      android:title="Spectrum range"
-      android:key="spectrumRange"
-      android:entries="@array/dbRangeArray"
-      android:entryValues="@array/dbRangeArray"
-      android:defaultValue="-120"
-      android:summary="Show range of spectrum in dB"
-    />
-    <CheckBoxPreference
-     android:title="Spectrogram shifting"
-     android:key="spectrogramShifting"
-     android:defaultValue="false"
-     android:summary="Make whole spectrogram shifting as time go"
-    />
-    <ListPreference
-      android:title="Spectrogram range"
-      android:key="spectrogramRange"
-      android:entries="@array/dbRangeArray"
-      android:entryValues="@array/dbRangeArray"
-      android:defaultValue="-120"
-      android:summary="Show range of spectrogram in dB"
-    />
-    <ListPreference
-     android:title="Spectrogram duration"
-     android:key="spectrogramDuration"
-     android:entries="@array/spectrogram_duration_array"
-     android:entryValues="@array/spectrogram_duration_array"
-     android:defaultValue="4.0"
-     android:summary="Duration of spectrogram shown (when average number is 1)"
-    />
-    <ListPreference
-      android:title="Audio source"
-      android:key="audioSource"
-      android:entries="@array/audio_source"
-      android:entryValues="@array/audio_source_id"
-      android:defaultValue="0"
-      android:summary="Audio source for spectrum"
-    />
-    <ListPreference
-      android:title="Window Function"
-      android:key="windowFunction"
-      android:entries="@array/wnd_func_names"
-      android:entryValues="@array/wnd_func_names"
-      android:defaultValue="Blackman Harris"
-      android:summary="Window function for STFT"
-    />
+        android:defaultValue="true"
+        android:key="keepScreenOn"
+        android:title="Keep screen on" />
+
+    <PreferenceCategory
+        android:key="spectrumAppearance"
+        android:title="Spectrum appearance" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="showLines"
+            android:summary="Use lines instead of bars for spectrum"
+            android:title="Spectrum use bars" />
+
+        <ListPreference
+            android:defaultValue="-120"
+            android:entries="@array/dbRangeArray"
+            android:entryValues="@array/dbRangeArray"
+            android:key="spectrumRange"
+            android:summary="Show range of spectrum in dB"
+            android:title="Spectrum range" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="spectrogramAppearance"
+        android:title="Spectrogram appearance" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="spectrogramShifting"
+            android:summary="Make whole spectrogram shifting as time go"
+            android:title="Spectrogram shifting" />
+
+        <ListPreference
+            android:defaultValue="-120"
+            android:entries="@array/dbRangeArray"
+            android:entryValues="@array/dbRangeArray"
+            android:key="spectrogramRange"
+            android:summary="Show range of spectrogram in dB"
+            android:title="Spectrogram range" />
+        <ListPreference
+            android:defaultValue="4.0"
+            android:entries="@array/spectrogram_duration_array"
+            android:entryValues="@array/spectrogram_duration_array"
+            android:key="spectrogramDuration"
+            android:summary="Duration of spectrogram shown (when average number is 1)"
+            android:title="Spectrogram duration" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="dataPref"
+        android:title="Data" >
+        <ListPreference
+            android:defaultValue="0"
+            android:entries="@array/audio_source"
+            android:entryValues="@array/audio_source_id"
+            android:key="audioSource"
+            android:summary="Audio source for spectrum"
+            android:title="Audio source" />
+        <ListPreference
+            android:defaultValue="Blackman Harris"
+            android:entries="@array/wnd_func_names"
+            android:entryValues="@array/wnd_func_names"
+            android:key="windowFunction"
+            android:summary="Window function for STFT"
+            android:title="Window Function" />
+    </PreferenceCategory>
+
 </PreferenceScreen>

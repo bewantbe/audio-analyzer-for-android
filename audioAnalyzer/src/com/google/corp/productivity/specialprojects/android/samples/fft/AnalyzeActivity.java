@@ -1070,7 +1070,7 @@ public class AnalyzeActivity extends Activity
       boolean bSaveWavLoop = bSaveWav;  // change of bSaveWav during loop will only affect next enter.
       if (bSaveWavLoop) {
         wavWriter.start();
-        Log.i(TAG, "PCM Write to file " + wavWriter.getPath());
+        Log.i(TAG, "PCM write to file " + wavWriter.getPath());
         isPaused1 = true;
       }
 
