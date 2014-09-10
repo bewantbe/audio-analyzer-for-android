@@ -474,6 +474,14 @@ public class AnalyzeActivity extends Activity
     sampleRate  = sharedPref.getInt("button_sample_rate", 16000);
     fftLen      = sharedPref.getInt("button_fftlen",       2048);
     nFFTAverage = sharedPref.getInt("button_average",         2);
+    isAWeighting = sharedPref.getBoolean("dbA", false);
+    if (isAWeighting) {
+      ((SelectorText) findViewById(R.id.dbA)).nextValue();
+    }
+    boolean isSpam = sharedPref.getBoolean("spectrum_spectrogram_mode", true);
+    if (!isSpam) {
+      ((SelectorText) findViewById(R.id.spectrum_spectrogram_mode)).nextValue();
+    }
     
     Log.i(TAG, "  updatePreferenceSaved(): sampleRate  = " + sampleRate);
     Log.i(TAG, "  updatePreferenceSaved(): fftLen      = " + fftLen);
@@ -718,6 +726,8 @@ public class AnalyzeActivity extends Activity
    */
 
   public boolean processClick(View v) {
+    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    SharedPreferences.Editor editor = sharedPref.edit();
     String value = ((TextView) v).getText().toString();
     switch (v.getId()) {
       case R.id.button_recording:
@@ -741,6 +751,8 @@ public class AnalyzeActivity extends Activity
         if (samplingThread != null && samplingThread.stft != null) {
           samplingThread.stft.setAWeighting(isAWeighting);
         }
+        editor.putBoolean("dbA", isAWeighting);
+        editor.commit();
         return false;
       case R.id.spectrum_spectrogram_mode:
         if (value.equals("spum")) {
@@ -748,6 +760,9 @@ public class AnalyzeActivity extends Activity
         } else {
           graphView.switch2Spectrogram(sampleRate, fftLen);
         }
+        editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
+        editor.commit();
+        return false;  // TODO, make it switch on the fly
       default:
         return true;
     }
