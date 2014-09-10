@@ -646,7 +646,7 @@ public class AnalyzeView extends View {
   int nTimePoints;
   int spectrogramColorsPt;
   Matrix matrixSpectrogram = new Matrix();
-  final int[] cma = ColorMapArray.hot;
+  static final int[] cma = ColorMapArray.hot;
   double dBLowerBound = -120;
   
   public int getShowMode() {
@@ -703,13 +703,10 @@ public class AnalyzeView extends View {
   }
   
   public int colorFromDB(double d) {
-    if (Double.isInfinite(d) || Double.isNaN(d)) {
-      return cma[cma.length-1];
-    }
     if (d >= 0) {
       return cma[0];
     }
-    if (d <= dBLowerBound) {
+    if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
       return cma[cma.length-1];
     }
     return cma[(int)(cma.length * d / dBLowerBound)];
@@ -717,15 +714,36 @@ public class AnalyzeView extends View {
   
   public void pushRawSpectrum(double[] db) {
     synchronized (this) {
+      int c;
+      int pRef; 
+      double d;
       if (showModeSpectrogram == 0) {
         System.arraycopy(spectrogramColors, nFreqPoints,
                          spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
+        pRef = spectrogramColors.length - nFreqPoints - 1;
         for (int i = 1; i < db.length; i++) {  // no direct current term
-          spectrogramColors[spectrogramColors.length - nFreqPoints - 1 + i] = colorFromDB(db[i]);
+          d = db[i];
+          if (d >= 0) {
+            c = cma[0];
+          } else if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
+            c = cma[cma.length-1];
+          } else {
+            c = cma[(int)(cma.length * d / dBLowerBound)];
+          }
+          spectrogramColors[pRef + i] = colorFromDB(db[i]);
         }
       } else {
+        pRef = spectrogramColorsPt*nFreqPoints - 1;
         for (int i = 1; i < db.length; i++) {  // no direct current term
-          spectrogramColors[spectrogramColorsPt*nFreqPoints - 1 + i] = colorFromDB(db[i]);
+          d = db[i];
+          if (d >= 0) {
+            c = cma[0];
+          } else if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
+            c = cma[cma.length-1];
+          } else {
+            c = cma[(int)(cma.length * d / dBLowerBound)];
+          }
+          spectrogramColors[pRef + i] = c;
         }
         spectrogramColorsPt++;
         if (spectrogramColorsPt >= nTimePoints) {

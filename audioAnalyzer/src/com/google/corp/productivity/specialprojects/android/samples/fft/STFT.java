@@ -126,18 +126,18 @@ public class STFT {
       Log.e("STFT", "dsLen > ds.length !");
       dsLen = ds.length;
     }
+    int inLen = spectrumAmpIn.length;
+    int outLen = spectrumAmpOut.length;
     int dsPt = 0;           // input data point to be read
     while (dsPt < dsLen) {
-      while (spectrumAmpPt < spectrumAmpIn.length && dsPt < dsLen) {
-        double s = ds[dsPt] / 32768.0;
-        spectrumAmpIn[spectrumAmpPt] = s;
+      while (spectrumAmpPt < inLen && dsPt < dsLen) {
+        double s = ds[dsPt++] / 32768.0;
+        spectrumAmpIn[spectrumAmpPt++] = s;
         cumRMS += s*s;
-        dsPt++;
-        spectrumAmpPt++;
         cntRMS++;
       }
-      if (spectrumAmpPt == spectrumAmpIn.length) {    // enough data for one FFT
-        for (int i = 0; i < wnd.length; i++) {
+      if (spectrumAmpPt == inLen) {    // enough data for one FFT
+        for (int i = 0; i < inLen; i++) {
           spectrumAmpInTmp[i] = spectrumAmpIn[i] * wnd[i];
         }
         spectrumAmpFFT.ft(spectrumAmpInTmp);
@@ -145,16 +145,13 @@ public class STFT {
         System.arraycopy(spectrumAmpOutTmp, 0, spectrumAmpOutArray[spectrumAmpOutArrayPt], 0,
                          spectrumAmpOutTmp.length);
         spectrumAmpOutArrayPt = (spectrumAmpOutArrayPt+1) % spectrumAmpOutArray.length;
-        for (int i = 0; i < spectrumAmpOutTmp.length; i++) {
+        for (int i = 0; i < outLen; i++) {
           spectrumAmpOutCum[i] += spectrumAmpOutTmp[i];
         }
         nAnalysed++;
-//        spectrumAmpPt = 0;                          // no overlap
-        // half overlap
+        // half overlap  (set spectrumAmpPt = 0 for no overlap)
         int n2 = spectrumAmpIn.length / 2;
-        for (int i=0; i<n2; i++) {
-          spectrumAmpIn[i] = spectrumAmpIn[i + n2];
-        }
+        System.arraycopy(spectrumAmpIn, n2, spectrumAmpIn, 0, n2);
         spectrumAmpPt = n2;
       }
     }
@@ -172,19 +169,21 @@ public class STFT {
   }
   
   final public double[] getSpectrumAmp() {
+    int outLen = spectrumAmpOut.length;
+    double[] sAOC = spectrumAmpOutCum;
     if (nAnalysed != 0) {    // no new result
-      for (int j = 0; j < spectrumAmpOutCum.length; j++) {
-        spectrumAmpOutCum[j] /= nAnalysed;
+      for (int j = 0; j < outLen; j++) {
+        sAOC[j] /= nAnalysed;
       }
       if (boolAWeighting) {
-        for (int j = 0; j < spectrumAmpOutCum.length; j++) {
-          spectrumAmpOutCum[j] *= dBAFactor[j];
+        for (int j = 0; j < outLen; j++) {
+          sAOC[j] *= dBAFactor[j];
         }
       }
-      System.arraycopy(spectrumAmpOutCum, 0, spectrumAmpOut, 0, spectrumAmpOut.length);
-      Arrays.fill(spectrumAmpOutCum, 0.0);
+      System.arraycopy(sAOC, 0, spectrumAmpOut, 0, outLen);
+      Arrays.fill(sAOC, 0.0);
       nAnalysed = 0;
-      for (int i = 0; i < spectrumAmpOut.length; i++) {
+      for (int i = 0; i < outLen; i++) {
         spectrumAmpOutDB[i] = 10.0 * Math.log10(spectrumAmpOut[i]);
       }
     }
