@@ -101,6 +101,11 @@ public class AnalyzeActivity extends Activity
   
   Object oblock = new Object();
 
+  StringBuilder textCur = new StringBuilder("");  // for textCurChar
+  char[] textRMSChar;   // for text in R.id.textview_RMS
+  char[] textCurChar;   // for text in R.id.textview_cur
+  char[] textPeakChar;  // for text in R.id.textview_peak
+
   PopupWindow popupMenuSampleRate;
   PopupWindow popupMenuFFTLen;
   PopupWindow popupMenuAverage;
@@ -119,6 +124,10 @@ public class AnalyzeActivity extends Activity
     // Set variable according to the preferences
     updatePreferenceSaved();
     
+    textRMSChar = new char[getString(R.string.textview_RMS_text).length()];
+    textCurChar = new char[getString(R.string.textview_cur_text).length()];
+    textPeakChar = new char[getString(R.string.textview_peak_text).length()];
+
     graphView = (AnalyzeView) findViewById(R.id.plot);
 
     // travel Views, and attach ClickListener to the views that contain android:tag="select"  
@@ -771,9 +780,6 @@ public class AnalyzeActivity extends Activity
   private void updateAllLabels() {
     refreshCursorLabel();
   }
-
-  StringBuilder textCur = new StringBuilder("");
-  char[] textCurChar = new char["Cur :XXXXX.XHz(AX#+XX) -XXX.XdB".length()];
   
   private void refreshCursorLabel() {
     double f1 = graphView.getCursorX();
@@ -838,18 +844,22 @@ public class AnalyzeActivity extends Activity
         graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
       }
       graphView.invalidate();
+      TextView tv;
+      synchronized (oblock) {
+        // RMS
+        tv = (TextView) findViewById(R.id.textview_RMS);
+        tv.setText(textRMSChar, 0, textRMSChar.length);
+        tv.invalidate();
+      }
+      synchronized (oblock) {
+        // peak frequency
+        tv = (TextView) findViewById(R.id.textview_peak);
+        tv.setText(textPeakChar, 0, textPeakChar.length);
+        tv.invalidate();
+      }
     }
   }
 
-  // Replot spectrum, do not limit frame rate 
-  public void recompute(double[] data) {
-  	if (graphView.isBusy() == true) {
-  		Log.d(TAG, "recompute(): isBusy == true");  // seems it's never busy
-  	}
-    graphView.replotRawSpectrum(data, 1, data.length, showLines);
-    graphView.invalidate();
-  }
-  
   /**
    * Return a array of verified audio sampling rates.
    * @param requested: the sampling rates to be verified
@@ -1145,8 +1155,6 @@ public class AnalyzeActivity extends Activity
 
     StringBuilder textRMS  = new StringBuilder("");
     StringBuilder textPeak = new StringBuilder("");
-    char[] textRMSChar = new char[getString(R.string.textview_RMS_text).length()];
-    char[] textPeakChar = new char[getString(R.string.textview_peak_text).length()];
     
     private void update(final double[] data) {
       synchronized (oblock) {
@@ -1175,19 +1183,6 @@ public class AnalyzeActivity extends Activity
         public void run() {
           // data will get out of synchronize here
           AnalyzeActivity.this.rePlot();
-          TextView tv;
-          synchronized (oblock) {
-            // RMS
-            tv = (TextView) findViewById(R.id.textview_RMS);
-            tv.setText(textRMSChar, 0, textRMSChar.length);
-            tv.invalidate();
-          }
-          synchronized (oblock) {
-            // peak frequency
-            tv = (TextView) findViewById(R.id.textview_peak);
-            tv.setText(textPeakChar, 0, textPeakChar.length);
-            tv.invalidate();
-          }
         }
       });
     }
