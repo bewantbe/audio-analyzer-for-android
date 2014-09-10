@@ -98,6 +98,8 @@ public class AnalyzeActivity extends Activity
   
   float listItemTextSize = 20;
   float listItemTitleTextSize = 12;
+  
+  Object oblock = new Object();
 
   PopupWindow popupMenuSampleRate;
   PopupWindow popupMenuFFTLen;
@@ -1132,19 +1134,23 @@ public class AnalyzeActivity extends Activity
     char[] textPeakChar = new char[getString(R.string.textview_peak_text).length()];
     
     private void update(final double[] data) {
-      textRMS.setLength(0);
-      textRMS.append("RMS:dB \n");
-      SBNumFormat.fillInNumFixedWidth(textRMS, 20*Math.log10(dtRMSFromFT), 3, 1);
-      textRMS.getChars(0, Math.min(textRMS.length(), textRMSChar.length), textRMSChar, 0);
-      textPeak.setLength(0);
-      textPeak.append("Peak:");
-      SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
-      textPeak.append("Hz(");
-      freq2Cent(textPeak, maxAmpFreq, " ");
-      textPeak.append(") ");
-      SBNumFormat.fillInNumFixedWidth(textPeak, maxAmpDB, 3, 1);
-      textPeak.append("dB");
-      textPeak.getChars(0, Math.min(textPeak.length(), textPeakChar.length), textPeakChar, 0);
+      synchronized (oblock) {
+        textRMS.setLength(0);
+        textRMS.append("RMS:dB \n");
+        SBNumFormat.fillInNumFixedWidth(textRMS, 20*Math.log10(dtRMSFromFT), 3, 1);
+        textRMS.getChars(0, Math.min(textRMS.length(), textRMSChar.length), textRMSChar, 0);
+      }
+      synchronized (oblock) {
+        textPeak.setLength(0);
+        textPeak.append("Peak:");
+        SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
+        textPeak.append("Hz(");
+        freq2Cent(textPeak, maxAmpFreq, " ");
+        textPeak.append(") ");
+        SBNumFormat.fillInNumFixedWidth(textPeak, maxAmpDB, 3, 1);
+        textPeak.append("dB");
+        textPeak.getChars(0, Math.min(textPeak.length(), textPeakChar.length), textPeakChar, 0);
+      }
       if (graphView.getShowMode() == 1) {
         // data is synchronized here
         graphView.pushRawSpectrum(spectrumDBcopy);
@@ -1154,14 +1160,19 @@ public class AnalyzeActivity extends Activity
         public void run() {
           // data will get out of synchronize here
           AnalyzeActivity.this.rePlot();
-          // RMS
-          TextView tv = (TextView) findViewById(R.id.textview_RMS);
-          tv.setText(textRMSChar, 0, Math.min(textRMS.length(), textRMSChar.length));
-          tv.invalidate();
-          // peak frequency
-          tv = (TextView) findViewById(R.id.textview_peak);
-          tv.setText(textPeakChar, 0, Math.min(textPeak.length(), textPeakChar.length));
-          tv.invalidate();
+          TextView tv;
+          synchronized (oblock) {
+            // RMS
+            tv = (TextView) findViewById(R.id.textview_RMS);
+            tv.setText(textRMSChar, 0, textRMSChar.length);
+            tv.invalidate();
+          }
+          synchronized (oblock) {
+            // peak frequency
+            tv = (TextView) findViewById(R.id.textview_peak);
+            tv.setText(textPeakChar, 0, textPeakChar.length);
+            tv.invalidate();
+          }
         }
       });
     }

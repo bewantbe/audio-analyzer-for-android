@@ -69,6 +69,8 @@ public class AnalyzeView extends View {
   private double[][] gridPoints2dB = new double[2][0];
   private StringBuilder[] gridPoints2Str = new StringBuilder[0];
   private StringBuilder[] gridPoints2StrDB = new StringBuilder[0];
+  private char[][] gridPoints2st = new char[0][];
+  private char[][] gridPoints2stDB = new char[0][];
   SharedPreferences sharedPref;  // read preference automatically
   
   public boolean isBusy() {
@@ -243,6 +245,7 @@ public class AnalyzeView extends View {
   
   double[][][] gridPointsArray = {gridPoints2, gridPoints2dB};
   StringBuilder[][] gridPointsStrArray = new StringBuilder[2][0];
+  char[][][] gridPointsStArray = new char[2][0][];
   
   public enum GridScaleType {
     FREQ(0), DB(1);
@@ -258,6 +261,7 @@ public class AnalyzeView extends View {
     int scale_mode_id = scale_mode.getValue();
     double[][] gridPoints = gridPointsArray[scale_mode_id];
     StringBuilder[] gridPointsStr = gridPointsStrArray[scale_mode_id];
+    char[][] gridPointsSt = gridPointsStArray[scale_mode_id];
     double[] oldGridPointBoundary = oldGridPointBoundaryArray[scale_mode_id];
 
     genLinearGridPoints(gridPoints, startValue, endValue, gridDensity, scale_mode_id);
@@ -269,10 +273,17 @@ public class AnalyzeView extends View {
       for (int i = 0; i < gridPointsBig.length; i++) {
         gridPointsStr[i] = new StringBuilder();
       }
+      gridPointsStArray[scale_mode_id] = new char[gridPointsBig.length][];  // new array of two char array
+      gridPointsSt = gridPointsStArray[scale_mode_id];
+      for (int i = 0; i < gridPointsBig.length; i++) {
+        gridPointsSt[i] = new char[16];
+      }
       if (scale_mode_id == 0) {
         gridPoints2Str = gridPointsStr;
+        gridPoints2st = gridPointsSt;
       } else {
         gridPoints2StrDB = gridPointsStr;
+        gridPoints2stDB = gridPointsSt;
       }
       needUpdate = true;
     }
@@ -289,6 +300,7 @@ public class AnalyzeView extends View {
         } else {
           gridPointsStr[i].append("0");
         }
+        gridPointsStr[i].getChars(0, gridPointsStr[i].length(), gridPointsSt[i], 0);
       }
 //      Log.i(AnalyzeActivity.TAG, "  Update grid label scale_mode_id=" + Integer.toString(scale_mode_id));
     }
@@ -355,15 +367,16 @@ public class AnalyzeView extends View {
     c.drawLine(0, labelBeginY, canvasWidth, labelBeginY, labelPaint);
 
     // plot labels
-    float widthHz   = labelPaint.measureText("Hz");
+    float widthHz    = labelPaint.measureText("Hz");
+    float widthDigit = labelPaint.measureText("0");
     float xPos, yPos;
     yPos = labelBeginY + 0.5f*labelLaegeLen + textHeigh;
     for(int i = 0; i < gridPoints2Str.length; i++) {
       xPos = canvasViewX4axis((float)gridPoints2[0][i]);
-      if (xPos + labelPaint.measureText(gridPoints2Str[i].toString()) + 1.5f*widthHz> canvasWidth) {
+      if (xPos + widthDigit * gridPoints2Str[i].length() + 1.5f*widthHz> canvasWidth) {
         continue;
       }
-      c.drawText(gridPoints2Str[i].toString(), xPos, yPos, labelPaint);
+      c.drawText(gridPoints2st[i], 0, gridPoints2Str[i].length(), xPos, yPos, labelPaint);
     }
     c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
     return labelBeginY;  // lower boundary of ruler
@@ -371,16 +384,17 @@ public class AnalyzeView extends View {
   
   // The coordinate frame of this function is identical to its view (id=plot).
   private void drawGridLabels(Canvas c) {
-    float textHeigh = labelPaint.getFontMetrics(null);
-    float widthHz = labelPaint.measureText("Hz");
+    float textHeigh  = labelPaint.getFontMetrics(null);
+    float widthHz    = labelPaint.measureText("Hz");
+    float widthDigit = labelPaint.measureText("0");
     float xPos, yPos;
     yPos = textHeigh;
     for(int i = 0; i < gridPoints2Str.length; i++) {
       xPos = canvasViewX4axis((float)gridPoints2[0][i]);
-      if (xPos + labelPaint.measureText(gridPoints2Str[i].toString()) + 1.5f*widthHz> canvasWidth) {
+      if (xPos + widthDigit*gridPoints2Str[i].length() + 1.5f*widthHz> canvasWidth) {
         continue;
       }
-      c.drawText(gridPoints2Str[i].toString(), xPos, yPos, labelPaint);
+      c.drawText(gridPoints2st[i], 0, gridPoints2Str[i].length(), xPos, yPos, labelPaint);
     }
     c.drawLine(0, 0, canvasWidth, 0, labelPaint);
     
@@ -389,7 +403,7 @@ public class AnalyzeView extends View {
     for(int i = 0; i < gridPoints2StrDB.length; i++) {
       yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
       if (yPos + 1.3f*widthHz > canvasHeight) continue;
-      c.drawText(gridPoints2StrDB[i].toString(), xPos, yPos, labelPaint);
+      c.drawText(gridPoints2stDB[i], 0, gridPoints2StrDB[i].length(), xPos, yPos, labelPaint);
     }
     c.drawLine(0, 0, 0, canvasHeight, labelPaint);
     c.drawText("dB", xPos, canvasHeight - 0.4f*widthHz, labelPaint);
