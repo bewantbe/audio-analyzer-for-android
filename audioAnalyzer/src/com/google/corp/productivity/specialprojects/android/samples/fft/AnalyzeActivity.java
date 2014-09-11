@@ -616,7 +616,20 @@ public class AnalyzeActivity extends Activity
     } else {
       scaleEvent(event);
     }
-    graphView.invalidate();
+    long t = SystemClock.uptimeMillis();
+    long frameTime;
+    if (graphView.getShowMode() != 0) {
+      frameTime = 200;  // use a much lower frame rate for spectrogram
+    } else {
+      frameTime = 50;
+    }
+    if (t >= timeToUpdate) {
+      timeToUpdate += frameTime;
+      if (timeToUpdate < t) {
+        timeToUpdate = t+frameTime;
+      }
+      graphView.invalidate();
+    }
     return super.onTouchEvent(event);
   }
   
@@ -1092,7 +1105,7 @@ public class AnalyzeActivity extends Activity
           notifyOverrun();
         }
         if (bSaveWavLoop) {
-          wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // XXX, Maybe move this to another thread?
+          wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // Maybe move this to another thread?
         }
         if (isPaused1) {
           fpsCounter.inc();
@@ -1132,6 +1145,7 @@ public class AnalyzeActivity extends Activity
       record.release();
       record = null;
       if (bSaveWavLoop) {
+        Log.i(TAG, "Looper::Run(): Ending saved wav.");
         wavWriter.stop();
       }
     }

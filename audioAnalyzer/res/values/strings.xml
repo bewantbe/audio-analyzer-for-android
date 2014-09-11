@@ -11,6 +11,8 @@
       &lt;br/&gt;
       The calculation of spectrum (and spectrogram) is done through FFT with chosen window function and with a 50% data overlap.
       &lt;br/&gt;
+      Some (if not many) cell phone have a low quality sampling rate converter. In these devices, one can have fake spectrum lines. You can use a sine wave swap signal to confirm that.
+      &lt;br/&gt;
       This software have a high power consumption.
       &lt;br/&gt;
       &lt;h2&gt;Button operation&lt;/h2&gt;
