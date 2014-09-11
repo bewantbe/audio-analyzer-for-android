@@ -734,6 +734,7 @@ public class AnalyzeView extends View {
     yShift = oldYShift;
     yZoom = oldYZoom;
     showMode = 0;
+    computeMatrix();
   }
   
   public void switch2Spectrogram(int sampleRate, int fftLen) {

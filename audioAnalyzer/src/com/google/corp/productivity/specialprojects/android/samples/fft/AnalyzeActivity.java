@@ -784,7 +784,7 @@ public class AnalyzeActivity extends Activity
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
         editor.commit();
-        return false;  // TODO, make it switch on the fly
+        return false;
       default:
         return true;
     }
