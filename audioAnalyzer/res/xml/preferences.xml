@@ -6,6 +6,21 @@
         android:key="keepScreenOn"
         android:title="Keep screen on" />
 
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/audio_source"
+        android:entryValues="@array/audio_source_id"
+        android:key="audioSource"
+        android:summary="Audio source for spectrum"
+        android:title="Audio source" />
+    <ListPreference
+        android:defaultValue="Blackman Harris"
+        android:entries="@array/wnd_func_names"
+        android:entryValues="@array/wnd_func_names"
+        android:key="windowFunction"
+        android:summary="Window function for STFT"
+        android:title="Window Function" />
+
     <PreferenceCategory
         android:key="spectrumAppearance"
         android:title="Spectrum appearance" >
@@ -32,6 +47,11 @@
             android:summary="Make whole spectrogram shifting as time go"
             android:title="Spectrogram shifting" />
 
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="spectrogramTimeAxis"
+            android:title="Show time axis" />
+
         <ListPreference
             android:defaultValue="-120"
             android:entries="@array/dbRangeArray"
@@ -46,24 +66,6 @@
             android:key="spectrogramDuration"
             android:summary="Duration of spectrogram shown (when average number is 1)"
             android:title="Spectrogram duration" />
-    </PreferenceCategory>
-    <PreferenceCategory
-        android:key="dataPref"
-        android:title="Data" >
-        <ListPreference
-            android:defaultValue="0"
-            android:entries="@array/audio_source"
-            android:entryValues="@array/audio_source_id"
-            android:key="audioSource"
-            android:summary="Audio source for spectrum"
-            android:title="Audio source" />
-        <ListPreference
-            android:defaultValue="Blackman Harris"
-            android:entries="@array/wnd_func_names"
-            android:entryValues="@array/wnd_func_names"
-            android:key="windowFunction"
-            android:summary="Window function for STFT"
-            android:title="Window Function" />
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -56,7 +56,7 @@ public class AnalyzeView extends View {
   private int canvasWidth, canvasHeight;   // size of my canvas
   private Paint linePaint, backgroundPaint;
   private Paint cursorPaint;
-  private Paint gridPaint;
+  private Paint gridPaint, rulerBrightPaint;
   private Paint labelPaint;
   private Path path;
   private int[] myLocation = {0, 0}; // window location on screen
@@ -114,6 +114,9 @@ public class AnalyzeView extends View {
     
     gridPaint = new Paint(linePaint);
     gridPaint.setColor(Color.DKGRAY);
+    
+    rulerBrightPaint = new Paint(linePaint);
+    rulerBrightPaint.setColor(Color.rgb(99, 99, 99));  // 99: between Color.DKGRAY and Color.GRAY
 
     labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     labelPaint.setColor(Color.GRAY);
@@ -385,13 +388,13 @@ public class AnalyzeView extends View {
     float labelLargeLen = 0.03f * canvasHeight;
     float labelSmallLen = 0.02f * canvasHeight;
     float textHeigh     = labelPaint.getFontMetrics(null);
-    for(int i = 0; i < gridPoints2[0].length; i++) {
-      xPos = ((float)gridPoints2[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-      c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelLargeLen, gridPaint);
-    }
     for(int i = 0; i < gridPoints2[1].length; i++) {
       xPos =((float)gridPoints2[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
       c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelSmallLen, gridPaint);
+    }
+    for(int i = 0; i < gridPoints2[0].length; i++) {
+      xPos = ((float)gridPoints2[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
+      c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelLargeLen, rulerBrightPaint);
     }
     c.drawLine(canvasMin, labelBeginY, canvasMax, labelBeginY, labelPaint);
 
@@ -423,13 +426,13 @@ public class AnalyzeView extends View {
     float labelLargeLen = 0.03f * canvasWidth;
     float labelSmallLen = 0.02f * canvasWidth;
     float textHeigh     = labelPaint.getFontMetrics(null);
-    for(int i = 0; i < gridPoints2T[0].length; i++) {
-      yPos = ((float)gridPoints2T[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-      c.drawLine(labelBeginX-labelLargeLen, yPos, labelBeginX, yPos, gridPaint);
-    }
     for(int i = 0; i < gridPoints2T[1].length; i++) {
       yPos =((float)gridPoints2T[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
       c.drawLine(labelBeginX-labelSmallLen, yPos, labelBeginX, yPos, gridPaint);
+    }
+    for(int i = 0; i < gridPoints2T[0].length; i++) {
+      yPos = ((float)gridPoints2T[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
+      c.drawLine(labelBeginX-labelLargeLen, yPos, labelBeginX, yPos, rulerBrightPaint);
     }
     c.drawLine(labelBeginX, canvasMin, labelBeginX, canvasMax, labelPaint);
 
@@ -710,6 +713,7 @@ public class AnalyzeView extends View {
   double timeInc;
   double timeWatch = 4.0;
   volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzeActivity
+  boolean bShowTimeAxis = true;
   int nTimePoints;
   int spectrogramColorsPt;
   Matrix matrixSpectrogram = new Matrix();
@@ -722,6 +726,10 @@ public class AnalyzeView extends View {
   
   public void setTimeMultiplier(int nAve) {
     timeMultiplier = nAve;
+  }
+  
+  public void setShowTimeAxis(boolean bSTA) {
+    bShowTimeAxis = bSTA;
   }
   
   public void setSpectrogramModeShifting(boolean b) {
@@ -832,8 +840,13 @@ public class AnalyzeView extends View {
       c.restore();
       drawGridLabels(c);
     } else {
-      float labelBeginX = getLabelBeginX();  // labelBeginX will make the scaling gesture inaccurate
+      float labelBeginX;
       float labelBeginY = getLabelBeginY();
+      if (bShowTimeAxis) {
+        labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
+      } else {
+        labelBeginX = 0;
+      }
       // show Spectrogram
       float xBmpScale = (canvasWidth-labelBeginX)/nFreqPoints;
       float halfFreqResolutionShift = xZoom*(canvasWidth-labelBeginX)/nFreqPoints/2;

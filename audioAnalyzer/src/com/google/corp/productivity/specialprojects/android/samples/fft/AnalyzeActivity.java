@@ -205,6 +205,7 @@ public class AnalyzeActivity extends Activity
     } else {
       getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
+    graphView.setShowTimeAxis(sharedPref.getBoolean("spectrogramTimeAxis", true));
     float b = graphView.getBounds().bottom;
     b = Float.parseFloat(sharedPref.getString("spectrumRange",
                          Double.toString(b)));
