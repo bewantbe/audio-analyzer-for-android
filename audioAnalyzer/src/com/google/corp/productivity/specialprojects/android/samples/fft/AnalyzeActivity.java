@@ -456,6 +456,9 @@ public class AnalyzeActivity extends Activity
     case R.id.button_average:
       popupMenuAverage.dismiss();
       nFFTAverage = Integer.parseInt(selectedItemTag);
+      if (graphView != null) {
+        graphView.setTimeMultiplier(nFFTAverage);
+      }
       b_need_restart_audio = false;
       editor.putInt("button_average", nFFTAverage);
       break;
@@ -472,6 +475,7 @@ public class AnalyzeActivity extends Activity
     }
   }
 
+  // When this function is called, the Looper must not running in the meanwhile.
   void updatePreferenceSaved() {
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     showLines   = sharedPref.getBoolean("showLines", false);
@@ -1207,6 +1211,7 @@ public class AnalyzeActivity extends Activity
       bounds.right = sampleRate / 2;
       graphView.setBounds(bounds);
       graphView.setupSpectrogram(sampleRate, fftLen);
+      graphView.setTimeMultiplier(nFFTAverage);
     }
 
     public void setPause(boolean pause) {

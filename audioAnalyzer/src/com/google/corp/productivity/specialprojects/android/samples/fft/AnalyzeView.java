@@ -412,7 +412,7 @@ public class AnalyzeView extends View {
   // Draw time axis for spectrogram
   // Working in the original canvas frame
   private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, float nt) {
-    float axisMin = (float) timeWatch;
+    float axisMin = (float) timeWatch * timeMultiplier;
     float axisMax = 0;
     float canvasMin = 0;
     float canvasMax = labelBeginY;
@@ -709,6 +709,7 @@ public class AnalyzeView extends View {
   int nFreqPoints;
   double timeInc;
   double timeWatch = 4.0;
+  volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzeActivity
   int nTimePoints;
   int spectrogramColorsPt;
   Matrix matrixSpectrogram = new Matrix();
@@ -717,6 +718,10 @@ public class AnalyzeView extends View {
   
   public int getShowMode() {
     return showMode;
+  }
+  
+  public void setTimeMultiplier(int nAve) {
+    timeMultiplier = nAve;
   }
   
   public void setSpectrogramModeShifting(boolean b) {
