@@ -91,7 +91,6 @@ public class AnalyzeActivity extends Activity
 
   private static boolean showLines;
   private static boolean bSaveWav;
-  //private boolean isTesting = false;
   private static int audioSourceId = RECORDER_AGC_OFF;
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
@@ -472,7 +471,6 @@ public class AnalyzeActivity extends Activity
     
     if (b_need_restart_audio) {
       reRecur();
-      updateAllLabels();
     }
   }
 
@@ -621,20 +619,7 @@ public class AnalyzeActivity extends Activity
     } else {
       scaleEvent(event);
     }
-    long t = SystemClock.uptimeMillis();
-    long frameTime;
-    if (graphView.getShowMode() != 0) {
-      frameTime = 200;  // use a much lower frame rate for spectrogram
-    } else {
-      frameTime = 50;
-    }
-    if (t >= timeToUpdate) {
-      timeToUpdate += frameTime;
-      if (timeToUpdate < t) {
-        timeToUpdate = t+frameTime;
-      }
-      graphView.invalidate();
-    }
+    invalidateGraphView();
     return super.onTouchEvent(event);
   }
   
@@ -644,9 +629,7 @@ public class AnalyzeActivity extends Activity
   private void measureEvent(MotionEvent event) {
     switch (event.getPointerCount()) {
       case 1:
-        if (graphView.setCursor(event.getX(), event.getY())) {
-          updateAllLabels();
-        }
+        graphView.setCursor(event.getX(), event.getY());
         break;
       case 2:
         if (isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
@@ -679,7 +662,6 @@ public class AnalyzeActivity extends Activity
       case 2 :
         if (isPinching)  {
           graphView.setShiftScale(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
-          updateAllLabels();
         } else {
           graphView.setShiftScaleBegin(event.getX(0), event.getY(0), event.getX(1), event.getY(1));
         }
@@ -705,7 +687,6 @@ public class AnalyzeActivity extends Activity
             graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
             graphView.setYShift(yShift0 + (y0 - y) / graphView.getYZoom());
           }
-          updateAllLabels();
         }
         isPinching = false;
         break;
@@ -728,8 +709,8 @@ public class AnalyzeActivity extends Activity
   public void onClick(View v) {
     if (processClick(v)) {
       reRecur();
-      updateAllLabels();
     }
+    invalidateGraphView();
   }
 
   private void reRecur() {
@@ -762,6 +743,9 @@ public class AnalyzeActivity extends Activity
         SelectorText st = (SelectorText) findViewById(R.id.run);
         if (bSaveWav && ! st.getText().toString().equals("stop")) {
           st.nextValue();
+          if (samplingThread != null) {
+            samplingThread.setPause(true);
+          }
         }
         return true;
       case R.id.run:
@@ -795,10 +779,6 @@ public class AnalyzeActivity extends Activity
     }
   }
 
-  private void updateAllLabels() {
-    refreshCursorLabel();
-  }
-  
   private void refreshCursorLabel() {
     double f1 = graphView.getCursorX();
     
@@ -840,26 +820,30 @@ public class AnalyzeActivity extends Activity
     }
   }
   
-  // Replot spectrum
   long timeToUpdate = SystemClock.uptimeMillis();; 
-  public void rePlot() {
+  boolean isInvalidating = false;
+  
+  // Invalidate graphView in limited a frame rate
+  public void invalidateGraphView() {
+    if (isInvalidating) {
+      return ;
+    }
+    isInvalidating = true;
     long t = SystemClock.uptimeMillis();
     long frameTime;
     if (graphView.getShowMode() != 0) {
-      frameTime = 200;  // use a much lower frame rate for spectrogram
+      frameTime = 1000/10;  // use a much lower frame rate for spectrogram
     } else {
-      frameTime = 50;
+      frameTime = 1000/20;
     }
-    if (t >= timeToUpdate) {  // limit frame rate
+    if (t >= timeToUpdate) {        // limit frame rate
+//      Log.d(TAG, "  t = " + t);
       timeToUpdate += frameTime;
-      if (timeToUpdate < t) {
+      if (timeToUpdate < t) {       // catch up current time
         timeToUpdate = t+frameTime;
       }
       if (graphView.isBusy() == true) {
         Log.d(TAG, "recompute(): isBusy == true");
-      }
-      if (graphView.getShowMode() == 0) {
-        graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
       }
       graphView.invalidate();
       TextView tv;
@@ -875,7 +859,9 @@ public class AnalyzeActivity extends Activity
         tv.setText(textPeakChar, 0, textPeakChar.length);
         tv.invalidate();
       }
+      refreshCursorLabel();
     }
+    isInvalidating = false;
   }
 
   /**
@@ -904,9 +890,10 @@ public class AnalyzeActivity extends Activity
     return validated.toArray(new String[0]);
   }
 
+  static final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
+
   // Convert frequency to pitch
   // Fill with sFill until length is 6. If sFill=="", do not fill
-  final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
   public void freq2Cent(StringBuilder a, double f, String sFill) {
     if (f<=0 || Double.isNaN(f) || Double.isInfinite(f)) {
       a.append("      ");
@@ -938,8 +925,8 @@ public class AnalyzeActivity extends Activity
   
   public class Looper extends Thread {
     AudioRecord record;
-    boolean isRunning = true;
-    boolean isPaused1 = false;
+    volatile boolean isRunning = true;
+    volatile boolean isPaused1 = false;
     double dtRMS = 0;
     double dtRMSFromFT = 0;
     double maxAmpDB;
@@ -951,6 +938,7 @@ public class AnalyzeActivity extends Activity
     double[] mdata;
     
     public Looper() {
+      isPaused1 = ((SelectorText) findViewById(R.id.run)).getText().toString().equals("stop");
       // Signal sources for testing
       double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
       double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
@@ -1082,14 +1070,13 @@ public class AnalyzeActivity extends Activity
       RecorderMonitor recorderMonitor = new RecorderMonitor(sampleRate, bufferSampleSize, "Looper::run()");
       recorderMonitor.start();
       
-      FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
+//      FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
       
       WavWriter wavWriter = new WavWriter(sampleRate);
       boolean bSaveWavLoop = bSaveWav;  // change of bSaveWav during loop will only affect next enter.
       if (bSaveWavLoop) {
         wavWriter.start();
         Log.i(TAG, "PCM write to file " + wavWriter.getPath());
-        isPaused1 = true;
       }
 
       // Start recording
@@ -1113,7 +1100,7 @@ public class AnalyzeActivity extends Activity
           wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // Maybe move this to another thread?
         }
         if (isPaused1) {
-          fpsCounter.inc();
+//          fpsCounter.inc();
           // keep reading data, for overrun checker and for write wav data
           continue;
         }
@@ -1126,7 +1113,7 @@ public class AnalyzeActivity extends Activity
           final double[] spectrumDB = stft.getSpectrumAmpDB();
           System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
           update(spectrumDBcopy);
-          fpsCounter.inc();
+//          fpsCounter.inc();
 
           // Find and show peak amplitude
           maxAmpDB  = 20 * Math.log10(0.5/32768);
@@ -1200,8 +1187,11 @@ public class AnalyzeActivity extends Activity
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          if (graphView.getShowMode() == 0) {
+            graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
+          }
           // data will get out of synchronize here
-          AnalyzeActivity.this.rePlot();
+          AnalyzeActivity.this.invalidateGraphView();
         }
       });
     }
@@ -1270,6 +1260,6 @@ public class AnalyzeActivity extends Activity
    */
   @Override
   public void ready() {
-    updateAllLabels();
+    // put code here for the moment that graph size just changed
   }
 }

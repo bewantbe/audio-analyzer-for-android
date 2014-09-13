@@ -102,6 +102,10 @@ public class AnalyzeView extends View {
   
   private void setup(AttributeSet attrs, Context context) {
     Log.v(TAG, "setup():");
+    matrix0.reset();
+    matrix0.setTranslate(0f, 0f);
+    matrix0.postScale(1f, 1f);
+
     path = new Path();
     
     linePaint = new Paint();
@@ -528,6 +532,7 @@ public class AnalyzeView extends View {
        x < myLocation[0] + getWidth() && y < myLocation[1] + getHeight();
   }
   
+  // return true if the coordinate (x,y) is inside graphView
   public boolean setCursor(float x, float y) {
     if (intersects(x, y)) {
       // Log.i(AnalyzeActivity.TAG, x + "," + y);
@@ -539,6 +544,8 @@ public class AnalyzeView extends View {
       } else {
         cursorX = xShift + (x - myLocation[0])/xZoom;  // coordinate in canvas
         cursorY = yShift + (y - myLocation[1])/yZoom;
+        cursorX = axisBounds.width() * cursorX / canvasWidth;  // coordinate in axis (frequency)
+        cursorY = axisBounds.height() * cursorY / canvasHeight;
       }
       return true;
     } else {
@@ -547,20 +554,22 @@ public class AnalyzeView extends View {
   }
   
   public float getCursorX() {
-    return  canvasWidth == 0 ? 0 : axisBounds.width() * cursorX / canvasWidth;
+    return  canvasWidth == 0 ? 0 : cursorX;
   }
   
   public float getCursorY() {
-    return  canvasHeight == 0 ? 0 : axisBounds.height() * cursorY / canvasHeight;
+    return  canvasHeight == 0 ? 0 : cursorY;
   }
   
-  // in the axisBounds frame
+  // In the (Zoomed) canvas frame
   private void drawCursor(Canvas c) {
-    if (xShift < cursorX && cursorX <= xShift + canvasWidth/xZoom) {
-      c.drawLine(cursorX, yShift, cursorX, yShift + canvasHeight/yZoom, cursorPaint); 
+    float cX = cursorX / axisBounds.width() * canvasWidth;
+    float cY = cursorY / axisBounds.height() * canvasHeight;
+    if (xShift < cX && cX <= xShift + canvasWidth/xZoom) {
+      c.drawLine(cX, yShift, cX, yShift + canvasHeight/yZoom, cursorPaint); 
     }
-    if (yShift < cursorY && cursorY <= yShift + canvasHeight/yZoom) {
-      c.drawLine(xShift, cursorY, xShift + canvasWidth/xZoom, cursorY, cursorPaint); 
+    if (yShift < cY && cY <= yShift + canvasHeight/yZoom) {
+      c.drawLine(xShift, cY, xShift + canvasWidth/xZoom, cY, cursorPaint); 
     }
   }
   
@@ -625,19 +634,16 @@ public class AnalyzeView extends View {
     xZoom = Math.max(s, 1f); 
     xShift = clamp(xShift, 0f, (xZoom - 1f) * canvasWidth );
     computeMatrix();
-    invalidate();
   }
   
   public void setXShift(float offset) {
     xShift = clampXShift(offset);
     computeMatrix();
-    invalidate();
   }
   
   public void setYShift(float offset) {
     yShift = clampYShift(offset);
     computeMatrix();
-    invalidate();
   }
   
   public void resetViewScale() {
@@ -646,7 +652,6 @@ public class AnalyzeView extends View {
     yShift = 0;
     yZoom = 1;
     computeMatrix();
-    invalidate();
   }
   
   private float xMidOld = 100;
@@ -672,26 +677,21 @@ public class AnalyzeView extends View {
   
   // Do the scaling according to the motion event getX() and getY() (getPointerCount()==2)
   public void setShiftScale(float x1, float y1, float x2, float y2) {
-    if (canvasWidth*0.13f < xDiffOld) {
+    if (canvasWidth*0.13f < xDiffOld) {  // if fingers are not very close in x direction, do scale in x direction 
       xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, axisBounds.width()/200f);    // 100 sample frequency full screen
     }
     xShift = clampXShift(xShiftOld + xMidOld/xZoomOld - (x1+x2)/2f/xZoom);
-    if (canvasHeight*0.13f < yDiffOld) {
+    if (canvasHeight*0.13f < yDiffOld) {  // if fingers are not very close in y direction, do scale in y direction
       yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, -axisBounds.height()/6f);  // ~ 3dB full screen
     }
     yShift = clampYShift(yShiftOld + yMidOld/yZoomOld - (y1+y2)/2f/yZoom);
     computeMatrix();
-    invalidate();
   }
   
   private void computeMatrix() {
     matrix.reset();
     matrix.setTranslate(-xShift, -yShift);
     matrix.postScale(xZoom, yZoom);
-    matrix0.reset();
-    matrix0.setTranslate(0f, 0f);
-    matrix0.postScale(1f, 1f);
-    // Log.i(AnalyzeActivity.TAG, "  computeMatrix(): xShift=" + xShift + " xZoom=" + xZoom);
   }
   
   @Override
@@ -826,9 +826,13 @@ public class AnalyzeView extends View {
     }
     isBusy = false;
   }
+  
+//  FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("View"); 
 
   @Override
   protected void onDraw(Canvas c) {
+//    fpsCounter.inc();
+//    long t = SystemClock.uptimeMillis();
     isBusy = true;
     c.concat(matrix0);
     c.save();
@@ -875,6 +879,7 @@ public class AnalyzeView extends View {
       }
     }
     isBusy = false;
+//    Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
   }
   
   /*
