@@ -16,10 +16,12 @@ public class STFT {
   private double[] spectrumAmpIn;
   private double[] spectrumAmpInTmp;
   private double[] wnd;
-  private double wndEnergyFactor = 1; 
+  private double wndEnergyFactor = 1;           // used to keep energy invariant under different window
+  private int sampleRate;
+  private int fftLen;
   private int spectrumAmpPt;
   private double[][] spectrumAmpOutArray;
-  private int spectrumAmpOutArrayPt = 0;                                   // Pointer for spectrumAmpOutArray
+  private int spectrumAmpOutArrayPt = 0;        // Pointer for spectrumAmpOutArray
   private int nAnalysed = 0;
   private RealDoubleFFT spectrumAmpFFT;
   private boolean boolAWeighting = false;
@@ -85,7 +87,7 @@ public class STFT {
     return boolAWeighting;
   }
   
-  private void init(int fftlen, double sampleRate, int minFeedSize, String wndName) {
+  private void init(int fftlen, int sampleRate, int minFeedSize, String wndName) {
     if (minFeedSize <= 0) {
       throw new IllegalArgumentException("STFT::init(): should minFeedSize >= 1.");
     }
@@ -93,6 +95,8 @@ public class STFT {
       // error: fftlen should be power of 2
       throw new IllegalArgumentException("STFT::init(): Currently, only power of 2 are supported in fftlen");
     }
+    this.sampleRate = sampleRate;
+    fftLen = fftlen;
     spectrumAmpOutCum= new double[fftlen/2+1];
     spectrumAmpOutTmp= new double[fftlen/2+1];
     spectrumAmpOut   = new double[fftlen/2+1];
@@ -110,11 +114,11 @@ public class STFT {
     boolAWeighting = false;
   }
   
-  public STFT(int fftlen, double sampleRate, int minFeedSize, String wndName) {
+  public STFT(int fftlen, int sampleRate, int minFeedSize, String wndName) {
     init(fftlen, sampleRate, minFeedSize, wndName);
   }
 
-  public STFT(int fftlen, double sampleRate, String wndName) {
+  public STFT(int fftlen, int sampleRate, String wndName) {
     init(fftlen, sampleRate, 1, wndName);
   }
 
@@ -169,9 +173,9 @@ public class STFT {
   }
   
   final public double[] getSpectrumAmp() {
-    int outLen = spectrumAmpOut.length;
-    double[] sAOC = spectrumAmpOutCum;
     if (nAnalysed != 0) {    // no new result
+      int outLen = spectrumAmpOut.length;
+      double[] sAOC = spectrumAmpOutCum;
       for (int j = 0; j < outLen; j++) {
         sAOC[j] /= nAnalysed;
       }
@@ -217,6 +221,45 @@ public class STFT {
     return nAnalysed;
   }
   
+  public double maxAmpFreq = Double.NaN, maxAmpDB = Double.NaN;
+  
+  public void calculatePeak() {
+    getSpectrumAmpDB();
+    // Find and show peak amplitude
+    maxAmpDB  = 20 * Math.log10(0.5/32768);
+    maxAmpFreq = 0;
+    for (int i = 1; i < spectrumAmpOutDB.length; i++) {  // skip the direct current term
+      if (spectrumAmpOutDB[i] > maxAmpDB) {
+        maxAmpDB  = spectrumAmpOutDB[i];
+        maxAmpFreq = i;
+      }
+    }
+    maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
+    
+    // Slightly better peak finder
+    // The peak around spectrumDB should look like quadratic curve after good window function
+    // a*x^2 + b*x + c = y
+    // a - b + c = x1
+    //         c = x2
+    // a + b + c = x3
+    if (sampleRate / fftLen < maxAmpFreq && maxAmpFreq < sampleRate/2 - sampleRate / fftLen) {
+      int id = (int)(Math.round(maxAmpFreq/sampleRate*fftLen));
+      double x1 = spectrumAmpOutDB[id-1];
+      double x2 = spectrumAmpOutDB[id];
+      double x3 = spectrumAmpOutDB[id+1];
+      double c = x2;
+      double a = (x3+x1)/2 - x2;
+      double b = (x3-x1)/2;
+      if (a < 0) {
+        double xPeak = -b/(2*a);
+        if (Math.abs(xPeak) < 1) {
+          maxAmpFreq += xPeak * sampleRate / fftLen;
+          maxAmpDB = (4*a*c - b*b)/(4*a);
+        }
+      }
+    }
+  }
+
   public void clear() {
     spectrumAmpPt = 0;
     Arrays.fill(spectrumAmpOut, 0.0);

@@ -1065,7 +1065,9 @@ public class AnalyzeActivity extends Activity
 
       stft = new STFT(fftLen, sampleRate, wndFuncName);
       stft.setAWeighting(isAWeighting);
-      spectrumDBcopy = new double[fftLen/2+1];
+      if (spectrumDBcopy == null || spectrumDBcopy.length != fftLen/2+1) {
+        spectrumDBcopy = new double[fftLen/2+1];
+      }
 
       RecorderMonitor recorderMonitor = new RecorderMonitor(sampleRate, bufferSampleSize, "Looper::run()");
       recorderMonitor.start();
@@ -1114,18 +1116,11 @@ public class AnalyzeActivity extends Activity
           System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
           update(spectrumDBcopy);
 //          fpsCounter.inc();
-
-          // Find and show peak amplitude
-          maxAmpDB  = 20 * Math.log10(0.5/32768);
-          maxAmpFreq = 0;
-          for (int i = 1; i < spectrumDB.length; i++) {  // skip the direct current term
-            if (spectrumDB[i] > maxAmpDB) {
-              maxAmpDB  = spectrumDB[i];
-              maxAmpFreq = i;
-            }
-          }
-          maxAmpFreq = maxAmpFreq * sampleRate / fftLen;
-
+          
+          stft.calculatePeak();
+          maxAmpFreq = stft.maxAmpFreq;
+          maxAmpDB = stft.maxAmpDB;
+          
           // get RMS
           dtRMS = stft.getRMS();
           dtRMSFromFT = stft.getRMSFromFT();
