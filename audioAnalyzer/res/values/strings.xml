@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">Audio Spectrum Analyzer 0.2</string>
-    <string name="instructions_text">&lt;h2&gt;Important notes&lt;/h2&gt;
+    <string name="instructions_text">&lt;h2&gt;Important Notes&lt;/h2&gt;
 All the dB in this software are Decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustics dB (e.g. dB SPL or dBA) (at least need a full spectrum calibration).
 &lt;br/&gt;
 The dBA in this software is a simple minded A-weighting dBFS.
@@ -12,10 +12,12 @@ Some (if not many) cell phone have a low quality sampling rate converter. In the
 This software have a high power consumption.
 &lt;br/&gt;
 
-&lt;h2&gt;Implementation Note&lt;/h2&gt;
-All the calculation of spectrum and spectrogram are done through FFT with chosen window function, and using a 50% data overlap.
-&lt;br/&gt;
+&lt;h2&gt;Implementation Notes&lt;/h2&gt;
 A full-scale sine wave is designated 0 dBFS.
+&lt;br/&gt;
+All the calculation of spectrum and spectrogram are done through FFT with chosen window function, with a 50% data overlapping.
+&lt;br/&gt;
+The peak frequency is found by look for max spectrum point, then correct it by a quadratic interpolation using 3 nearby points. The error is ususlly smaller than one tenth of (sample rate)/(FFT length).
 &lt;br/&gt;
 This software will drop frames if the required frame rate is too high. e.g. sampling rate 48000 with FFT length 1024 lead to a frame rate 48000 / 1024 * 2 = 93.75 fps, which is far too high for a cell phone.
 &lt;br/&gt;
