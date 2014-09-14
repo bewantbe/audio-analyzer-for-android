@@ -22,7 +22,6 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -33,8 +32,6 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.SystemClock;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +42,7 @@ import android.view.View;
 
 public class AnalyzeView extends View {
   private final String TAG = "AnalyzeView::";
+  static float DPRatio;
   private float cursorX, cursorY; // cursor location
   private float xZoom;     // horizontal scaling
   private float xShift;    // horizontal translation
@@ -75,7 +73,6 @@ public class AnalyzeView extends View {
   private char[][] gridPoints2st   = new char[0][];
   private char[][] gridPoints2stDB = new char[0][];
   private char[][] gridPoints2stT  = new char[0][];
-  SharedPreferences sharedPref;  // read preference automatically
   
   public boolean isBusy() {
     return isBusy;
@@ -102,6 +99,7 @@ public class AnalyzeView extends View {
   }
   
   private void setup(AttributeSet attrs, Context context) {
+    DPRatio = context.getResources().getDisplayMetrics().density;
     Log.v(TAG, "setup():");
     matrix0.reset();
     matrix0.setTranslate(0f, 0f);
@@ -125,7 +123,7 @@ public class AnalyzeView extends View {
 
     labelPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     labelPaint.setColor(Color.GRAY);
-    labelPaint.setTextSize(14.0f);
+    labelPaint.setTextSize(14.0f * DPRatio);
     labelPaint.setTypeface(Typeface.MONOSPACE);  // or Typeface.SANS_SERIF
     
     backgroundPaint = new Paint();
@@ -141,11 +139,6 @@ public class AnalyzeView extends View {
     gridDensity = 1/85f;  // every 85 pixel one grid line, on average
     Resources res = getResources();
     minDB = Float.parseFloat(res.getString(R.string.max_DB_range));
-    sharedPref = PreferenceManager.getDefaultSharedPreferences(context);
-    dBLowerBound = Double.parseDouble(sharedPref.getString("spectrogramRange",
-                   Double.toString(dBLowerBound)));
-    axisBounds.bottom = Float.parseFloat(sharedPref.getString("spectrumRange",
-                        Double.toString(axisBounds.bottom)));
   }
   
   public void setBounds(RectF bounds) {
@@ -752,16 +745,13 @@ public class AnalyzeView extends View {
     computeMatrix();
   }
   
-  public void switch2Spectrogram(int sampleRate, int fftLen) {
+  public void switch2Spectrogram(int sampleRate, int fftLen, double timeDurationE) {
     showMode = 1;
-    setupSpectrogram(sampleRate, fftLen);
+    setupSpectrogram(sampleRate, fftLen, timeDurationE);
   }
   
-  public void setupSpectrogram(int sampleRate, int fftLen) {
-    if (sharedPref != null) {
-      timeWatch = Double.parseDouble(sharedPref.getString("spectrogramDuration",
-                  Double.toString(4.0)));
-    }
+  public void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE) {
+    timeWatch = timeDurationE;
     oldYShift = yShift;
     oldYZoom  = yZoom;
     nFreqPoints = fftLen / 2;                 // no direct current term
@@ -823,7 +813,7 @@ public class AnalyzeView extends View {
     c.concat(matrix0);
     c.save();
     if (showMode == 0) {
-      drawGridLines(c, canvasWidth * gridDensity, canvasHeight * gridDensity);
+      drawGridLines(c, canvasWidth * gridDensity / DPRatio, canvasHeight * gridDensity / DPRatio);
       c.concat(matrix);
       c.drawPath(path, linePaint);
       drawCursor(c);
@@ -867,10 +857,10 @@ public class AnalyzeView extends View {
         c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint);
       }
       c.restore();
-      drawFreqAxis(c, labelBeginX, labelBeginY, canvasWidth * gridDensity);
+      drawFreqAxis(c, labelBeginX, labelBeginY, canvasWidth * gridDensity / DPRatio);
       if (labelBeginX > 0) {
         c.drawRect(0, 0, labelBeginX, labelBeginY, backgroundPaint);
-        drawTimeAxis(c, labelBeginX, labelBeginY, canvasHeight * gridDensity);
+        drawTimeAxis(c, labelBeginX, labelBeginY, canvasHeight * gridDensity / DPRatio);
       }
     }
     isBusy = false;

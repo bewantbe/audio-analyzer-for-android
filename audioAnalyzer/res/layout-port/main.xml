@@ -20,7 +20,7 @@
 
         <TextView
             android:id="@+id/textview_RMS"
-            android:layout_width="60dp"
+            android:layout_width="@dimen/textview_RMS_layout_width"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
             android:lines="2"
@@ -65,29 +65,29 @@
         <Button
             android:id="@+id/button_sample_rate"
             android:layout_width="wrap_content"
-            android:layout_height="40sp"
+            android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
             android:text="Sample/S"
-            android:textSize="18sp" />
+            android:textSize="@dimen/button_text_fontsize" />
 
         <Button
             android:id="@+id/button_fftlen"
             android:layout_width="wrap_content"
-            android:layout_height="40sp"
+            android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
             android:text="fftlen"
-            android:textSize="18sp" />
+            android:textSize="@dimen/button_text_fontsize" />
 
         <Button
             android:id="@+id/button_average"
             android:layout_width="wrap_content"
-            android:layout_height="40sp"
+            android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
             android:text="ave"
-            android:textSize="18sp" />
+            android:textSize="@dimen/button_text_fontsize" />
     </LinearLayout>
 
     <LinearLayout

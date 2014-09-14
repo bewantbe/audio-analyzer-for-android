@@ -997,6 +997,9 @@ containing a value of this type.
          */
         public static final int activity_horizontal_margin=0x7f090015;
         public static final int activity_vertical_margin=0x7f090016;
+        public static final int button_button_height=0x7f090018;
+        public static final int button_text_fontsize=0x7f090019;
+        public static final int button_text_small_fontsize=0x7f09001a;
         /**  The platform's desired fixed height for a dialog along the major axis
          (the screen is in portrait). This may be either a fraction or a dimension.
  The platform's desired fixed height for a dialog along the major axis
@@ -1029,6 +1032,7 @@ containing a value of this type.
          (the screen is in portrait). This may be either a fraction or a dimension.
          */
         public static final int dialog_fixed_width_minor=0x7f090012;
+        public static final int textview_RMS_layout_width=0x7f090017;
     }
     public static final class drawable {
         public static final int abc_ab_bottom_solid_dark_holo=0x7f020000;

@@ -75,6 +75,7 @@ public class AnalyzeActivity extends Activity
     implements OnLongClickListener, OnClickListener,
                OnItemClickListener, Ready {
   static final String TAG="AnalyzeActivity";
+  static float DPRatio;
 
   private AnalyzeView graphView;
   private Looper samplingThread;
@@ -94,9 +95,10 @@ public class AnalyzeActivity extends Activity
   private static int audioSourceId = RECORDER_AGC_OFF;
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
+  private double timeDurationPref = 4.0;
   
-  float listItemTextSize = 20;
-  float listItemTitleTextSize = 12;
+  float listItemTextSize = 20;        // font size in pixel
+  float listItemTitleTextSize = 12;   // font size in pixel
   
   Object oblock = new Object();
 
@@ -114,6 +116,8 @@ public class AnalyzeActivity extends Activity
 //  Debug.startMethodTracing("calc");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
+    
+    DPRatio = getResources().getDisplayMetrics().density;
     
     final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
     Log.i(TAG, " max mem = " + maxMemory + "k");
@@ -141,6 +145,9 @@ public class AnalyzeActivity extends Activity
     
     Resources res = getResources();
     getAudioSourceNameFromIdPrepare(res);
+
+    listItemTextSize      = res.getDimension(R.dimen.button_text_fontsize);
+    listItemTitleTextSize = res.getDimension(R.dimen.button_text_small_fontsize);
     
     /// initialize pop up window items list
     // http://www.codeofaninja.com/2013/04/show-listview-as-drop-down-android.html
@@ -161,30 +168,30 @@ public class AnalyzeActivity extends Activity
   @SuppressWarnings("deprecation")
   private void setTextViewFontSize() {
     TextView tv = (TextView) findViewById(R.id.textview_cur);
+    // At this point tv.getWidth(), tv.getLineCount() will return 0
 
     Paint mTestPaint = new Paint();
-    mTestPaint.set(tv.getPaint());
+//    mTestPaint.set(tv.getPaint());
     mTestPaint.setTextSize(tv.getTextSize());
     mTestPaint.setTypeface(Typeface.MONOSPACE);
     
     final String text = "Peak:XXXXX.XHz(AX#+XX) -XXX.XdB";
     Display display = getWindowManager().getDefaultDisplay();
-    Resources r = getResources();
-    float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 60, r.getDisplayMetrics());
-    px = display.getWidth() - px - 5;  // pixels left
     
-    // At this point tv.getWidth(), tv.getLineCount() will return 0
+    // pixels left
+    float px = display.getWidth() - getResources().getDimension(R.dimen.textview_RMS_layout_width) - 5;
     
-    float fs = tv.getTextSize();
-    Log.i(TAG, "  font size before = " + fs);
+    float fs = tv.getTextSize();  // size in pixel
+//    float fs2 = fs;
+//    Log.i(TAG, "  font size before = " + fs);
     while (mTestPaint.measureText(text) > px && fs > 5) {
       fs -= 0.5;
       mTestPaint.setTextSize(fs);
     }
-    Log.i(TAG, "  font size after = " + fs);
-    ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs);
-    ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs);
-
+//    Log.i(TAG, "  font size after = " + fs);
+//    (Toast.makeText(this, " px, fs1, fs2 = " + DPRatio + " " + fs2 + " " + fs, Toast.LENGTH_LONG)).show();
+    ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs / DPRatio);
+    ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs / DPRatio);
   }
   
   /**
@@ -205,16 +212,21 @@ public class AnalyzeActivity extends Activity
       getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
     graphView.setShowTimeAxis(sharedPref.getBoolean("spectrogramTimeAxis", true));
+    // set spectrum show range
     float b = graphView.getBounds().bottom;
     b = Float.parseFloat(sharedPref.getString("spectrumRange",
                          Double.toString(b)));
     graphView.setBoundsBottom(b);
+    // set spectrogram show range
     double d = graphView.getLowerBound();
     d = Double.parseDouble(sharedPref.getString("spectrogramRange",
                            Double.toString(d)));
     graphView.setLowerBound(d);
+    // set spectrogram shifting mode
     graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
-
+    timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
+                                          Double.toString(4.0)));
+    
     // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
@@ -340,7 +352,7 @@ public class AnalyzeActivity extends Activity
     Paint mTestPaint = new Paint();
     mTestPaint.setTextSize(listItemTextSize);
     float w = 0;
-    float wi;
+    float wi;      // max text width in pixel
     for (int i = 0; i < popUpContents.length; i++) {
       String sts[] = popUpContents[i].split("::");
       String st = sts[0];
@@ -355,9 +367,9 @@ public class AnalyzeActivity extends Activity
         w = wi;
       }
     }
-    
+        
     // left and right padding, at least +7, or the whole app will stop respond, don't know why
-    w = w + 25;
+    w = w + 20 * DPRatio;
     if (w < 60) {
       w = 60;
     }
@@ -366,9 +378,9 @@ public class AnalyzeActivity extends Activity
     popupWindow.setFocusable(true);
     popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
     // Set window width according to max text width
-    popupWindow.setWidth((int)(w));
+    popupWindow.setWidth((int)w);
     // also set button width
-    ((Button) findViewById(resId)).setWidth((int)w);
+    ((Button) findViewById(resId)).setWidth((int)(w + 2 * DPRatio));
     // Set the text on button in updatePreferenceSaved()
     
     // set the list view as pop up window content
@@ -397,14 +409,14 @@ public class AnalyzeActivity extends Activity
           if (id.equals("0")) {
             listItem.setText(text);
             listItem.setTag(id);
-            listItem.setTextSize(listItemTitleTextSize);
+            listItem.setTextSize(listItemTitleTextSize / DPRatio);
             listItem.setPadding(5, 5, 5, 5);
             listItem.setTextColor(Color.GREEN);
             listItem.setGravity(android.view.Gravity.CENTER);
           } else {
             listItem.setText(text);
             listItem.setTag(id);
-            listItem.setTextSize(listItemTextSize);
+            listItem.setTextSize(listItemTextSize / DPRatio);
             listItem.setPadding(5, 5, 5, 5);
             listItem.setTextColor(Color.WHITE);
             listItem.setGravity(android.view.Gravity.CENTER);
@@ -769,7 +781,7 @@ public class AnalyzeActivity extends Activity
         if (value.equals("spum")) {
           graphView.switch2Spectrum();
         } else {
-          graphView.switch2Spectrogram(sampleRate, fftLen);
+          graphView.switch2Spectrogram(sampleRate, fftLen, timeDurationPref);
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
         editor.commit();
@@ -1196,7 +1208,7 @@ public class AnalyzeActivity extends Activity
       RectF bounds = graphView.getBounds();
       bounds.right = sampleRate / 2;
       graphView.setBounds(bounds);
-      graphView.setupSpectrogram(sampleRate, fftLen);
+      graphView.setupSpectrogram(sampleRate, fftLen, timeDurationPref);
       graphView.setTimeMultiplier(nFFTAverage);
     }
 
