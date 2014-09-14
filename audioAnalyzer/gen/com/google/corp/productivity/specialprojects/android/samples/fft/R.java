@@ -1306,23 +1306,24 @@ containing a value of this type.
         /**  Description of a share target (both in the list of such or the default share button) in a ShareActionProvider (share UI). [CHAR LIMIT=NONE] 
          */
         public static final int abc_shareactionprovider_share_with_application=0x7f0b000b;
-        public static final int action_settings=0x7f0b0012;
-        public static final int app_name=0x7f0b000d;
-        public static final int dismiss=0x7f0b0010;
-        public static final int instructions_text=0x7f0b000e;
-        public static final int instructions_title=0x7f0b000f;
-        public static final int max_DB_range=0x7f0b0017;
-        public static final int test_signal_1_db1=0x7f0b0019;
-        public static final int test_signal_1_freq1=0x7f0b0018;
-        public static final int test_signal_2_db1=0x7f0b001b;
-        public static final int test_signal_2_db2=0x7f0b001d;
-        public static final int test_signal_2_freq1=0x7f0b001a;
-        public static final int test_signal_2_freq2=0x7f0b001c;
-        public static final int text_view_info_log_0=0x7f0b0013;
-        public static final int textview_RMS_text=0x7f0b0014;
-        public static final int textview_cur_text=0x7f0b0015;
-        public static final int textview_peak_text=0x7f0b0016;
-        public static final int title_activity_info_rec=0x7f0b0011;
+        public static final int action_settings=0x7f0b0013;
+        public static final int app_name=0x7f0b000e;
+        public static final int audio_source_id_default=0x7f0b000d;
+        public static final int dismiss=0x7f0b0011;
+        public static final int instructions_text=0x7f0b000f;
+        public static final int instructions_title=0x7f0b0010;
+        public static final int max_DB_range=0x7f0b0018;
+        public static final int test_signal_1_db1=0x7f0b001a;
+        public static final int test_signal_1_freq1=0x7f0b0019;
+        public static final int test_signal_2_db1=0x7f0b001c;
+        public static final int test_signal_2_db2=0x7f0b001e;
+        public static final int test_signal_2_freq1=0x7f0b001b;
+        public static final int test_signal_2_freq2=0x7f0b001d;
+        public static final int text_view_info_log_0=0x7f0b0014;
+        public static final int textview_RMS_text=0x7f0b0015;
+        public static final int textview_cur_text=0x7f0b0016;
+        public static final int textview_peak_text=0x7f0b0017;
+        public static final int title_activity_info_rec=0x7f0b0012;
     }
     public static final class style {
         /**  Mimic text appearance in select_dialog_item.xml 

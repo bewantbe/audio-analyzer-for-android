@@ -35,14 +35,11 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GestureDetectorCompat;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -171,7 +168,6 @@ public class AnalyzeActivity extends Activity
     // At this point tv.getWidth(), tv.getLineCount() will return 0
 
     Paint mTestPaint = new Paint();
-//    mTestPaint.set(tv.getPaint());
     mTestPaint.setTextSize(tv.getTextSize());
     mTestPaint.setTypeface(Typeface.MONOSPACE);
     
@@ -182,14 +178,10 @@ public class AnalyzeActivity extends Activity
     float px = display.getWidth() - getResources().getDimension(R.dimen.textview_RMS_layout_width) - 5;
     
     float fs = tv.getTextSize();  // size in pixel
-//    float fs2 = fs;
-//    Log.i(TAG, "  font size before = " + fs);
     while (mTestPaint.measureText(text) > px && fs > 5) {
       fs -= 0.5;
       mTestPaint.setTextSize(fs);
     }
-//    Log.i(TAG, "  font size after = " + fs);
-//    (Toast.makeText(this, " px, fs1, fs2 = " + DPRatio + " " + fs2 + " " + fs, Toast.LENGTH_LONG)).show();
     ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs / DPRatio);
     ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs / DPRatio);
   }
@@ -226,6 +218,11 @@ public class AnalyzeActivity extends Activity
     graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
     timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
                                           Double.toString(4.0)));
+
+    // Preferences in preference activity 
+    showLines   = sharedPref.getBoolean("showLines", false);
+    audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
+    wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
     
     // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
@@ -270,6 +267,10 @@ public class AnalyzeActivity extends Activity
       inflater.inflate(R.menu.info, menu);
       return true;
   }
+  
+  // used to pass audioSourceIDs and audioSourceNames to MyPreferences
+  public final static String MYPREFERENCES_MSG_SOURCE_ID = "AnalyzeActivity.SOURCE_ID";
+  public final static String MYPREFERENCES_MSG_SOURCE_NAME = "AnalyzeActivity.SOURCE_NAME";
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
@@ -280,6 +281,8 @@ public class AnalyzeActivity extends Activity
         return true;
       case R.id.settings:
         Intent settings = new Intent(getBaseContext(), MyPreferences.class);
+        settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, audioSourceIDs);
+        settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, audioSourceNames);
         startActivity(settings);
         return true;
       case R.id.info_recoder:
@@ -488,13 +491,8 @@ public class AnalyzeActivity extends Activity
 
   // When this function is called, the Looper must not running in the meanwhile.
   void updatePreferenceSaved() {
-    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    showLines   = sharedPref.getBoolean("showLines", false);
-    audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
-    wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
-    
     // load as key-value pair
-    sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
     sampleRate  = sharedPref.getInt("button_sample_rate", 16000);
     fftLen      = sharedPref.getInt("button_fftlen",       2048);
     nFFTAverage = sharedPref.getInt("button_average",         2);
@@ -515,73 +513,27 @@ public class AnalyzeActivity extends Activity
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(nFFTAverage));
   }
   
-  static String[] as;
-  static int[] asid;
+  static String[] audioSourceNames;
+  static int[] audioSourceIDs;
   private void getAudioSourceNameFromIdPrepare(Resources res) {
-    as   = res.getStringArray(R.array.audio_source);
+    audioSourceNames   = res.getStringArray(R.array.audio_source);
     String[] sasid = res.getStringArray(R.array.audio_source_id);
-    asid = new int[as.length];
-    for (int i = 0; i < as.length; i++) {
-      asid[i] = Integer.parseInt(sasid[i]);
+    audioSourceIDs = new int[audioSourceNames.length];
+    for (int i = 0; i < audioSourceNames.length; i++) {
+      audioSourceIDs[i] = Integer.parseInt(sasid[i]);
     }
   }
   
   // Get audio source name from its ID
   // Tell me if there is better way to do it.
   private static String getAudioSourceNameFromId(int id) {
-    for (int i = 0; i < as.length; i++) {
-      if (asid[i] == id) {
-        return as[i];
+    for (int i = 0; i < audioSourceNames.length; i++) {
+      if (audioSourceIDs[i] == id) {
+        return audioSourceNames[i];
       }
     }
     Log.e(TAG, "getAudioSourceName(): no this entry.");
     return "";
-  }
-  
-  // I'm using a old cell phone -- API level 9 (android 2.3.6)
-  // http://developer.android.com/guide/topics/ui/settings.html
-  @SuppressWarnings("deprecation")
-  public static class MyPreferences extends PreferenceActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-      super.onCreate(savedInstanceState);
-      addPreferencesFromResource(R.xml.preferences);
-      // as soon as the user modifies a preference,
-      // the system saves the changes to a default SharedPreferences file
-    }
-
-    SharedPreferences.OnSharedPreferenceChangeListener prefListener =
-        new SharedPreferences.OnSharedPreferenceChangeListener() {
-      public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-        Log.i(TAG, key + "=" + prefs);
-        if (key == null || key.equals("showLines")) {
-          showLines = prefs.getBoolean("showLines", false);
-        }
-        if (key == null || key.equals("windowFunction")) {
-          wndFuncName = prefs.getString("windowFunction", "Blackman Harris");
-          Preference connectionPref = findPreference(key);
-          connectionPref.setSummary(prefs.getString(key, ""));
-        }
-        if (key == null || key.equals("audioSource")) {
-          String asi = prefs.getString("audioSource", Integer.toString(RECORDER_AGC_OFF));
-          audioSourceId = Integer.parseInt(asi);
-          Preference connectionPref = findPreference(key);
-          connectionPref.setSummary(getAudioSourceNameFromId(audioSourceId));
-        }
-      }
-    };
-    @Override
-    protected void onResume() {
-        super.onResume();
-        getPreferenceScreen().getSharedPreferences()
-                .registerOnSharedPreferenceChangeListener(prefListener);
-    }
-    @Override
-    protected void onPause() {
-        super.onPause();
-        getPreferenceScreen().getSharedPreferences()
-                .unregisterOnSharedPreferenceChangeListener(prefListener);
-    }
   }
   
   private boolean isInGraphView(float x, float y) {

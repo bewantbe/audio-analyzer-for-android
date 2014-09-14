@@ -27,7 +27,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeActivity$MyPreferences"
+            android:name="com.google.corp.productivity.specialprojects.android.samples.fft.MyPreferences"
             android:label="Preferences" >
         </activity>
         <activity
