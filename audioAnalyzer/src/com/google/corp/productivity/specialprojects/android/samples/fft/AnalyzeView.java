@@ -33,6 +33,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -707,8 +708,9 @@ public class AnalyzeView extends View {
   }
   
   int[] spectrogramColors;  // int:ARGB, nFreqPoints columns, nTimePoints rows
+  int[] spectrogramColorsShifting;  // temporarily of spectrogramColors for shifting mode
   int showMode = 0;         // 0: Spectrum, 1:Spectrogram
-  int showModeSpectrogram = 1;  // 0: moving spectrogram, 1: overwriting in loop
+  int showModeSpectrogram = 1;  // 0: moving (shifting) spectrogram, 1: overwriting in loop
   int nFreqPoints;
   double timeInc;
   double timeWatch = 4.0;
@@ -769,6 +771,7 @@ public class AnalyzeView extends View {
     synchronized (this) {
       if (spectrogramColors == null || spectrogramColors.length != nFreqPoints * nTimePoints) {
         spectrogramColors = new int[nFreqPoints * nTimePoints];
+        spectrogramColorsShifting = new int[nFreqPoints * nTimePoints];
       }
       Arrays.fill(spectrogramColors, 0);
     }
@@ -790,38 +793,21 @@ public class AnalyzeView extends View {
       int c;
       int pRef; 
       double d;
-      if (showModeSpectrogram == 0) {
-        System.arraycopy(spectrogramColors, nFreqPoints,
-                         spectrogramColors, 0, spectrogramColors.length - nFreqPoints);
-        pRef = spectrogramColors.length - nFreqPoints - 1;
-        for (int i = 1; i < db.length; i++) {  // no direct current term
-          d = db[i];
-          if (d >= 0) {
-            c = cma[0];
-          } else if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
-            c = cma[cma.length-1];
-          } else {
-            c = cma[(int)(cma.length * d / dBLowerBound)];
-          }
-          spectrogramColors[pRef + i] = colorFromDB(db[i]);
+      pRef = spectrogramColorsPt*nFreqPoints - 1;
+      for (int i = 1; i < db.length; i++) {  // no direct current term
+        d = db[i];
+        if (d >= 0) {
+          c = cma[0];
+        } else if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
+          c = cma[cma.length-1];
+        } else {
+          c = cma[(int)(cma.length * d / dBLowerBound)];
         }
-      } else {
-        pRef = spectrogramColorsPt*nFreqPoints - 1;
-        for (int i = 1; i < db.length; i++) {  // no direct current term
-          d = db[i];
-          if (d >= 0) {
-            c = cma[0];
-          } else if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
-            c = cma[cma.length-1];
-          } else {
-            c = cma[(int)(cma.length * d / dBLowerBound)];
-          }
-          spectrogramColors[pRef + i] = c;
-        }
-        spectrogramColorsPt++;
-        if (spectrogramColorsPt >= nTimePoints) {
-          spectrogramColorsPt = 0;
-        }
+        spectrogramColors[pRef + i] = c;
+      }
+      spectrogramColorsPt++;
+      if (spectrogramColorsPt >= nTimePoints) {
+        spectrogramColorsPt = 0;
       }
     }
     isBusy = false;
@@ -865,8 +851,17 @@ public class AnalyzeView extends View {
       float x = 0;
       float y = 0;
       synchronized (this) {
-        c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-                     nFreqPoints, nTimePoints, false, null);
+        if (showModeSpectrogram == 0) {
+          System.arraycopy(spectrogramColors, 0, spectrogramColorsShifting,
+                           (nTimePoints-spectrogramColorsPt)*nFreqPoints, spectrogramColorsPt*nFreqPoints);
+          System.arraycopy(spectrogramColors, spectrogramColorsPt*nFreqPoints, spectrogramColorsShifting,
+                           0, (nTimePoints-spectrogramColorsPt)*nFreqPoints);
+          c.drawBitmap(spectrogramColorsShifting, 0, nFreqPoints, x, y,
+                       nFreqPoints, nTimePoints, false, null);
+        } else {
+          c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
+              nFreqPoints, nTimePoints, false, null);
+        }
       }
       if (showModeSpectrogram == 1) {
         c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint);

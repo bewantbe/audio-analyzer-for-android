@@ -832,7 +832,7 @@ public class AnalyzeActivity extends Activity
     long t = SystemClock.uptimeMillis();
     long frameTime;
     if (graphView.getShowMode() != 0) {
-      frameTime = 1000/10;  // use a much lower frame rate for spectrogram
+      frameTime = 1000/8;  // use a much lower frame rate for spectrogram
     } else {
       frameTime = 1000/20;
     }
