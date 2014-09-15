@@ -32,6 +32,7 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -700,20 +701,20 @@ public class AnalyzeView extends View {
     isBusy = false;
   }
   
-  int[] spectrogramColors;  // int:ARGB, nFreqPoints columns, nTimePoints rows
-  int[] spectrogramColorsShifting;  // temporarily of spectrogramColors for shifting mode
-  int showMode = 0;         // 0: Spectrum, 1:Spectrogram
-  int showModeSpectrogram = 1;  // 0: moving (shifting) spectrogram, 1: overwriting in loop
-  int nFreqPoints;
-  double timeInc;
-  double timeWatch = 4.0;
-  volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzeActivity
-  boolean bShowTimeAxis = true;
-  int nTimePoints;
-  int spectrogramColorsPt;
-  Matrix matrixSpectrogram = new Matrix();
-  static final int[] cma = ColorMapArray.hot;
-  double dBLowerBound = -120;
+  private int[] spectrogramColors;  // int:ARGB, nFreqPoints columns, nTimePoints rows
+  private int[] spectrogramColorsShifting;  // temporarily of spectrogramColors for shifting mode
+  private int showMode = 0;         // 0: Spectrum, 1:Spectrogram
+  private int showModeSpectrogram = 1;  // 0: moving (shifting) spectrogram, 1: overwriting in loop
+  private int nFreqPoints;
+  private double timeInc;
+  private double timeWatch = 4.0;
+  private volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzeActivity
+  private boolean bShowTimeAxis = true;
+  private int nTimePoints;
+  private int spectrogramColorsPt;
+  private Matrix matrixSpectrogram = new Matrix();
+  private static final int[] cma = ColorMapArray.hot;
+  private double dBLowerBound = -120;
   
   public int getShowMode() {
     return showMode;
@@ -765,6 +766,10 @@ public class AnalyzeView extends View {
       }
       Arrays.fill(spectrogramColors, 0);
     }
+    Log.i(TAG, "setupSpectrogram() is ready"+
+      "\n  sampleRate    = " + sampleRate + 
+      "\n  fftLen        = " + fftLen + 
+      "\n  timeDurationE = " + timeDurationE);
   }
   
   public int colorFromDB(double d) {

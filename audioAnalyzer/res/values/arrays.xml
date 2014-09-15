@@ -46,7 +46,7 @@
         <item>1001</item>
         <item>1002</item>
     </string-array>
-    <string name="audio_source_id_default">6</string>
+    <string name="audio_source_id_default">0</string>
     <string-array name="sample_rates">
         <item>SAMPLE/S::0</item>
         <item>8000::8000</item>
