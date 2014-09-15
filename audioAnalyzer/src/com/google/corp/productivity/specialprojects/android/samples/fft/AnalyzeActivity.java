@@ -550,7 +550,8 @@ public class AnalyzeActivity extends Activity
    */
   class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
     @Override
-    public boolean onDown(MotionEvent event) {
+    public boolean onDown(MotionEvent event) {  // enter here when down action happen
+      flyingMoveHandler.removeCallbacks(flyingMoveRunnable);
       return true;
     }
     
@@ -573,8 +574,47 @@ public class AnalyzeActivity extends Activity
             float velocityX, float velocityY) {
 //      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
       // Fly the canvas in graphView when in scale mode
+      shiftingDirectionX = Math.signum(velocityX);
+      shiftingDirectionY = Math.signum(velocityY);
+      shiftingVelocityX = Math.abs(velocityX);  // Fling pixels per second
+      shiftingVelocityY = Math.abs(velocityY);
+      timeFlingStart = SystemClock.uptimeMillis();
+      flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
     }
+    
+    Handler flyingMoveHandler = new Handler();
+    long timeFlingStart;           // Prevent from running forever
+    float flyDt = 1/20f;           // delta t of refresh
+    float shiftingVelocityX;       // fling velocity x, pixels/second
+    float shiftingVelocityY;       // fling velocity y, pixels/second
+    float shiftingDirectionX;      // fling direction
+    float shiftingDirectionY;      // fling direction
+    float flyAcceleration = 500f;  // damping acceleration of fling, pixels/second^2
+    
+    Runnable flyingMoveRunnable = new Runnable() {
+      @Override
+      public void run() {
+        float shiftingVelocityXNew = shiftingVelocityX - flyAcceleration*flyDt;
+        if (shiftingVelocityXNew < 0) shiftingVelocityXNew = 0;
+        float shiftingVelocityYNew = shiftingVelocityY - flyAcceleration*flyDt;
+        if (shiftingVelocityYNew < 0) shiftingVelocityYNew = 0;
+        // Get pixel should move in this time step
+        float shiftingPixelX = (shiftingVelocityXNew + shiftingVelocityX)/2 * flyDt;
+        float shiftingPixelY = (shiftingVelocityYNew + shiftingVelocityY)/2 * flyDt;
+        shiftingVelocityX = shiftingVelocityXNew;
+        shiftingVelocityY = shiftingVelocityYNew;
+        if ((shiftingVelocityX > 0f || shiftingVelocityY > 0f )
+            && SystemClock.uptimeMillis() - timeFlingStart < 10000) {
+//          Log.i(TAG, "  fly pixels x=" + shiftingPixelX + " y=" + shiftingPixelY);
+          graphView.setXShift(graphView.getXShift() - shiftingDirectionX*shiftingPixelX / graphView.getXZoom());
+          graphView.setYShift(graphView.getYShift() - shiftingDirectionY*shiftingPixelY / graphView.getYZoom());
+          // Am I need to use runOnUiThread() ?
+          AnalyzeActivity.this.invalidateGraphView();
+          flyingMoveHandler.postDelayed(flyingMoveRunnable, (int)(1000*flyDt));
+        }
+      }
+    };
   }
   
   @Override
@@ -786,9 +826,7 @@ public class AnalyzeActivity extends Activity
     }
   }
   
-  long time0 = SystemClock.uptimeMillis();;
   long timeToUpdate = SystemClock.uptimeMillis();;
-//  long t_old;
   volatile boolean isInvalidating = false;
   
   // Invalidate graphView in a limited frame rate
@@ -804,21 +842,15 @@ public class AnalyzeActivity extends Activity
       frameTime = 1000/20;
     }
     long t = SystemClock.uptimeMillis();
-//    Log.d(TAG, "  t = " + (t-time0) + "  invalidate request");
     if (t >= timeToUpdate) {             // limit frame rate
       timeToUpdate += frameTime;
       if (timeToUpdate < t) {            // catch up current time
         timeToUpdate = t+frameTime;
       }
       idPaddingInvalidate = false;
-//      if (graphView.isBusy() == true) {
-        // Busy because graphView.pushRawSpectrum() is running on Looper thread
-        // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
-        // Then here just do invalidate() any way.
-//        Log.d(TAG, "recompute(): isBusy == true : " + graphView.busyName);
-//      }
-//        Log.d(TAG, "  t = " + (t-time0) + "  doing an graphView.invalidate(), dt = " + (t - t_old));
-//        t_old = t;
+      // Here graphView.isBusy() can be true because graphView.pushRawSpectrum() is running on Looper thread
+      // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
+      // and then here just do invalidate().
       graphView.invalidate();
       TextView tv;
       synchronized (oblock) {
@@ -837,7 +869,6 @@ public class AnalyzeActivity extends Activity
     } else {
       if (idPaddingInvalidate == false) {
         idPaddingInvalidate = true;
-//        Log.d(TAG, "  t = " + (t-time0) + " padding a request, wait=" + (timeToUpdate - t + 1));
         paddingInvalidateHandler.postDelayed(paddingInvalidateRunnable, timeToUpdate - t + 1);
       }
     }
@@ -845,7 +876,6 @@ public class AnalyzeActivity extends Activity
   }
 
   volatile boolean idPaddingInvalidate = false;
-  
   Handler paddingInvalidateHandler = new Handler();
   
   // Am I need to use runOnUiThread() ?
@@ -853,10 +883,7 @@ public class AnalyzeActivity extends Activity
     @Override
     public void run() {
       if (idPaddingInvalidate) {
-        long t = SystemClock.uptimeMillis();
-        if (t-timeToUpdate <= 0) {
-          Log.d(TAG, "  t = " + (t-time0) + "  Runnable: sending invalidate request, dt=" + (t-timeToUpdate));
-        }
+        // It is possible that t-timeToUpdate <= 0 here, don't know why
         AnalyzeActivity.this.invalidateGraphView();
       }
     }
