@@ -7,7 +7,7 @@
         android:title="Keep screen on" />
 
     <ListPreference
-        android:defaultValue="0"
+        android:defaultValue="@string/audio_source_id_default"
         android:entries="@array/audio_source"
         android:entryValues="@array/audio_source_id"
         android:key="audioSource"

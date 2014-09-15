@@ -268,7 +268,7 @@ public class AnalyzeActivity extends Activity
       return true;
   }
   
-  // used to pass audioSourceIDs and audioSourceNames to MyPreferences
+  // for pass audioSourceIDs and audioSourceNames to MyPreferences
   public final static String MYPREFERENCES_MSG_SOURCE_ID = "AnalyzeActivity.SOURCE_ID";
   public final static String MYPREFERENCES_MSG_SOURCE_NAME = "AnalyzeActivity.SOURCE_NAME";
 
@@ -333,7 +333,7 @@ public class AnalyzeActivity extends Activity
     }
   }
 
-  // XXX, Maybe put this PopupWindow into a class
+  // Maybe put this PopupWindow into a class
   public PopupWindow popupMenuCreate(String[] popUpContents, int resId) {
     
     // initialize a pop up window type
@@ -451,7 +451,7 @@ public class AnalyzeActivity extends Activity
 
     boolean b_need_restart_audio;
 
-    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
     
     // dismiss the pop up
@@ -489,10 +489,11 @@ public class AnalyzeActivity extends Activity
     }
   }
 
+  // Load preferences for Views
   // When this function is called, the Looper must not running in the meanwhile.
   void updatePreferenceSaved() {
-    // load as key-value pair
-    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    // load preferences for buttons
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     sampleRate  = sharedPref.getInt("button_sample_rate", 16000);
     fftLen      = sharedPref.getInt("button_fftlen",       2048);
     nFFTAverage = sharedPref.getInt("button_average",         2);
@@ -543,7 +544,7 @@ public class AnalyzeActivity extends Activity
   
   /**
    * Gesture Listener for graphView (and possibly other views)
-   * XXX  How to attach these events to the graphView?
+   * How to attach these events to the graphView?
    * @author xyy
    */
   class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
@@ -698,7 +699,7 @@ public class AnalyzeActivity extends Activity
    */
 
   public boolean processClick(View v) {
-    SharedPreferences sharedPref = this.getPreferences(Context.MODE_PRIVATE);
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
     String value = ((TextView) v).getText().toString();
     switch (v.getId()) {
