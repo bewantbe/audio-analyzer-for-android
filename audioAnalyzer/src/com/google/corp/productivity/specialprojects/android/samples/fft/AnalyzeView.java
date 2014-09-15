@@ -782,8 +782,11 @@ public class AnalyzeView extends View {
     return cma[(int)(cma.length * d / dBLowerBound)];
   }
   
+//  volatile String busyName = "";
+  
   public void pushRawSpectrum(double[] db) {
     isBusy = true;
+//    busyName = "pushRawSpectrum";
     synchronized (this) {
       int c;
       int pRef; 
@@ -806,15 +809,20 @@ public class AnalyzeView extends View {
       }
     }
     isBusy = false;
+//    busyName = "";
   }
   
 //  FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("View"); 
+//  long t_old;
 
   @Override
   protected void onDraw(Canvas c) {
 //    fpsCounter.inc();
 //    long t = SystemClock.uptimeMillis();
+//    Log.i(TAG, " onDraw last call dt = " + (t - t_old));
+//    t_old = t;
     isBusy = true;
+//    busyName = "onDraw";
     c.concat(matrix0);
     c.save();
     if (showMode == 0) {
@@ -869,6 +877,7 @@ public class AnalyzeView extends View {
       }
     }
     isBusy = false;
+//    busyName = "";
 //    Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
   }
   

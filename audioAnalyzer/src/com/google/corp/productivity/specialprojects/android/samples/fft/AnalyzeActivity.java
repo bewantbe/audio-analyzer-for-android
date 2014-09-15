@@ -34,6 +34,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GestureDetectorCompat;
@@ -785,31 +786,39 @@ public class AnalyzeActivity extends Activity
     }
   }
   
-  long timeToUpdate = SystemClock.uptimeMillis();; 
-  boolean isInvalidating = false;
+  long time0 = SystemClock.uptimeMillis();;
+  long timeToUpdate = SystemClock.uptimeMillis();;
+//  long t_old;
+  volatile boolean isInvalidating = false;
   
-  // Invalidate graphView in limited a frame rate
+  // Invalidate graphView in a limited frame rate
   public void invalidateGraphView() {
     if (isInvalidating) {
       return ;
     }
     isInvalidating = true;
-    long t = SystemClock.uptimeMillis();
-    long frameTime;
+    long frameTime;                      // time delay for next frame
     if (graphView.getShowMode() != 0) {
       frameTime = 1000/8;  // use a much lower frame rate for spectrogram
     } else {
       frameTime = 1000/20;
     }
-    if (t >= timeToUpdate) {        // limit frame rate
-//      Log.d(TAG, "  t = " + t);
+    long t = SystemClock.uptimeMillis();
+//    Log.d(TAG, "  t = " + (t-time0) + "  invalidate request");
+    if (t >= timeToUpdate) {             // limit frame rate
       timeToUpdate += frameTime;
-      if (timeToUpdate < t) {       // catch up current time
+      if (timeToUpdate < t) {            // catch up current time
         timeToUpdate = t+frameTime;
       }
-      if (graphView.isBusy() == true) {
-        Log.d(TAG, "recompute(): isBusy == true");
-      }
+      idPaddingInvalidate = false;
+//      if (graphView.isBusy() == true) {
+        // Busy because graphView.pushRawSpectrum() is running on Looper thread
+        // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
+        // Then here just do invalidate() any way.
+//        Log.d(TAG, "recompute(): isBusy == true : " + graphView.busyName);
+//      }
+//        Log.d(TAG, "  t = " + (t-time0) + "  doing an graphView.invalidate(), dt = " + (t - t_old));
+//        t_old = t;
       graphView.invalidate();
       TextView tv;
       synchronized (oblock) {
@@ -825,9 +834,33 @@ public class AnalyzeActivity extends Activity
         tv.invalidate();
       }
       refreshCursorLabel();
+    } else {
+      if (idPaddingInvalidate == false) {
+        idPaddingInvalidate = true;
+//        Log.d(TAG, "  t = " + (t-time0) + " padding a request, wait=" + (timeToUpdate - t + 1));
+        paddingInvalidateHandler.postDelayed(paddingInvalidateRunnable, timeToUpdate - t + 1);
+      }
     }
     isInvalidating = false;
   }
+
+  volatile boolean idPaddingInvalidate = false;
+  
+  Handler paddingInvalidateHandler = new Handler();
+  
+  // Am I need to use runOnUiThread() ?
+  Runnable paddingInvalidateRunnable = new Runnable() {
+    @Override
+    public void run() {
+      if (idPaddingInvalidate) {
+        long t = SystemClock.uptimeMillis();
+        if (t-timeToUpdate <= 0) {
+          Log.d(TAG, "  t = " + (t-time0) + "  Runnable: sending invalidate request, dt=" + (t-timeToUpdate));
+        }
+        AnalyzeActivity.this.invalidateGraphView();
+      }
+    }
+  };
 
   /**
    * Return a array of verified audio sampling rates.
