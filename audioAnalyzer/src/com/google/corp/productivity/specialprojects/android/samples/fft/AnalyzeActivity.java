@@ -584,13 +584,13 @@ public class AnalyzeActivity extends Activity
     }
     
     Handler flyingMoveHandler = new Handler();
-    long timeFlingStart;           // Prevent from running forever
-    float flyDt = 1/20f;           // delta t of refresh
-    float shiftingVelocityX;       // fling velocity x, pixels/second
-    float shiftingVelocityY;       // fling velocity y, pixels/second
-    float shiftingDirectionX;      // fling direction
-    float shiftingDirectionY;      // fling direction
-    float flyAcceleration = 500f;  // damping acceleration of fling, pixels/second^2
+    long timeFlingStart;                     // Prevent from running forever
+    float flyDt = 1/20f;                     // delta t of refresh
+    float shiftingVelocityX;                 // fling velocity x, pixels/second
+    float shiftingVelocityY;                 // fling velocity y, pixels/second
+    float shiftingDirectionX;                // fling direction x
+    float shiftingDirectionY;                // fling direction y
+    float flyAcceleration = 700f * DPRatio;  // damping acceleration of fling, pixels/second^2
     
     Runnable flyingMoveRunnable = new Runnable() {
       @Override
