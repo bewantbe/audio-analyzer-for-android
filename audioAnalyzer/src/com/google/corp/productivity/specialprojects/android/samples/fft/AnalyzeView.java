@@ -531,11 +531,10 @@ public class AnalyzeView extends View {
   public boolean setCursor(float x, float y) {
     if (intersects(x, y)) {
       // Log.i(AnalyzeActivity.TAG, x + "," + y);
-      float current = getXShift();
-      if (x <= 3 && xShift > 0f) {
-        setXShift(current - 10f) ;
+      if (x <= 3 && xShift > 0f) {    // TODO: if touch point is very close to boundary, move the view, maybe move to upper layer
+        setXShift(xShift - 10f) ;
       } else if (x >=  canvasWidth - 3) {
-        setXShift(current + 10f);
+        setXShift(xShift + 10f);
       } else {
         cursorX = xShift + (x - myLocation[0])/xZoom;  // coordinate in canvas
         cursorY = yShift + (y - myLocation[1])/yZoom;

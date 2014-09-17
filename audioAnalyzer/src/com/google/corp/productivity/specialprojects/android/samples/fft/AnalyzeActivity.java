@@ -556,7 +556,7 @@ public class AnalyzeActivity extends Activity
   
   private boolean isInGraphView(float x, float y) {
     graphView.getLocationInWindow(windowLocation);
-    return x>windowLocation[0] && y>windowLocation[1] && x<windowLocation[0]+graphView.getWidth() && y<windowLocation[1]+graphView.getHeight();
+    return x>=windowLocation[0] && y>=windowLocation[1] && x<windowLocation[0]+graphView.getWidth() && y<windowLocation[1]+graphView.getHeight();
   }
   
   /**
@@ -588,6 +588,9 @@ public class AnalyzeActivity extends Activity
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2, 
             float velocityX, float velocityY) {
+      if (isMeasure) {
+        return true;
+      }
 //      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
       // Fly the canvas in graphView when in scale mode
       shiftingDirectionX = Math.signum(velocityX);
@@ -635,13 +638,15 @@ public class AnalyzeActivity extends Activity
   
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    this.mDetector.onTouchEvent(event);
-    if (isMeasure) {
-      measureEvent(event);
-    } else {
-      scaleEvent(event);
+    if (isInGraphView(event.getX(0), event.getY(0))) {
+      this.mDetector.onTouchEvent(event);
+      if (isMeasure) {
+        measureEvent(event);
+      } else {
+        scaleEvent(event);
+      }
+      invalidateGraphView();
     }
-    invalidateGraphView();
     return super.onTouchEvent(event);
   }
   
@@ -654,7 +659,7 @@ public class AnalyzeActivity extends Activity
         graphView.setCursor(event.getX(), event.getY());
         break;
       case 2:
-        if (isInGraphView(event.getX(0), event.getY(0)) && isInGraphView(event.getX(1), event.getY(1))) {
+        if (isInGraphView(event.getX(1), event.getY(1))) {
           isMeasure = !isMeasure;
           SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
