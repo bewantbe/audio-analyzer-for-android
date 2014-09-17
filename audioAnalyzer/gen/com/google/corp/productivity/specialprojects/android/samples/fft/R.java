@@ -1136,7 +1136,7 @@ containing a value of this type.
         public static final int action_menu_divider=0x7f060016;
         public static final int action_menu_presenter=0x7f060017;
         public static final int action_mode_close_button=0x7f060024;
-        public static final int action_settings=0x7f06004c;
+        public static final int action_settings=0x7f06004d;
         public static final int activity_chooser_view_content=0x7f060025;
         public static final int always=0x7f06000b;
         public static final int beginning=0x7f060011;
@@ -1161,15 +1161,15 @@ containing a value of this type.
         public static final int icon=0x7f06002a;
         public static final int ifRoom=0x7f06000a;
         public static final int image=0x7f060027;
-        public static final int info=0x7f060049;
-        public static final int info_recoder=0x7f06004b;
+        public static final int info=0x7f06004a;
+        public static final int info_recoder=0x7f06004c;
         public static final int listMode=0x7f060001;
         public static final int list_item=0x7f060029;
         public static final int middle=0x7f060012;
         public static final int never=0x7f060009;
         public static final int none=0x7f060010;
         public static final int normal=0x7f060000;
-        public static final int one=0x7f06004d;
+        public static final int one=0x7f06004e;
         public static final int plot=0x7f06003d;
         public static final int progress_circular=0x7f060018;
         public static final int progress_horizontal=0x7f060019;
@@ -1185,7 +1185,7 @@ containing a value of this type.
         public static final int search_plate=0x7f060036;
         public static final int search_src_text=0x7f060037;
         public static final int search_voice_btn=0x7f06003b;
-        public static final int settings=0x7f06004a;
+        public static final int settings=0x7f06004b;
         public static final int shortcut=0x7f06002e;
         public static final int showCustom=0x7f060007;
         public static final int showHome=0x7f060004;
@@ -1198,10 +1198,11 @@ containing a value of this type.
         public static final int textview_cur=0x7f06003f;
         public static final int textview_info_rec=0x7f06003c;
         public static final int textview_peak=0x7f060040;
-        public static final int three=0x7f06004f;
+        public static final int textview_rec=0x7f060049;
+        public static final int three=0x7f060050;
         public static final int title=0x7f06002b;
         public static final int top_action_bar=0x7f060020;
-        public static final int two=0x7f06004e;
+        public static final int two=0x7f06004f;
         public static final int up=0x7f060021;
         public static final int useLogo=0x7f060003;
         public static final int withText=0x7f06000c;
@@ -1323,6 +1324,7 @@ containing a value of this type.
         public static final int textview_RMS_text=0x7f0b0015;
         public static final int textview_cur_text=0x7f0b0016;
         public static final int textview_peak_text=0x7f0b0017;
+        public static final int textview_rec_text=0x7f0b001f;
         public static final int title_activity_info_rec=0x7f0b0012;
     }
     public static final class style {

@@ -72,7 +72,8 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="warnOverrun"
-            android:title="Warn if audio buffer ovrrun" />
+            android:summary="Show a warning if audio buffer overrun."
+            android:title="Ovrrun Warning" />
     </PreferenceCategory>
 
 </PreferenceScreen>

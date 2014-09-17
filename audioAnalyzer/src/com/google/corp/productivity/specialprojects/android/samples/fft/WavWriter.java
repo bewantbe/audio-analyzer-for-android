@@ -10,7 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
 import android.os.Environment;
+import android.os.StatFs;
 import android.util.Log;
 
 public class WavWriter {
@@ -75,14 +77,24 @@ public class WavWriter {
     header[43] = (byte) ((totalAudioLen >> 24) & 0xff);
   }
   
-//  public double spaceLeft() {
-//    long byteLeft = outPath.getFreeSpace();  // Need API level 9
-//    if (byteRate == 0 || byteLeft == 0) {
-//      return 0;
-//    }
-//    return (double)byteLeft / (byteRate);
-//  }
-//  
+  static final int version = android.os.Build.VERSION.SDK_INT;
+  
+  @SuppressLint("NewApi")
+  @SuppressWarnings("deprecation")
+  public double secondsLeft() {
+    long byteLeft;
+    if (version >= 9) {
+      byteLeft = outPath.getFreeSpace();  // Need API level 9
+    } else {
+      StatFs statFs = new StatFs(outPath.getAbsolutePath());
+      byteLeft = (statFs.getAvailableBlocks() * (long)statFs.getBlockSize());
+    }
+    if (byteRate == 0 || byteLeft == 0) {
+      return 0;
+    }
+    return (double)byteLeft / byteRate;
+  }
+  
   public boolean start() {
     if (!isExternalStorageWritable()) {
       return false;
@@ -160,6 +172,10 @@ public class WavWriter {
       Log.w(TAG, "pushAudioShort(): Error writing " + outPath, e);
       out = null;
     }
+  }
+  
+  public double secondsWritten() {
+    return (double)framesWrited/(byteRate*8/RECORDER_BPP/channels);
   }
   
   /* Checks if external storage is available for read and write */

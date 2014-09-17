@@ -12,6 +12,7 @@ public class RecorderMonitor {
   int sampleRate;
   int bufferSampleSize;
   double sampleRateReal;
+  boolean lastCheckOverrun = false;
   
   public RecorderMonitor(int sampleRateIn, int bufferSampleSizeIn, String TAG1) {
     sampleRate = sampleRateIn;
@@ -29,8 +30,8 @@ public class RecorderMonitor {
     sampleRateReal = sampleRate;
   }
 
-  // Input number of audio frames read
-  // Return if overrun is occured
+  // Input number of audio frames that read
+  // Return true if an overrun check is performed, otherwise false.
   public boolean updateState(int numOfReadShort) {
     long timeNow = SystemClock.uptimeMillis();
     if (nSamplesRead == 0) {      // get overrun checker synchronized
@@ -76,7 +77,12 @@ public class RecorderMonitor {
         nSamplesRead = 0;
       }
     }
-    return lastOverrunTime == timeNow;
+    lastCheckOverrun = lastOverrunTime == timeNow;
+    return true;  // state updated during this check
+  }
+  
+  public boolean getLastCheckOverrun() {
+    return lastCheckOverrun;
   }
   
   public long getLastOverrunTime() {

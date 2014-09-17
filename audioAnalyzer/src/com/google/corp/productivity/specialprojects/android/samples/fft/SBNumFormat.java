@@ -4,7 +4,7 @@ public class SBNumFormat {
   static final char charDigits[] = {'0','1','2','3','4','5','6','7','8','9'};
 
   // Invent wheel... so we can eliminate GC
-  static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac) {
+  static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac, char padChar) {
     if (d<0) {
       for (int i = 3; i < nInt+nFrac+(nFrac>0?1:0); i++) {
         sb.append("don't");
@@ -27,7 +27,7 @@ public class SBNumFormat {
     while (nInt > 0) {
       nInt--;
       if (d < Math.pow(10,nInt) && nInt>0) {
-        sb.append(' ');
+        sb.append(padChar);
       } else {
         sb.append(charDigits[(int)(d / Math.pow(10,nInt) % 10.0)]);
       }
@@ -38,6 +38,10 @@ public class SBNumFormat {
         sb.append(charDigits[(int)(d * Math.pow(10,i) % 10.0)]);
       }
     }
+  }
+  
+  static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac) {
+    fillInNumFixedWidthPositive(sb, d, nInt, nFrac, ' ');
   }
   
   static public void fillInNumFixedWidth(StringBuilder sb, double d, int nInt, int nFrac) {
@@ -94,5 +98,26 @@ public class SBNumFormat {
       sb.insert(it, in%10);
       in /= 10;
     }
+  }
+  
+  static public void fillTime(StringBuilder sb, double t, int nFrac) {
+    // in format x0:00:00.x
+    if (t<0) {
+      t = -t;
+      sb.append('-');
+    }
+    double u;
+    // hours
+    u = Math.floor(t/3600.0);
+    fillInInt(sb, (int)u);
+    sb.append(':');
+    // minutes
+    t -= u * 3600;
+    u = Math.floor(t/60.0);
+    fillInNumFixedWidthPositive(sb, u, 2, 0, '0');
+    sb.append(':');
+    // seconds
+    t -= u * 60;
+    fillInNumFixedWidthPositive(sb, t, 2, nFrac, '0');
   }
 }

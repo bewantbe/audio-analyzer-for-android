@@ -95,6 +95,7 @@ public class AnalyzeActivity extends Activity
   private boolean isAWeighting = false;
   private boolean bWarnOverrun = true;
   private double timeDurationPref = 4.0;
+  private double wavSec, wavSecRemain;
   
   float listItemTextSize = 20;        // font size in pixel
   float listItemTitleTextSize = 12;   // font size in pixel
@@ -102,9 +103,11 @@ public class AnalyzeActivity extends Activity
   Object oblock = new Object();
 
   StringBuilder textCur = new StringBuilder("");  // for textCurChar
+  StringBuilder textRec = new StringBuilder("");  // for textCurChar
   char[] textRMSChar;   // for text in R.id.textview_RMS
   char[] textCurChar;   // for text in R.id.textview_cur
   char[] textPeakChar;  // for text in R.id.textview_peak
+  char[] textRecChar;   // for text in R.id.textview_rec
 
   PopupWindow popupMenuSampleRate;
   PopupWindow popupMenuFFTLen;
@@ -128,6 +131,7 @@ public class AnalyzeActivity extends Activity
     
     textRMSChar = new char[getString(R.string.textview_RMS_text).length()];
     textCurChar = new char[getString(R.string.textview_cur_text).length()];
+    textRecChar = new char[getString(R.string.textview_rec_text).length()];
     textPeakChar = new char[getString(R.string.textview_peak_text).length()];
 
     graphView = (AnalyzeView) findViewById(R.id.plot);
@@ -227,6 +231,15 @@ public class AnalyzeActivity extends Activity
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
 
     bWarnOverrun = sharedPref.getBoolean("warnOverrun", true);
+    
+//    ((TextView) findViewById(R.id.textview_rec)).setLayoutParams(
+//        new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    
+    if (bSaveWav) {
+      ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
+    } else {
+      ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(0*DPRatio));
+    }
     
     // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
@@ -756,6 +769,12 @@ public class AnalyzeActivity extends Activity
             samplingThread.setPause(true);
           }
         }
+        if (bSaveWav) {
+          wavSec = 0;
+          ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
+        } else {
+          ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(0*DPRatio));
+        }
         return true;
       case R.id.run:
         boolean pause = value.equals("stop");
@@ -804,6 +823,18 @@ public class AnalyzeActivity extends Activity
     ((TextView) findViewById(R.id.textview_cur))
       .setText(textCurChar, 0, Math.min(textCur.length(), textCurChar.length));
   }
+  
+  private void refreshRecTimeLable() {
+    // consist with @string/textview_rec_text
+    textRec.setLength(0);
+    textRec.append("Rec: ");
+    SBNumFormat.fillTime(textRec, wavSec, 1);
+    textRec.append(", Remain: ");
+    SBNumFormat.fillTime(textRec, wavSecRemain, 0);
+    textRec.getChars(0, Math.min(textRec.length(), textRecChar.length), textRecChar, 0);
+    ((TextView) findViewById(R.id.textview_rec))
+      .setText(textRecChar, 0, Math.min(textRec.length(), textRecChar.length));
+  }
 
   // used to detect if the data is unchanged
   double[] cmpDB;
@@ -834,6 +865,16 @@ public class AnalyzeActivity extends Activity
   
   // Invalidate graphView in a limited frame rate
   public void invalidateGraphView() {
+    invalidateGraphView(-1);
+  }
+  
+  static final int VIEW_MASK_graphView     = 1<<0;
+  static final int VIEW_MASK_textview_RMS  = 1<<1;
+  static final int VIEW_MASK_textview_peak = 1<<2;
+  static final int VIEW_MASK_CursorLabel   = 1<<3;
+  static final int VIEW_MASK_RecTimeLable  = 1<<4;
+  
+  public void invalidateGraphView(int viewMask) {
     if (isInvalidating) {
       return ;
     }
@@ -854,31 +895,41 @@ public class AnalyzeActivity extends Activity
       // Here graphView.isBusy() can be true because graphView.pushRawSpectrum() is running on Looper thread
       // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
       // and then here just do invalidate().
-      graphView.invalidate();
+      if ((viewMask & VIEW_MASK_graphView) != 0)
+        graphView.invalidate();
       TextView tv;
-      synchronized (oblock) {
-        // RMS
-        tv = (TextView) findViewById(R.id.textview_RMS);
-        tv.setText(textRMSChar, 0, textRMSChar.length);
-        tv.invalidate();
-      }
-      synchronized (oblock) {
-        // peak frequency
-        tv = (TextView) findViewById(R.id.textview_peak);
-        tv.setText(textPeakChar, 0, textPeakChar.length);
-        tv.invalidate();
-      }
-      refreshCursorLabel();
+      if ((viewMask & VIEW_MASK_textview_RMS) != 0)
+        synchronized (oblock) {
+          // RMS
+          tv = (TextView) findViewById(R.id.textview_RMS);
+          tv.setText(textRMSChar, 0, textRMSChar.length);
+          tv.invalidate();
+        }
+      if ((viewMask & VIEW_MASK_textview_peak) != 0)
+        synchronized (oblock) {
+          // peak frequency
+          tv = (TextView) findViewById(R.id.textview_peak);
+          tv.setText(textPeakChar, 0, textPeakChar.length);
+          tv.invalidate();
+        }
+      if ((viewMask & VIEW_MASK_CursorLabel) != 0)
+        refreshCursorLabel();
+      if ((viewMask & VIEW_MASK_RecTimeLable) != 0)
+        refreshRecTimeLable();
     } else {
       if (idPaddingInvalidate == false) {
         idPaddingInvalidate = true;
+        paddingViewMask = viewMask;
         paddingInvalidateHandler.postDelayed(paddingInvalidateRunnable, timeToUpdate - t + 1);
+      } else {
+        paddingViewMask |= viewMask;
       }
     }
     isInvalidating = false;
   }
 
   volatile boolean idPaddingInvalidate = false;
+  volatile int paddingViewMask = -1;
   Handler paddingInvalidateHandler = new Handler();
   
   // Am I need to use runOnUiThread() ?
@@ -887,7 +938,7 @@ public class AnalyzeActivity extends Activity
     public void run() {
       if (idPaddingInvalidate) {
         // It is possible that t-timeToUpdate <= 0 here, don't know why
-        AnalyzeActivity.this.invalidateGraphView();
+        AnalyzeActivity.this.invalidateGraphView(paddingViewMask);
       }
     }
   };
@@ -955,6 +1006,7 @@ public class AnalyzeActivity extends Activity
     AudioRecord record;
     volatile boolean isRunning = true;
     volatile boolean isPaused1 = false;
+    double wavSecOld = 0;      // used to reduce frame rate
     double dtRMS = 0;
     double dtRMSFromFT = 0;
     double maxAmpDB;
@@ -1106,6 +1158,9 @@ public class AnalyzeActivity extends Activity
       boolean bSaveWavLoop = bSaveWav;  // change of bSaveWav during loop will only affect next enter.
       if (bSaveWavLoop) {
         wavWriter.start();
+        wavSecRemain = wavWriter.secondsLeft();
+        wavSec = 0;
+        wavSecOld = 0;
         Log.i(TAG, "PCM write to file " + wavWriter.getPath());
       }
 
@@ -1123,11 +1178,16 @@ public class AnalyzeActivity extends Activity
         } else {
           numOfReadShort = record.read(audioSamples, 0, readChunkSize);   // pulling
         }
-        if ( recorderMonitor.updateState(numOfReadShort) ) {
-          notifyOverrun();
+        if ( recorderMonitor.updateState(numOfReadShort) ) {  // performed a check
+          if (recorderMonitor.getLastCheckOverrun())
+            notifyOverrun();
+          if (bSaveWavLoop)
+            wavSecRemain = wavWriter.secondsLeft();
         }
         if (bSaveWavLoop) {
           wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // Maybe move this to another thread?
+          wavSec = wavWriter.secondsWritten();
+          updateRec();
         }
         if (isPaused1) {
 //          fpsCounter.inc();
@@ -1218,6 +1278,20 @@ public class AnalyzeActivity extends Activity
           }
           // data will get out of synchronize here
           AnalyzeActivity.this.invalidateGraphView();
+        }
+      });
+    }
+    
+    private void updateRec() {
+      if (wavSec - wavSecOld < 0.1) {
+        return;
+      }
+      wavSecOld = wavSec;
+      AnalyzeActivity.this.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          // data will get out of synchronize here
+          AnalyzeActivity.this.invalidateGraphView(VIEW_MASK_RecTimeLable);
         }
       });
     }
