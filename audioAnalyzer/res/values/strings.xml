@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Audio Spectrum Analyzer 0.2</string>
+    <string name="app_name">Audio Spectrum Analyzer</string>
     <string name="instructions_text">&lt;h2&gt;Important Notes&lt;/h2&gt;
 All the dB in this software are Decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustics dB (e.g. dB SPL or dBA) (at least need a full spectrum calibration).
 &lt;br/&gt;

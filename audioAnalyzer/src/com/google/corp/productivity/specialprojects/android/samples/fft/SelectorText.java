@@ -96,8 +96,8 @@ public class SelectorText extends TextView {
   
   @Override
   protected void onSizeChanged (int w, int h, int oldw, int oldh) {
-    rect.set(2f*DPRatio, h/2 - 6f*DPRatio, 12f*DPRatio, h/2 + 6f*DPRatio);
-    bgRect.set(1f*DPRatio, 1f*DPRatio, w - 2f*DPRatio, h - 2f*DPRatio);
+    rect.set(2f*DPRatio, h/2 - 5f*DPRatio, 12f*DPRatio, h/2 + 7f*DPRatio);
+    bgRect.set(1f*DPRatio, 1f*DPRatio, w - 2f*DPRatio, h - 1f*DPRatio);
   }
   
   /**
