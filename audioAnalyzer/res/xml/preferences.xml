@@ -46,7 +46,6 @@
             android:key="spectrogramShifting"
             android:summary="Make whole spectrogram shifting as time go"
             android:title="Spectrogram shifting" />
-
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="spectrogramTimeAxis"
@@ -66,6 +65,14 @@
             android:key="spectrogramDuration"
             android:summary="Duration of spectrogram shown (when average number is 1)"
             android:title="Spectrogram duration" />
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:key="miscellaneous"
+        android:title="Miscellaneous" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="warnOverrun"
+            android:title="Warn if audio buffer ovrrun" />
     </PreferenceCategory>
 
 </PreferenceScreen>

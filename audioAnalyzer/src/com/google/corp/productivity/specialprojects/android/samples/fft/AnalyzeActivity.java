@@ -93,6 +93,7 @@ public class AnalyzeActivity extends Activity
   private static int audioSourceId = RECORDER_AGC_OFF;
   private boolean isMeasure = true;
   private boolean isAWeighting = false;
+  private boolean bWarnOverrun = true;
   private double timeDurationPref = 4.0;
   
   float listItemTextSize = 20;        // font size in pixel
@@ -224,6 +225,8 @@ public class AnalyzeActivity extends Activity
     showLines   = sharedPref.getBoolean("showLines", false);
     audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
+
+    bWarnOverrun = sharedPref.getBoolean("warnOverrun", true);
     
     // travel the views with android:tag="select" to get default setting values  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
@@ -1164,6 +1167,9 @@ public class AnalyzeActivity extends Activity
     
     long lastTimeNotifyOverrun = 0;
     private void notifyOverrun() {
+      if (!bWarnOverrun) {
+        return;
+      }
       long t = SystemClock.uptimeMillis();
       if (t - lastTimeNotifyOverrun > 6000) {
         lastTimeNotifyOverrun = t;
