@@ -16,17 +16,18 @@ import android.os.StatFs;
 import android.util.Log;
 
 public class WavWriter {
-  static final String TAG = "WavWriter::";
-  File outPath;
-  OutputStream out;
+  static final String TAG = "WavWriter";
+  private File outPath;
+  private OutputStream out;
   private byte[] header = new byte[44];
+  final String relativeDir = "/Recorder";
 
-  int channels = 1;
-  byte RECORDER_BPP = 16;  // bits per sample
-  int byteRate;            // Average bytes per second
-  int totalDataLen  = 0;   // (file size) - 8
-  int totalAudioLen = 0;   // bytes of audio raw data
-  int framesWrited = 0;
+  private int channels = 1;
+  private byte RECORDER_BPP = 16;  // bits per sample
+  private int byteRate;            // Average bytes per second
+  private int totalDataLen  = 0;   // (file size) - 8
+  private int totalAudioLen = 0;   // bytes of audio raw data
+  private int framesWrited = 0;
 
   public WavWriter(int sampleRate) {
     byteRate = sampleRate*RECORDER_BPP/8*channels;
@@ -99,7 +100,7 @@ public class WavWriter {
     if (!isExternalStorageWritable()) {
       return false;
     }
-    File path = new File(Environment.getExternalStorageDirectory().getPath() + "/Recorder");
+    File path = new File(Environment.getExternalStorageDirectory().getPath() + relativeDir);
     path.mkdirs();
     DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss.SSS's'", Locale.US);
     String nowStr = df.format(new Date());

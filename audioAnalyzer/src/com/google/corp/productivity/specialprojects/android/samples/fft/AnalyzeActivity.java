@@ -1222,6 +1222,7 @@ public class AnalyzeActivity extends Activity
       if (bSaveWavLoop) {
         Log.i(TAG, "Looper::Run(): Ending saved wav.");
         wavWriter.stop();
+        notifyWAVSaved(wavWriter.relativeDir);
       }
     }
     
@@ -1243,6 +1244,18 @@ public class AnalyzeActivity extends Activity
           }
         });
       }
+    }
+
+    private void notifyWAVSaved(final String path) {
+      AnalyzeActivity.this.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          Context context = getApplicationContext();
+          String text = "WAV saved to " + path;
+          Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+          toast.show();
+        }
+      });
     }
 
     StringBuilder textRMS  = new StringBuilder("");
