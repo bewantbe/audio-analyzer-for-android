@@ -36,12 +36,13 @@ import android.widget.TextView;
  */
 
 public class SelectorText extends TextView {
+  static float DPRatio;
   private static final int ANIMATION_DELAY = 100;
   private String[] values;
   private Paint paint, bg;
   private RectF rect = new RectF();
   private RectF bgRect = new RectF();
-  private float r = 3;
+  private float r;
   
   public SelectorText(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
@@ -95,8 +96,8 @@ public class SelectorText extends TextView {
   
   @Override
   protected void onSizeChanged (int w, int h, int oldw, int oldh) {
-    rect.set(2f, h/2 - 6f, 12f, h/2 + 6f);
-    bgRect.set(1f, 1f, w - 2f, h - 2f);
+    rect.set(2f*DPRatio, h/2 - 6f*DPRatio, 12f*DPRatio, h/2 + 6f*DPRatio);
+    bgRect.set(1f*DPRatio, 1f*DPRatio, w - 2f*DPRatio, h - 2f*DPRatio);
   }
   
   /**
@@ -110,22 +111,15 @@ public class SelectorText extends TextView {
   }
   
   /**
-   * Adjust the padding to make room for the select indicator.
-   */
-  
-  @Override
-  public
-  void setPadding(int left, int top, int right, int bottom) {
-    super.setPadding(left + 14, top, right, bottom);
-  }
-  
-  /**
    * Initialize our selector.  We could make most of the features customizable via XML.
    */
   
   private void setup(Context context, AttributeSet attrs) {
+    DPRatio = getResources().getDisplayMetrics().density;
+    r = 3 * DPRatio;
+    
     bg = new Paint();
-    bg.setStrokeWidth(2);
+    bg.setStrokeWidth(2*DPRatio);
     bg.setColor(Color.GRAY);
     bg.setStyle(Paint.Style.STROKE);
     paint = new Paint(bg);
@@ -180,6 +174,6 @@ public class SelectorText extends TextView {
     for (String s : values) {
       width = Math.max(width, Math.round(p.measureText(s)));
     }
-    setMinWidth(width + adj + 4);
+    setMinWidth(width + adj + (int)(4*DPRatio));
   }
 }
