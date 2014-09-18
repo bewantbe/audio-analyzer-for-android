@@ -593,10 +593,9 @@ public class AnalyzeActivity extends Activity
       }
 //      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
       // Fly the canvas in graphView when in scale mode
-      shiftingDirectionX = Math.signum(velocityX);
-      shiftingDirectionY = Math.signum(velocityY);
-      shiftingVelocityX = Math.abs(velocityX);  // Fling pixels per second
-      shiftingVelocityY = Math.abs(velocityY);
+      shiftingVelocity = (float) Math.sqrt(velocityX*velocityX + velocityY*velocityY);
+      shiftingComponentX = velocityX / shiftingVelocity;
+      shiftingComponentY = velocityY / shiftingVelocity;
       timeFlingStart = SystemClock.uptimeMillis();
       flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
@@ -605,29 +604,24 @@ public class AnalyzeActivity extends Activity
     Handler flyingMoveHandler = new Handler();
     long timeFlingStart;                     // Prevent from running forever
     float flyDt = 1/20f;                     // delta t of refresh
-    float shiftingVelocityX;                 // fling velocity x, pixels/second
-    float shiftingVelocityY;                 // fling velocity y, pixels/second
-    float shiftingDirectionX;                // fling direction x
-    float shiftingDirectionY;                // fling direction y
-    float flyAcceleration = 700f * DPRatio;  // damping acceleration of fling, pixels/second^2
+    float shiftingVelocity;                  // fling velocity
+    float shiftingComponentX;                // fling direction x
+    float shiftingComponentY;                // fling direction y
+    float flyAcceleration = 600f * DPRatio;  // damping acceleration of fling, pixels/second^2
     
     Runnable flyingMoveRunnable = new Runnable() {
       @Override
       public void run() {
-        float shiftingVelocityXNew = shiftingVelocityX - flyAcceleration*flyDt;
-        if (shiftingVelocityXNew < 0) shiftingVelocityXNew = 0;
-        float shiftingVelocityYNew = shiftingVelocityY - flyAcceleration*flyDt;
-        if (shiftingVelocityYNew < 0) shiftingVelocityYNew = 0;
-        // Get pixel should move in this time step
-        float shiftingPixelX = (shiftingVelocityXNew + shiftingVelocityX)/2 * flyDt;
-        float shiftingPixelY = (shiftingVelocityYNew + shiftingVelocityY)/2 * flyDt;
-        shiftingVelocityX = shiftingVelocityXNew;
-        shiftingVelocityY = shiftingVelocityYNew;
-        if ((shiftingVelocityX > 0f || shiftingVelocityY > 0f )
+        float shiftingVelocityNew = shiftingVelocity - flyAcceleration*flyDt;
+        if (shiftingVelocityNew < 0) shiftingVelocityNew = 0;
+        // Number of pixels that should move in this time step
+        float shiftingPixel = (shiftingVelocityNew + shiftingVelocity)/2 * flyDt;
+        shiftingVelocity = shiftingVelocityNew;
+        if (shiftingVelocity > 0f
             && SystemClock.uptimeMillis() - timeFlingStart < 10000) {
 //          Log.i(TAG, "  fly pixels x=" + shiftingPixelX + " y=" + shiftingPixelY);
-          graphView.setXShift(graphView.getXShift() - shiftingDirectionX*shiftingPixelX / graphView.getXZoom());
-          graphView.setYShift(graphView.getYShift() - shiftingDirectionY*shiftingPixelY / graphView.getYZoom());
+          graphView.setXShift(graphView.getXShift() - shiftingComponentX*shiftingPixel / graphView.getXZoom());
+          graphView.setYShift(graphView.getYShift() - shiftingComponentY*shiftingPixel / graphView.getYZoom());
           // Am I need to use runOnUiThread() ?
           AnalyzeActivity.this.invalidateGraphView();
           flyingMoveHandler.postDelayed(flyingMoveRunnable, (int)(1000*flyDt));
