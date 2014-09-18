@@ -50,6 +50,10 @@
             android:defaultValue="true"
             android:key="spectrogramTimeAxis"
             android:title="Show time axis" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="spectrogramShowFreqAlongX"
+            android:title="Frequency as X axis" />
 
         <ListPreference
             android:defaultValue="-120"

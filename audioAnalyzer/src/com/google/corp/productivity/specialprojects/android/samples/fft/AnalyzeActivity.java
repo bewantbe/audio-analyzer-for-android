@@ -222,6 +222,7 @@ public class AnalyzeActivity extends Activity
     graphView.setLowerBound(d);
     // set spectrogram shifting mode
     graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
+    graphView.setShowFreqAlongX(sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
     timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
                                           Double.toString(4.0)));
 
@@ -574,12 +575,12 @@ public class AnalyzeActivity extends Activity
     @Override
     public boolean onDoubleTap(MotionEvent event) {
       if (isInGraphView(event.getX(0), event.getY(0))) {
-        if (isMeasure == false) {  // go from scale mode to measure mode (one way)
+        if (isMeasure == false) {  // go from "scale" mode to "cursor" mode
           isMeasure = !isMeasure;
           SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
           st.performClick();
         } else {
-          graphView.resetViewScale();
+//          graphView.resetViewScale();
         }
       }
       return false;
