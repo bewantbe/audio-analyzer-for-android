@@ -477,10 +477,8 @@ public class AnalyzeView extends View {
   }
   
   private float clampDB(float value) {
-    if (value < getMinY() || Float.isNaN(value)) {
-      value = getMinY();
-    } else if (value > getMaxY()) {
-      value = getMaxY();
+    if (value < minDB) {
+      value = minDB;
     }
     return value;
   }
@@ -493,6 +491,7 @@ public class AnalyzeView extends View {
       return;
     }
     isBusy = true;
+//    long t = SystemClock.uptimeMillis();
     if (showMode == 0) {
       float minYcanvas = canvasY4axis(minDB);
       path.reset();
@@ -518,6 +517,7 @@ public class AnalyzeView extends View {
     } else {
       //use pushRawSpectrogram(db);
     }
+//    Log.i(TAG, " replotRawSpectrum: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
     isBusy = false;
   }
   

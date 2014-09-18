@@ -67,7 +67,14 @@
             android:text="fftlen"
             android:textSize="18sp" />
     </RelativeLayout>
-
+    
+    <TextView
+        android:id="@+id/textview_rec"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/textview_rec_text"
+        android:typeface="monospace" />
+    
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
