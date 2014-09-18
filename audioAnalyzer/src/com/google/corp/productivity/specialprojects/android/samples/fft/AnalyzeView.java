@@ -714,7 +714,7 @@ public class AnalyzeView extends View {
       return clamp(offset, canvasY4axis(12f), canvasY4axis(minDB) - canvasHeight / yZoom);
     } else {
       // strict restrict, y can be frequency or time.
-      return clamp(offset, 0f, canvasHeight - canvasHeight / yZoom);
+      return clamp(offset, 0f, canvasHeight - (canvasHeight - 0.25f) / yZoom);
     }
   }
   
@@ -794,10 +794,10 @@ public class AnalyzeView extends View {
     isBusy = false;
   }
   
-  private int[] spectrogramColors;  // int:ARGB, nFreqPoints columns, nTimePoints rows
+  private int[] spectrogramColors;          // int:ARGB, nFreqPoints columns, nTimePoints rows
   private int[] spectrogramColorsShifting;  // temporarily of spectrogramColors for shifting mode
-  private int showMode = 0;         // 0: Spectrum, 1:Spectrogram
-  private int showModeSpectrogram = 1;  // 0: moving (shifting) spectrogram, 1: overwriting in loop
+  private int showMode = 0;                 // 0: Spectrum, 1:Spectrogram
+  private int showModeSpectrogram = 1;      // 0: moving (shifting) spectrogram, 1: overwriting in loop
   private boolean showFreqAlongX = false;
   private int nFreqPoints;
   private double timeWatch = 4.0;
@@ -839,9 +839,16 @@ public class AnalyzeView extends View {
   float oldXZoom = 1;
 
   public void switch2Spectrum() {
-    xShift = oldXShift;
+    if (showFreqAlongX) {
+      // the frequency range is the same
+    } else {
+      if (spectrogramColors != null && canvasHeight > 0) {
+        // when switch from Spectrogram mode to Spectrum mode
+        xShift = (canvasHeight - yShift - canvasHeight/yZoom) / canvasHeight * canvasWidth;
+        xZoom = yZoom;
+      }
+    }
     yShift = oldYShift;
-    xZoom = oldXZoom;
     yZoom = oldYZoom;
     showMode = 0;
     computeMatrix();
@@ -855,9 +862,15 @@ public class AnalyzeView extends View {
   public void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE) {
     timeWatch = timeDurationE;
     oldXShift = xShift;
-    oldYShift = yShift;
     oldXZoom  = xZoom;
+    oldYShift = yShift;
     oldYZoom  = yZoom;
+    if (showMode == 1 && !showFreqAlongX && canvasWidth>0) {
+      // when switch from Spectrum mode to Spectrogram mode
+      yZoom = xZoom;
+      yShift = canvasHeight - canvasHeight/yZoom - xShift / canvasWidth * canvasHeight;
+    }
+    Log.w(TAG, "  yZ = " + yZoom + "  yS = " + yShift);
     nFreqPoints = fftLen / 2;                    // no direct current term
     double timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
     nTimePoints = (int)Math.ceil(timeWatch / timeInc);
