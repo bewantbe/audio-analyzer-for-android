@@ -45,11 +45,9 @@ public class AnalyzeView extends View {
   private final String TAG = "AnalyzeView::";
   static float DPRatio;
   private float cursorX, cursorY; // cursor location
-  private float xZoom;     // horizontal scaling
-  private float xShift;    // horizontal translation
-  private float yZoom;     // vertical scaling
-  private float yShift;    // vertical translation
-  private float minDB = -144f;  // hard lower bound limit
+  private float xZoom, yZoom;     // horizontal and vertical scaling
+  private float xShift, yShift;   // horizontal and vertical translation
+  private float minDB = -144f;    // hard lower bound limit
   private RectF axisBounds;
   private Ready readyCallback = null;      // callback to caller when rendering is complete
   
@@ -166,7 +164,7 @@ public class AnalyzeView extends View {
   private void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue,
                                    double gridDensity, int scale_mode) {
     if (startValue == endValue || Double.isInfinite(startValue+endValue) || Double.isNaN(startValue+endValue)) {
-      Log.e(TAG, "genLinearGridPoints(): startValue == endValue !");
+      Log.e(TAG, "genLinearGridPoints(): startValue == endValue or value invalid");
       return;
     }
     if (startValue > endValue) {
@@ -180,7 +178,7 @@ public class AnalyzeView extends View {
     double gridIntervalSmall;
     
     // Determine a suitable grid interval from guess
-    if (scale_mode == 0 || scale_mode == 2 || intervalValue <= 1) {  // Linear scale (Hz)
+    if (scale_mode == 0 || scale_mode == 2 || intervalValue <= 1) {  // Linear scale (Hz, Time)
       double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
       double fraction = gridIntervalGuess / exponent;
       // grid interval is 1, 2, 5, 10, ...
@@ -217,7 +215,6 @@ public class AnalyzeView extends View {
         gridIntervalSmall = 1.0/6;
       }
     }
-//    Log.i(AnalyzeActivity.TAG, "  gridIntervalGuess = " + Double.toString(gridIntervalGuess) + "  gridIntervalBig = " + Double.toString(gridIntervalBig));
 
     if (gridPointsArray == null || gridPointsArray.length != 2) {
       Log.e(TAG, " genLinearGridPoints(): empty array!!");
@@ -317,7 +314,6 @@ public class AnalyzeView extends View {
         }
         gridPointsStr[i].getChars(0, gridPointsStr[i].length(), gridPointsSt[i], 0);
       }
-//      Log.i(AnalyzeActivity.TAG, "  Update grid label scale_mode_id=" + Integer.toString(scale_mode_id));
     }
   }
 
@@ -340,7 +336,6 @@ public class AnalyzeView extends View {
   }
   
   private void drawGridLines(Canvas c, float nx, float ny) {
-//    Log.i(AnalyzeActivity.TAG, " axisBounds.height(): " + Double.toString(axisBounds.height()));
     updateGridLabels(getMinX(), getMaxX(), nx, GridScaleType.FREQ);
     for(int i = 0; i < gridPoints2[0].length; i++) {
       float xPos = canvasViewX4axis((float)gridPoints2[0][i]);
@@ -384,13 +379,13 @@ public class AnalyzeView extends View {
       return 0.6f*labelLaegeLen + 2.5f*textHeigh;
     }
   }
-
-  // Draw frequency axis for spectrogram
-  // Working in the original canvas frame
-  // nx: number of grid lines on average
-  private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, float nx, boolean drawOnXAxis) {
-    float axisMin = getFreqMin();
-    float axisMax = getFreqMax();
+  
+  static final String[] axisLabels = {"Hz", "dB", "Sec"};
+  
+  // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
+  private void drawAxis(Canvas c, float labelBeginX, float labelBeginY, float ng, boolean drawOnXAxis,
+                        float axisMin, float axisMax, GridScaleType scale_mode) {
+    int scale_mode_id = scale_mode.getValue();
     float canvasMin;
     float canvasMax;
     if (drawOnXAxis) {
@@ -400,27 +395,32 @@ public class AnalyzeView extends View {
       canvasMin = labelBeginY;
       canvasMax = 0;
     }
-    updateGridLabels(axisMin, axisMax, nx, GridScaleType.FREQ);
+    updateGridLabels(axisMin, axisMax, ng, scale_mode);
+    String axisLabel = axisLabels[scale_mode_id];
+    
+    double[][]      gridPoints    = gridPointsArray[scale_mode_id];
+    StringBuilder[] gridPointsStr = gridPointsStrArray[scale_mode_id];
+    char[][]        gridPointsSt  = gridPointsStArray[scale_mode_id];
     
     // plot axis mark
-    float xPos, yPos;
+    float posAlongAxis;
     float textHeigh     = labelPaint.getFontMetrics(null);
     float labelLargeLen = 0.6f * textHeigh;
     float labelSmallLen = 0.6f*labelLargeLen;
-    for(int i = 0; i < gridPoints2[1].length; i++) {
-      xPos =((float)gridPoints2[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
+    for(int i = 0; i < gridPoints[1].length; i++) {
+      posAlongAxis =((float)gridPoints[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
       if (drawOnXAxis) {
-        c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelSmallLen, gridPaint);
+        c.drawLine(posAlongAxis, labelBeginY, posAlongAxis, labelBeginY+labelSmallLen, gridPaint);
       } else {
-        c.drawLine(labelBeginX-labelSmallLen, xPos, labelBeginX, xPos, gridPaint);
+        c.drawLine(labelBeginX-labelSmallLen, posAlongAxis, labelBeginX, posAlongAxis, gridPaint);
       }
     }
-    for(int i = 0; i < gridPoints2[0].length; i++) {
-      xPos = ((float)gridPoints2[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
+    for(int i = 0; i < gridPoints[0].length; i++) {
+      posAlongAxis = ((float)gridPoints[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
       if (drawOnXAxis) {
-        c.drawLine(xPos, labelBeginY, xPos, labelBeginY+labelLargeLen, rulerBrightPaint);
+        c.drawLine(posAlongAxis, labelBeginY, posAlongAxis, labelBeginY+labelLargeLen, rulerBrightPaint);
       } else {
-        c.drawLine(labelBeginX-labelLargeLen, xPos, labelBeginX, xPos, rulerBrightPaint);
+        c.drawLine(labelBeginX-labelLargeLen, posAlongAxis, labelBeginX, posAlongAxis, rulerBrightPaint);
       }
     }
     if (drawOnXAxis) {
@@ -430,96 +430,47 @@ public class AnalyzeView extends View {
     }
 
     // plot labels
-    float widthHz    = labelPaint.measureText("Hz");
     float widthDigit = labelPaint.measureText("0");
-    yPos = labelBeginY + 0.3f*labelLargeLen + textHeigh;
-    for(int i = 0; i < gridPoints2Str.length; i++) {
-      xPos = ((float)gridPoints2[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
+    float posOffAxis = labelBeginY + 0.3f*labelLargeLen + textHeigh;
+    for(int i = 0; i < gridPointsStr.length; i++) {
+      posAlongAxis = ((float)gridPoints[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
       if (drawOnXAxis) {
-        if (xPos + widthDigit * gridPoints2Str[i].length() + 1.5f*widthHz > canvasWidth) {
+        if (posAlongAxis + widthDigit * gridPointsStr[i].length() > canvasWidth - (axisLabel.length() + .3f)*widthDigit) {
           continue;
         }
-        c.drawText(gridPoints2st[i], 0, gridPoints2Str[i].length(), xPos, yPos, labelPaint);
+        c.drawText(gridPointsSt[i], 0, gridPointsStr[i].length(), posAlongAxis, posOffAxis, labelPaint);
       } else {
-        if (xPos - textHeigh < canvasMax+textHeigh) {
+        if (posAlongAxis - 0.5f*textHeigh < canvasMax + textHeigh) {
           continue;
         }
-        c.drawText(gridPoints2st[i], 0, gridPoints2Str[i].length(),
-                   labelBeginX - widthDigit * gridPoints2Str[i].length() - 0.5f * labelLargeLen, xPos, labelPaint);
+        c.drawText(gridPointsSt[i], 0, gridPointsStr[i].length(),
+                   labelBeginX - widthDigit * gridPointsStr[i].length() - 0.5f * labelLargeLen, posAlongAxis, labelPaint);
       }
     }
     if (drawOnXAxis) {
-      c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
+      c.drawText(axisLabel, canvasWidth - (axisLabel.length() +.3f)*widthDigit, posOffAxis, labelPaint);
     } else {
-      c.drawText("Hz", labelBeginX - widthDigit * 2 - 0.5f * labelLargeLen, canvasMax+textHeigh, labelPaint);
+      c.drawText(axisLabel, labelBeginX - widthDigit * axisLabel.length() - 0.5f * labelLargeLen, canvasMax+textHeigh, labelPaint);
     }
+  }
+  
+  // Draw frequency axis for spectrogram
+  // Working in the original canvas frame
+  // nx: number of grid lines on average
+  private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, float nx, boolean drawOnXAxis) {
+    drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
+             getFreqMin(), getFreqMax(), GridScaleType.FREQ);
   }
   
   // Draw time axis for spectrogram
   // Working in the original canvas frame
   private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, float nt, boolean drawOnXAxis) {
-    float axisMin = 0;
-    float axisMax = (float) timeWatch * timeMultiplier;
-    float canvasMin = 0;
-    float canvasMax = labelBeginY;
-    if (drawOnXAxis) {
-      canvasMin = labelBeginX;
-      canvasMax = canvasWidth;
+    if (showFreqAlongX ^ (showModeSpectrogram == 0)) {
+      drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
+          (float) timeWatch * timeMultiplier, 0, GridScaleType.TIME);
     } else {
-      canvasMin = 0;
-      canvasMax = labelBeginY;
-    }
-    updateGridLabels(axisMin, axisMax, nt, GridScaleType.TIME);
-    
-    // plot axis mark
-    float yPos;
-    float textHeigh     = labelPaint.getFontMetrics(null);
-    float labelLargeLen = 0.6f * textHeigh;
-    float labelSmallLen = 0.6f*labelLargeLen;
-    for(int i = 0; i < gridPoints2T[1].length; i++) {
-      yPos =((float)gridPoints2T[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-      if (drawOnXAxis) {
-        c.drawLine(yPos, labelBeginY, yPos, labelBeginY+labelSmallLen, gridPaint);
-      } else {
-        c.drawLine(labelBeginX-labelSmallLen, yPos, labelBeginX, yPos, gridPaint);
-      }
-    }
-    for(int i = 0; i < gridPoints2T[0].length; i++) {
-      yPos = ((float)gridPoints2T[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-      if (drawOnXAxis) {
-        c.drawLine(yPos, labelBeginY, yPos, labelBeginY+labelLargeLen, rulerBrightPaint);
-      } else {
-        c.drawLine(labelBeginX-labelLargeLen, yPos, labelBeginX, yPos, rulerBrightPaint);
-      }
-    }
-    if (drawOnXAxis) {
-      c.drawLine(canvasMin, labelBeginY, canvasMax, labelBeginY, labelPaint);
-    } else {
-      c.drawLine(labelBeginX, canvasMin, labelBeginX, canvasMax, labelPaint);
-    }
-
-    // plot labels
-    float widthDigit = labelPaint.measureText("0");
-    float xPos = labelBeginY + 0.3f*labelLargeLen + textHeigh;
-    for(int i = 0; i < gridPoints2StrT.length; i++) {
-      yPos = ((float)gridPoints2T[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-      if (drawOnXAxis) {
-        if (yPos + widthDigit * gridPoints2StrT[i].length() > canvasWidth - 3.3f*widthDigit) {
-          continue;
-        }
-        c.drawText(gridPoints2stT[i], 0, gridPoints2StrT[i].length(), yPos, xPos, labelPaint);
-      } else {
-        if (yPos > canvasMax - 1.0f*textHeigh) {
-          continue;
-        }
-        c.drawText(gridPoints2stT[i], 0, gridPoints2StrT[i].length(),
-                   labelBeginX - widthDigit * gridPoints2StrT[i].length() - 0.5f * labelLargeLen, yPos, labelPaint);
-      }
-    }
-    if (drawOnXAxis) {
-      c.drawText("Sec", canvasWidth - 3.3f*widthDigit, xPos, labelPaint);
-    } else {
-      c.drawText("Sec", labelBeginX - widthDigit * 3 - 0.5f * labelLargeLen, canvasMax, labelPaint);
+      drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
+          0, (float) timeWatch * timeMultiplier, GridScaleType.TIME);
     }
   }
   
@@ -604,17 +555,10 @@ public class AnalyzeView extends View {
   // return true if the coordinate (x,y) is inside graphView
   public boolean setCursor(float x, float y) {
     if (intersects(x, y)) {
-      // Log.i(AnalyzeActivity.TAG, x + "," + y);
-      if (x <= 3 && xShift > 0f) {    // TODO: if touch point is very close to boundary, move the view, maybe move to upper layer
-        setXShift(xShift - 10f) ;
-      } else if (x >=  canvasWidth - 3) {
-        setXShift(xShift + 10f);
-      } else {
-        cursorX = xShift + (x - myLocation[0])/xZoom;  // coordinate in canvas
-        cursorY = yShift + (y - myLocation[1])/yZoom;
-        cursorX = axisBounds.width() * cursorX / canvasWidth;  // coordinate in axis (frequency)
-        cursorY = axisBounds.height() * cursorY / canvasHeight;
-      }
+      cursorX = xShift + (x - myLocation[0])/xZoom;  // coordinate in canvas
+      cursorY = yShift + (y - myLocation[1])/yZoom;
+      cursorX = axisBounds.width() * cursorX / canvasWidth;  // coordinate in axis (frequency)
+      cursorY = axisBounds.height() * cursorY / canvasHeight;
       return true;
     } else {
       return false;
@@ -870,12 +814,11 @@ public class AnalyzeView extends View {
       yZoom = xZoom;
       yShift = canvasHeight - canvasHeight/yZoom - xShift / canvasWidth * canvasHeight;
     }
-    Log.w(TAG, "  yZ = " + yZoom + "  yS = " + yShift);
-    nFreqPoints = fftLen / 2;                    // no direct current term
     double timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
-    nTimePoints = (int)Math.ceil(timeWatch / timeInc);
-    spectrogramColorsPt = 0;                     // pointer to the row to be filled (row major)
     synchronized (this) {
+      nFreqPoints = fftLen / 2;                    // no direct current term
+      nTimePoints = (int)Math.ceil(timeWatch / timeInc);
+      spectrogramColorsPt = 0;                     // pointer to the row to be filled (row major)
       if (spectrogramColors == null || spectrogramColors.length != nFreqPoints * nTimePoints) {
         spectrogramColors = new int[nFreqPoints * nTimePoints];
         spectrogramColorsShifting = new int[nFreqPoints * nTimePoints];
@@ -898,11 +841,8 @@ public class AnalyzeView extends View {
     return cma[(int)(cma.length * d / dBLowerBound)];
   }
   
-//  volatile String busyName = "";
-  
   public void pushRawSpectrum(double[] db) {
     isBusy = true;
-//    busyName = "pushRawSpectrum";
     synchronized (this) {
       int c;
       int pRef; 
@@ -925,7 +865,6 @@ public class AnalyzeView extends View {
       }
     }
     isBusy = false;
-//    busyName = "";
   }
   
 //  FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("View"); 
@@ -934,11 +873,10 @@ public class AnalyzeView extends View {
   @Override
   protected void onDraw(Canvas c) {
 //    fpsCounter.inc();
-//    long t = SystemClock.uptimeMillis();
+    long t = SystemClock.uptimeMillis();
 //    Log.i(TAG, " onDraw last call dt = " + (t - t_old));
 //    t_old = t;
     isBusy = true;
-//    busyName = "onDraw";
     c.concat(matrix0);
     c.save();
     if (showMode == 0) {
@@ -955,7 +893,7 @@ public class AnalyzeView extends View {
       float halfFreqResolutionShift = xZoom*(canvasWidth-labelBeginX)/nFreqPoints/2;
       matrixSpectrogram.reset();
       if (showFreqAlongX) {
-      // when xZoom== 1: nFreqPoints -> canvasWidth; 0 -> labelBeginX
+        // when xZoom== 1: nFreqPoints -> canvasWidth; 0 -> labelBeginX
         matrixSpectrogram.postScale(xZoom*(canvasWidth-labelBeginX)/nFreqPoints, labelBeginY/nTimePoints);
         matrixSpectrogram.postTranslate(labelBeginX - xShift/canvasWidth*xZoom*(canvasWidth-labelBeginX) + halfFreqResolutionShift, 0f);
       } else {
@@ -969,19 +907,17 @@ public class AnalyzeView extends View {
       
       // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
       //                         int width, int height, boolean hasAlpha, Paint paint)
-      float x = 0;
-      float y = 0;
       synchronized (this) {
         if (showModeSpectrogram == 0) {
           System.arraycopy(spectrogramColors, 0, spectrogramColorsShifting,
                            (nTimePoints-spectrogramColorsPt)*nFreqPoints, spectrogramColorsPt*nFreqPoints);
           System.arraycopy(spectrogramColors, spectrogramColorsPt*nFreqPoints, spectrogramColorsShifting,
                            0, (nTimePoints-spectrogramColorsPt)*nFreqPoints);
-          c.drawBitmap(spectrogramColorsShifting, 0, nFreqPoints, x, y,
+          c.drawBitmap(spectrogramColorsShifting, 0, nFreqPoints, 0, 0,
                        nFreqPoints, nTimePoints, false, null);
         } else {
-          c.drawBitmap(spectrogramColors, 0, nFreqPoints, x, y,
-              nFreqPoints, nTimePoints, false, null);
+          c.drawBitmap(spectrogramColors, 0, nFreqPoints, 0, 0,
+                       nFreqPoints, nTimePoints, false, null);
         }
       }
       if (showModeSpectrogram == 1) {
@@ -1003,8 +939,7 @@ public class AnalyzeView extends View {
       }
     }
     isBusy = false;
-//    busyName = "";
-//    Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
+    Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
   }
   
   /*
@@ -1025,6 +960,7 @@ public class AnalyzeView extends View {
   
   @Override
   public void onRestoreInstanceState(Parcelable state) {
+    // TODO: save more state here!!
     if (state instanceof State) {
       State s = (State) state;
       super.onRestoreInstanceState(s.getSuperState());
@@ -1033,7 +969,6 @@ public class AnalyzeView extends View {
       this.xZoom = s.scale;
       this.xShift = s.xlate;
       this.axisBounds = s.bounds;
-      // Log.i(AnalyzeActivity.TAG, "Restore: " + cx + "," + cy + " " + scale + ":" + xlate + " (" + bounds + ")");
       computeMatrix();
       invalidate();
     } else {

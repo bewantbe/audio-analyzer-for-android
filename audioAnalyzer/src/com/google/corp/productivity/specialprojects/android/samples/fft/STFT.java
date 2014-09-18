@@ -226,7 +226,7 @@ public class STFT {
   public void calculatePeak() {
     getSpectrumAmpDB();
     // Find and show peak amplitude
-    maxAmpDB  = 20 * Math.log10(0.5/32768);
+    maxAmpDB  = 20 * Math.log10(0.125/32768);
     maxAmpFreq = 0;
     for (int i = 1; i < spectrumAmpOutDB.length; i++) {  // skip the direct current term
       if (spectrumAmpOutDB[i] > maxAmpDB) {

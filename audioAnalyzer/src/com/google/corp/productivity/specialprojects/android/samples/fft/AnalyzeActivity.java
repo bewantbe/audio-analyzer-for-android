@@ -233,9 +233,6 @@ public class AnalyzeActivity extends Activity
 
     bWarnOverrun = sharedPref.getBoolean("warnOverrun", true);
     
-//    ((TextView) findViewById(R.id.textview_rec)).setLayoutParams(
-//        new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-    
     if (bSaveWav) {
       ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
     } else {
@@ -652,6 +649,7 @@ public class AnalyzeActivity extends Activity
     switch (event.getPointerCount()) {
       case 1:
         graphView.setCursor(event.getX(), event.getY());
+        // TODO: if touch point is very close to boundary for a long time, move the view
         break;
       case 2:
         if (isInGraphView(event.getX(1), event.getY(1))) {
