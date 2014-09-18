@@ -694,7 +694,7 @@ public class AnalyzeView extends View {
     this.canvasHeight = h;
     this.canvasWidth = w;
     Log.i(TAG, "onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
-    if (oldh == 0 && h > 0 && readyCallback != null) {
+    if (h > 0 && readyCallback != null) {
       readyCallback.ready();
     }
     isBusy = false;
