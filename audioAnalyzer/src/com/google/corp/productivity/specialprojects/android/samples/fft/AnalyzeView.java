@@ -246,11 +246,11 @@ public class AnalyzeView extends View {
   
   private DecimalFormat smallFormatter = new DecimalFormat("@@");
   private DecimalFormat largeFormatter = new DecimalFormat("#");
-  double[][] oldGridPointBoundaryArray = new double[3][2];
+  private double[][] oldGridPointBoundaryArray = new double[3][2];
   
-  double[][][] gridPointsArray = {gridPoints2, gridPoints2dB, gridPoints2T};
-  StringBuilder[][] gridPointsStrArray = new StringBuilder[3][0];
-  char[][][] gridPointsStArray = new char[3][0][];
+  private double[][][] gridPointsArray = {gridPoints2, gridPoints2dB, gridPoints2T};
+  private StringBuilder[][] gridPointsStrArray = new StringBuilder[3][0];
+  private char[][][] gridPointsStArray = new char[3][0][];
   
   public enum GridScaleType {  // java's enum type is inconvenient
     FREQ(0), DB(1), TIME(2);
@@ -358,7 +358,7 @@ public class AnalyzeView extends View {
   
   private float getLabelBeginY() {
     float textHeigh     = labelPaint.getFontMetrics(null);
-    float labelLaegeLen = 0.6f * textHeigh;
+    float labelLaegeLen = 0.5f * textHeigh;
     if (!showFreqAlongX && !bShowTimeAxis) {
       return canvasHeight;
     } else {
@@ -368,7 +368,7 @@ public class AnalyzeView extends View {
   
   private float getLabelBeginX() {
     float textHeigh     = labelPaint.getFontMetrics(null);
-    float labelLaegeLen = 0.6f * textHeigh;
+    float labelLaegeLen = 0.5f * textHeigh;
     if (showFreqAlongX) {
       if (bShowTimeAxis) {
         return 0.6f*labelLaegeLen + 1.5f*textHeigh;
@@ -405,7 +405,7 @@ public class AnalyzeView extends View {
     // plot axis mark
     float posAlongAxis;
     float textHeigh     = labelPaint.getFontMetrics(null);
-    float labelLargeLen = 0.6f * textHeigh;
+    float labelLargeLen = 0.5f * textHeigh;
     float labelSmallLen = 0.6f*labelLargeLen;
     for(int i = 0; i < gridPoints[1].length; i++) {
       posAlongAxis =((float)gridPoints[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
@@ -502,7 +502,7 @@ public class AnalyzeView extends View {
   }
   
   private float clampDB(float value) {
-    if (value < minDB) {
+    if (value < minDB || Double.isNaN(value)) {
       value = minDB;
     }
     return value;
@@ -752,6 +752,7 @@ public class AnalyzeView extends View {
   private Matrix matrixSpectrogram = new Matrix();
   private static final int[] cma = ColorMapArray.hot;
   private double dBLowerBound = -120;
+  private Paint smoothBmpPaint;
   
   public int getShowMode() {
     return showMode;
@@ -775,6 +776,14 @@ public class AnalyzeView extends View {
   
   public void setShowFreqAlongX(boolean b) {
     showFreqAlongX = b;
+  }
+  
+  public void setSmoothRender(boolean b) {
+    if (b) {
+      smoothBmpPaint = new Paint(Paint.FILTER_BITMAP_FLAG);
+    } else {
+      smoothBmpPaint = null;
+    }
   }
   
   float oldYShift = 0;
@@ -873,7 +882,6 @@ public class AnalyzeView extends View {
   @Override
   protected void onDraw(Canvas c) {
 //    fpsCounter.inc();
-    long t = SystemClock.uptimeMillis();
 //    Log.i(TAG, " onDraw last call dt = " + (t - t_old));
 //    t_old = t;
     isBusy = true;
@@ -897,6 +905,7 @@ public class AnalyzeView extends View {
         matrixSpectrogram.postScale(xZoom*(canvasWidth-labelBeginX)/nFreqPoints, labelBeginY/nTimePoints);
         matrixSpectrogram.postTranslate(labelBeginX - xShift/canvasWidth*xZoom*(canvasWidth-labelBeginX) + halfFreqResolutionShift, 0f);
       } else {
+        // Will make c.drawBitmap about 20% slower, don't know why
         matrixSpectrogram.postRotate(-90);
         matrixSpectrogram.postScale((canvasWidth-labelBeginX)/nTimePoints, yZoom*labelBeginY/nFreqPoints);
         // (canvasHeight-yShift)/canvasHeight is relative position of shift
@@ -907,6 +916,7 @@ public class AnalyzeView extends View {
       
       // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
       //                         int width, int height, boolean hasAlpha, Paint paint)
+//      long t = SystemClock.uptimeMillis();
       synchronized (this) {
         if (showModeSpectrogram == 0) {
           System.arraycopy(spectrogramColors, 0, spectrogramColorsShifting,
@@ -914,12 +924,13 @@ public class AnalyzeView extends View {
           System.arraycopy(spectrogramColors, spectrogramColorsPt*nFreqPoints, spectrogramColorsShifting,
                            0, (nTimePoints-spectrogramColorsPt)*nFreqPoints);
           c.drawBitmap(spectrogramColorsShifting, 0, nFreqPoints, 0, 0,
-                       nFreqPoints, nTimePoints, false, null);
+                       nFreqPoints, nTimePoints, false, smoothBmpPaint);
         } else {
           c.drawBitmap(spectrogramColors, 0, nFreqPoints, 0, 0,
-                       nFreqPoints, nTimePoints, false, null);
+                       nFreqPoints, nTimePoints, false, smoothBmpPaint);
         }
       }
+//      Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
       if (showModeSpectrogram == 1) {
         c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint);
       }
@@ -939,7 +950,6 @@ public class AnalyzeView extends View {
       }
     }
     isBusy = false;
-    Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
   }
   
   /*

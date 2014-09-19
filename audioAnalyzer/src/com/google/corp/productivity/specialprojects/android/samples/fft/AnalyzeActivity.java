@@ -97,8 +97,8 @@ public class AnalyzeActivity extends Activity
   private double timeDurationPref = 4.0;
   private double wavSec, wavSecRemain;
   
-  float listItemTextSize = 20;        // font size in pixel
-  float listItemTitleTextSize = 12;   // font size in pixel
+  float listItemTextSize = 20;        // see R.dimen.button_text_fontsize
+  float listItemTitleTextSize = 12;   // see R.dimen.button_text_small_fontsize
   
   Object oblock = new Object();
 
@@ -225,13 +225,14 @@ public class AnalyzeActivity extends Activity
     graphView.setShowFreqAlongX(sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
     timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
                                           Double.toString(4.0)));
-
+    graphView.setSmoothRender(sharedPref.getBoolean("spectrogramSmoothRender", false));
+    
     // Preferences in preference activity 
     showLines   = sharedPref.getBoolean("showLines", false);
     audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
 
-    bWarnOverrun = sharedPref.getBoolean("warnOverrun", true);
+    bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
     
     if (bSaveWav) {
       ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));

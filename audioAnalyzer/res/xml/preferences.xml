@@ -53,8 +53,14 @@
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="spectrogramShowFreqAlongX"
+            android:summary="So time axis is Y axis"
             android:title="Frequency as X axis" />
-
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="spectrogramSmoothRender"
+            android:summary="Smooth render the spectrogram"
+            android:title="Smooth render" />
+        
         <ListPreference
             android:defaultValue="-120"
             android:entries="@array/dbRangeArray"
@@ -74,7 +80,7 @@
         android:key="miscellaneous"
         android:title="Miscellaneous" >
         <CheckBoxPreference
-            android:defaultValue="true"
+            android:defaultValue="false"
             android:key="warnOverrun"
             android:summary="Show a warning if audio buffer overrun."
             android:title="Ovrrun Warning" />
