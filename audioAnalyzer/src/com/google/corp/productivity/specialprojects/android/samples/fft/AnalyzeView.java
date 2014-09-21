@@ -340,7 +340,7 @@ public class AnalyzeView extends View {
   }
   
   float axisY4canvasView(float y) {
-    return axisBounds.height() * (yShift + y/yZoom) / canvasHeight;
+    return axisBounds.height() * (yShift + y/yZoom) / canvasHeight + axisBounds.top;
   }
   
   private void drawGridLines(Canvas c, float nx, float ny) {
@@ -568,7 +568,8 @@ public class AnalyzeView extends View {
       // Convert to coordinate in axis
       if (showMode == 0) {
         cursorFreq = axisX4canvasView(x);  // frequency
-        cursorDB   = axisX4canvasView(y);  // decibel
+        cursorDB   = axisY4canvasView(y);  // decibel
+        //Log.i(TAG, "cursorDB = " + cursorDB + "  y = " + y);
       } else {
         cursorDB   = 0;  // disabled
         if (showFreqAlongX) {
@@ -619,7 +620,6 @@ public class AnalyzeView extends View {
         }
       } else {
         cY = (canvasHeight - yShift - cursorFreq / axisBounds.width() * canvasHeight) * yZoom / canvasHeight * labelBeginY;
-        Log.i(TAG, "cY = " + cY + "  labelBeginX = " + labelBeginX + "  canvasWidth = " + canvasWidth);
         if (cursorFreq != 0) {
           c.drawLine(labelBeginX, cY, canvasWidth, cY, cursorPaint); 
         }
@@ -934,8 +934,8 @@ public class AnalyzeView extends View {
       drawGridLines(c, canvasWidth * gridDensity / DPRatio, canvasHeight * gridDensity / DPRatio);
       c.concat(matrix);
       c.drawPath(path, linePaint);
-      drawCursor(c);
       c.restore();
+      drawCursor(c);
       drawGridLabels(c);
     } else {
       labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
@@ -1006,8 +1006,8 @@ public class AnalyzeView extends View {
     State state = new State(parentState);
     state.cx = cursorFreq;
     state.cy = cursorDB;
-    state.scale = xZoom;
-    state.xlate = xShift;
+    state.xZ = xZoom;
+    state.xS = xShift;
     state.bounds = axisBounds;
     return state;
   }
@@ -1020,8 +1020,10 @@ public class AnalyzeView extends View {
       super.onRestoreInstanceState(s.getSuperState());
       this.cursorFreq = s.cx;
       this.cursorDB = s.cy;
-      this.xZoom = s.scale;
-      this.xShift = s.xlate;
+      this.xZoom = s.xZ;
+      this.yZoom = s.yZ;
+      this.xShift = s.xS;
+      this.yShift = s.yS;
       this.axisBounds = s.bounds;
       computeMatrix();
       invalidate();
@@ -1036,8 +1038,8 @@ public class AnalyzeView extends View {
   
   public static class State extends BaseSavedState {
     float cx, cy; 
-    float scale;
-    float xlate;
+    float xZ, yZ;
+    float xS, yS;
     RectF bounds;
     
     State(Parcelable state) {
@@ -1049,8 +1051,10 @@ public class AnalyzeView extends View {
       super.writeToParcel(out, flags);
       out.writeFloat(cx);
       out.writeFloat(cy);
-      out.writeFloat(scale);
-      out.writeFloat(xlate);
+      out.writeFloat(xZ);
+      out.writeFloat(yZ);
+      out.writeFloat(xS);
+      out.writeFloat(yS);
       bounds.writeToParcel(out, flags);
     }
     
@@ -1070,8 +1074,10 @@ public class AnalyzeView extends View {
       super(in);
       cx = in.readFloat();
       cy = in.readFloat();
-      scale = in.readFloat();
-      xlate = in.readFloat();
+      xZ = in.readFloat();
+      yZ = in.readFloat();
+      xS = in.readFloat();
+      yS = in.readFloat();
       bounds = RectF.CREATOR.createFromParcel(in);
     }
   }
