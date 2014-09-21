@@ -46,7 +46,7 @@ public class AnalyzeView extends View {
   static float DPRatio;
   private float cursorFreq, cursorDB; // cursor location
   private float xZoom, yZoom;     // horizontal and vertical scaling
-  private float xShift, yShift;   // horizontal and vertical translation
+  private float xShift, yShift;   // horizontal and vertical translation, in unit 1 unit
   private float minDB = -144f;    // hard lower bound for dB
   private float maxDB = 12f;      // hard upper bound for dB
   private RectF axisBounds;
@@ -714,17 +714,14 @@ public class AnalyzeView extends View {
   public void setScale(float s) {
     xZoom = Math.max(s, 1f); 
     xShift = clamp(xShift, 0f, 1-1/xZoom);
-    computeMatrix();
   }
   
   public void setXShift(float offset) {
     xShift = clampXShift(offset);
-    computeMatrix();
   }
   
   public void setYShift(float offset) {
     yShift = clampYShift(offset);
-    computeMatrix();
   }
   
   public void resetViewScale() {
@@ -732,7 +729,6 @@ public class AnalyzeView extends View {
     xZoom = 1;
     yShift = 0;
     yZoom = 1;
-    computeMatrix();
   }
   
   private float xMidOld = 100;
@@ -768,7 +764,6 @@ public class AnalyzeView extends View {
       yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, -axisBounds.height()/6f);
     }
     yShift = clampYShift(yShiftOld + (yMidOld/yZoomOld - (y1+y2)/2f/yZoom) / canvasHeight);
-    computeMatrix();
   }
   
   private void computeMatrix() {
@@ -844,19 +839,20 @@ public class AnalyzeView extends View {
   float oldXZoom = 1;
 
   public void switch2Spectrum() {
+    Log.v(TAG, "switch2Spectrum()");
+    if (showMode == 0) {
+      return;
+    }
+    // execute when switch from Spectrogram mode to Spectrum mode
+    showMode = 0;
     if (showFreqAlongX) {
       // the frequency range is the same
     } else {
-      if (spectrogramColors != null && canvasHeight > 0) {
-        // when switch from Spectrogram mode to Spectrum mode
-        xShift = 1 - yShift - 1/yZoom;
-        xZoom = yZoom;
-      }
+      xShift = 1 - yShift - 1/yZoom;
+      xZoom = yZoom;
     }
     yShift = oldYShift;
     yZoom = oldYZoom;
-    showMode = 0;
-    computeMatrix();
   }
   
   public void switch2Spectrogram(int sampleRate, int fftLen, double timeDurationE) {
@@ -941,6 +937,7 @@ public class AnalyzeView extends View {
     c.save();
     if (showMode == 0) {
       drawGridLines(c, canvasWidth * gridDensity / DPRatio, canvasHeight * gridDensity / DPRatio);
+      computeMatrix();
       c.concat(matrix);
       c.drawPath(path, linePaint);
       c.restore();
@@ -1016,8 +1013,11 @@ public class AnalyzeView extends View {
     state.cx = cursorFreq;
     state.cy = cursorDB;
     state.xZ = xZoom;
+    state.yZ = yZoom;
     state.xS = xShift;
+    state.yS = yShift;
     state.bounds = axisBounds;
+    Log.i("onSaveInstanceState()", "xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     return state;
   }
   
@@ -1034,8 +1034,7 @@ public class AnalyzeView extends View {
       this.xShift = s.xS;
       this.yShift = s.yS;
       this.axisBounds = s.bounds;
-      computeMatrix();
-      invalidate();
+      Log.i("onRestoreInstanceState()", "xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     } else {
       super.onRestoreInstanceState(state);
     }
@@ -1065,6 +1064,7 @@ public class AnalyzeView extends View {
       out.writeFloat(xS);
       out.writeFloat(yS);
       bounds.writeToParcel(out, flags);
+//      out.write
     }
     
     public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {

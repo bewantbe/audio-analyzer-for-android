@@ -1373,8 +1373,6 @@ public class AnalyzeActivity extends Activity
   @Override
   public void ready() {
     // put code here for the moment that graph size just changed
-    if (spectrumDBcopy != null && graphView != null) {
-      graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
-    }
+    Log.v(TAG, "ready()");
   }
 }
