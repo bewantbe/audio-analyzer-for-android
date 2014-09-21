@@ -619,8 +619,8 @@ public class AnalyzeActivity extends Activity
         if (shiftingVelocity > 0f
             && SystemClock.uptimeMillis() - timeFlingStart < 10000) {
 //          Log.i(TAG, "  fly pixels x=" + shiftingPixelX + " y=" + shiftingPixelY);
-          graphView.setXShift(graphView.getXShift() - shiftingComponentX*shiftingPixel / graphView.getXZoom());
-          graphView.setYShift(graphView.getYShift() - shiftingComponentY*shiftingPixel / graphView.getYZoom());
+          graphView.setXShift(graphView.getXShift() - shiftingComponentX*shiftingPixel / graphView.getCanvasWidth() / graphView.getXZoom());
+          graphView.setYShift(graphView.getYShift() - shiftingComponentY*shiftingPixel / graphView.getCanvasHeight() / graphView.getYZoom());
           // Am I need to use runOnUiThread() ?
           AnalyzeActivity.this.invalidateGraphView();
           flyingMoveHandler.postDelayed(flyingMoveRunnable, (int)(1000*flyDt));
@@ -701,12 +701,12 @@ public class AnalyzeActivity extends Activity
         } else {
           // when close to the axis, scroll that axis only
           if (x0 < windowLocation[0] + 50) {
-            graphView.setYShift(yShift0 + (y0 - y) / graphView.getYZoom());
+            graphView.setYShift(yShift0 + (y0 - y) / graphView.getCanvasHeight() / graphView.getYZoom());
           } else if (y0 < windowLocation[1] + 50) {
-            graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
+            graphView.setXShift(xShift0 + (x0 - x) / graphView.getCanvasWidth() / graphView.getXZoom());
           } else {
-            graphView.setXShift(xShift0 + (x0 - x) / graphView.getXZoom());
-            graphView.setYShift(yShift0 + (y0 - y) / graphView.getYZoom());
+            graphView.setXShift(xShift0 + (x0 - x) / graphView.getCanvasWidth() / graphView.getXZoom());
+            graphView.setYShift(yShift0 + (y0 - y) / graphView.getCanvasHeight() / graphView.getYZoom());
           }
         }
         isPinching = false;
