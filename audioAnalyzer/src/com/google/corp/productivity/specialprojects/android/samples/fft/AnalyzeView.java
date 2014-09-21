@@ -43,6 +43,7 @@ import android.view.View;
 
 public class AnalyzeView extends View {
   private final String TAG = "AnalyzeView::";
+  private Ready readyCallback = null;      // callback to caller when rendering is complete
   static float DPRatio;
   private float cursorFreq, cursorDB; // cursor location
   private float xZoom, yZoom;     // horizontal and vertical scaling
@@ -50,8 +51,9 @@ public class AnalyzeView extends View {
   private float minDB = -144f;    // hard lower bound for dB
   private float maxDB = 12f;      // hard upper bound for dB
   private RectF axisBounds;
-  private Ready readyCallback = null;      // callback to caller when rendering is complete
-  
+  private double[] tmpSpectrum = new double[0];
+
+  private boolean showLines;
   private int canvasWidth, canvasHeight;   // size of my canvas
   private Paint linePaint, backgroundPaint;
   private Paint cursorPaint;
@@ -159,6 +161,10 @@ public class AnalyzeView extends View {
   
   public double getLowerBound() {
     return dBLowerBound;
+  }
+  
+  public void setShowLines(boolean b) {
+    showLines = b;
   }
   
   // return position of grid lines, there are roughly gridDensity lines for the bigger grid
@@ -517,10 +523,18 @@ public class AnalyzeView extends View {
     return value;
   }
   
+  private void saveSpectrum(double[] db) {
+    if (tmpSpectrum == null || tmpSpectrum.length != db.length) {
+      tmpSpectrum = new double[db.length];
+    }
+    System.arraycopy(db, 0, tmpSpectrum, 0, db.length);
+  }
+  
   /**
    * Re-plot the spectrum
    */
-  public void replotRawSpectrum(double[] db, int start, int end, boolean bars) {
+  public void replotRawSpectrum(double[] db) {
+    saveSpectrum(db);
     if (canvasHeight < 1) {
       return;
     }
@@ -529,8 +543,8 @@ public class AnalyzeView extends View {
     if (showMode == 0) {
       float minYcanvas = canvasY4axis(minDB);
       path.reset();
-      if (bars) {
-        for (int i = start; i < end; i++) {
+      if (!showLines) {
+        for (int i = 1; i < db.length; i++) {
           float x = (float) i / (db.length-1) * canvasWidth;
           float y = canvasY4axis(clampDB((float)db[i]));
           if (y != canvasHeight) {
@@ -541,15 +555,15 @@ public class AnalyzeView extends View {
         }
       } else {
         // (0,0) is the upper left of the View, in pixel unit
-        path.moveTo((float) start / (db.length-1) * canvasWidth, canvasY4axis(clampDB((float)db[start])));
-        for (int i = start+1; i < end; i++) {
+        path.moveTo((float) 1 / (db.length-1) * canvasWidth, canvasY4axis(clampDB((float)db[1])));
+        for (int i = 1+1; i < db.length; i++) {
           float x = (float) i / (db.length-1) * canvasWidth;
           float y = canvasY4axis(clampDB((float)db[i]));
           path.lineTo(x, y);
         }
       }
     } else {
-      //use pushRawSpectrogram(db);
+      //use pushRawSpectrum(db);
     }
 //    Log.i(TAG, " replotRawSpectrum: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
     isBusy = false;
@@ -781,6 +795,9 @@ public class AnalyzeView extends View {
     if (h > 0 && readyCallback != null) {
       readyCallback.ready();
     }
+    if (showMode == 0 && tmpSpectrum != null && tmpSpectrum.length > 1) {
+      replotRawSpectrum(tmpSpectrum);
+    }
     isBusy = false;
   }
   
@@ -853,6 +870,9 @@ public class AnalyzeView extends View {
     }
     yShift = oldYShift;
     yZoom = oldYZoom;
+    if (tmpSpectrum != null && tmpSpectrum.length > 1) {
+      replotRawSpectrum(tmpSpectrum);
+    }
   }
   
   public void switch2Spectrogram(int sampleRate, int fftLen, double timeDurationE) {
@@ -900,6 +920,7 @@ public class AnalyzeView extends View {
   
   public void pushRawSpectrum(double[] db) {
     isBusy = true;
+    saveSpectrum(db);
     synchronized (this) {
       int c;
       int pRef; 
@@ -1017,6 +1038,8 @@ public class AnalyzeView extends View {
     state.xS = xShift;
     state.yS = yShift;
     state.bounds = axisBounds;
+    state.nfq = tmpSpectrum==null ? 0 : tmpSpectrum.length;
+    state.tmpS = tmpSpectrum;
     Log.i("onSaveInstanceState()", "xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     return state;
   }
@@ -1034,6 +1057,7 @@ public class AnalyzeView extends View {
       this.xShift = s.xS;
       this.yShift = s.yS;
       this.axisBounds = s.bounds;
+      this.tmpSpectrum = s.tmpS;
       Log.i("onRestoreInstanceState()", "xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     } else {
       super.onRestoreInstanceState(state);
@@ -1049,6 +1073,8 @@ public class AnalyzeView extends View {
     float xZ, yZ;
     float xS, yS;
     RectF bounds;
+    int nfq;
+    double[] tmpS;
     
     State(Parcelable state) {
       super(state);
@@ -1064,7 +1090,8 @@ public class AnalyzeView extends View {
       out.writeFloat(xS);
       out.writeFloat(yS);
       bounds.writeToParcel(out, flags);
-//      out.write
+      out.writeInt(nfq);
+      out.writeDoubleArray(tmpS);
     }
     
     public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {
@@ -1088,6 +1115,9 @@ public class AnalyzeView extends View {
       xS = in.readFloat();
       yS = in.readFloat();
       bounds = RectF.CREATOR.createFromParcel(in);
+      nfq = in.readInt();
+      tmpS = new double[nfq];
+      in.readDoubleArray(tmpS);
     }
   }
   

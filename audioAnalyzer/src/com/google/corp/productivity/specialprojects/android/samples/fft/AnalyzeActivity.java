@@ -88,7 +88,6 @@ public class AnalyzeActivity extends Activity
   private static int nFFTAverage = 2;
   private static String wndFuncName;
 
-  private static boolean showLines;
   private static boolean bSaveWav;
   private static int audioSourceId = RECORDER_AGC_OFF;
   private boolean isMeasure = true;
@@ -209,29 +208,30 @@ public class AnalyzeActivity extends Activity
     } else {
       getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
-    graphView.setShowTimeAxis(sharedPref.getBoolean("spectrogramTimeAxis", true));
-    // set spectrum show range
-    float b = graphView.getBounds().bottom;
-    b = Float.parseFloat(sharedPref.getString("spectrumRange",
-                         Double.toString(b)));
-    graphView.setBoundsBottom(b);
-    // set spectrogram show range
-    double d = graphView.getLowerBound();
-    d = Double.parseDouble(sharedPref.getString("spectrogramRange",
-                           Double.toString(d)));
-    graphView.setLowerBound(d);
-    // set spectrogram shifting mode
-    graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
-    graphView.setShowFreqAlongX(sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
-    timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
-                                          Double.toString(4.0)));
-    graphView.setSmoothRender(sharedPref.getBoolean("spectrogramSmoothRender", false));
     
-    // Preferences in preference activity 
-    showLines   = sharedPref.getBoolean("showLines", false);
     audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
     wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
 
+    // spectrum
+    graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
+    // set spectrum show range
+    float b = graphView.getBounds().bottom;
+    b = Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(b)));
+    graphView.setBoundsBottom(b);
+
+    // spectrogram
+    // set spectrogram shifting mode
+    graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
+    graphView.setShowTimeAxis(sharedPref.getBoolean("spectrogramTimeAxis", true));
+    graphView.setShowFreqAlongX(sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
+    graphView.setSmoothRender(sharedPref.getBoolean("spectrogramSmoothRender", false));
+    // set spectrogram show range
+    double d = graphView.getLowerBound();
+    d = Double.parseDouble(sharedPref.getString("spectrogramRange", Double.toString(d)));
+    graphView.setLowerBound(d);
+    timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
+                                          Double.toString(4.0)));
+    
     bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
     
     if (bSaveWav) {
@@ -1286,7 +1286,7 @@ public class AnalyzeActivity extends Activity
         @Override
         public void run() {
           if (graphView.getShowMode() == 0) {
-            graphView.replotRawSpectrum(spectrumDBcopy, 1, spectrumDBcopy.length, showLines);
+            graphView.replotRawSpectrum(spectrumDBcopy);
           }
           // data will get out of synchronize here
           AnalyzeActivity.this.invalidateGraphView();
