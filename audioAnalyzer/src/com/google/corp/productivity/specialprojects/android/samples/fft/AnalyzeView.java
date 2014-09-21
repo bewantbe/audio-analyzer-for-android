@@ -801,22 +801,22 @@ public class AnalyzeView extends View {
     isBusy = false;
   }
   
-  private int[] spectrogramColors;          // int:ARGB, nFreqPoints columns, nTimePoints rows
-  private int[] spectrogramColorsShifting;  // temporarily of spectrogramColors for shifting mode
-  private int showMode = 0;                 // 0: Spectrum, 1:Spectrogram
-  private int showModeSpectrogram = 1;      // 0: moving (shifting) spectrogram, 1: overwriting in loop
+  private int[] spectrogramColors = new int[0];  // int:ARGB, nFreqPoints columns, nTimePoints rows
+  private int[] spectrogramColorsShifting;       // temporarily of spectrogramColors for shifting mode
+  private int showMode = 0;                      // 0: Spectrum, 1:Spectrogram
+  private int showModeSpectrogram = 1;           // 0: moving (shifting) spectrogram, 1: overwriting in loop
   private boolean showFreqAlongX = false;
   private int nFreqPoints;
   private double timeWatch = 4.0;
   private volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzeActivity
   private boolean bShowTimeAxis = true;
   private int nTimePoints;
-  private int spectrogramColorsPt;
+  private int spectrogramColorsPt;          // pointer to the row to be filled (row major)
   private Matrix matrixSpectrogram = new Matrix();
   private static final int[] cma = ColorMapArray.hot;
   private double dBLowerBound = -120;
   private Paint smoothBmpPaint;
-  float labelBeginX, labelBeginY;
+  private float labelBeginX, labelBeginY;
   
   public int getShowMode() {
     return showMode;
@@ -876,8 +876,8 @@ public class AnalyzeView extends View {
   }
   
   public void switch2Spectrogram(int sampleRate, int fftLen, double timeDurationE) {
-    showMode = 1;
     setupSpectrogram(sampleRate, fftLen, timeDurationE);
+    showMode = 1;
   }
   
   public void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE) {
@@ -893,14 +893,22 @@ public class AnalyzeView extends View {
     }
     double timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
     synchronized (this) {
+      boolean bNeedClean = nFreqPoints != fftLen / 2;
       nFreqPoints = fftLen / 2;                    // no direct current term
       nTimePoints = (int)Math.ceil(timeWatch / timeInc);
-      spectrogramColorsPt = 0;                     // pointer to the row to be filled (row major)
       if (spectrogramColors == null || spectrogramColors.length != nFreqPoints * nTimePoints) {
         spectrogramColors = new int[nFreqPoints * nTimePoints];
         spectrogramColorsShifting = new int[nFreqPoints * nTimePoints];
+        bNeedClean = true;
       }
-      Arrays.fill(spectrogramColors, 0);
+      if (bNeedClean) {
+        spectrogramColorsPt = 0;
+        Arrays.fill(spectrogramColors, 0);
+      }
+      if (spectrogramColorsPt >= nTimePoints) {
+        Log.w(TAG, "setupSpectrogram(): Should not happend!!");
+        spectrogramColorsPt = 0;
+      }
     }
     Log.i(TAG, "setupSpectrogram() is ready"+
       "\n  sampleRate    = " + sampleRate + 
@@ -1038,15 +1046,22 @@ public class AnalyzeView extends View {
     state.xS = xShift;
     state.yS = yShift;
     state.bounds = axisBounds;
-    state.nfq = tmpSpectrum==null ? 0 : tmpSpectrum.length;
+    
+    state.nfq = tmpSpectrum.length;
     state.tmpS = tmpSpectrum;
+    
+    state.nsc = spectrogramColors.length;
+    state.nFP = nFreqPoints;
+    state.nSCP = spectrogramColorsPt;
+    state.tmpSC = spectrogramColors;
     Log.i("onSaveInstanceState()", "xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     return state;
   }
   
+  // maybe we could save the whole view in main activity
+  
   @Override
   public void onRestoreInstanceState(Parcelable state) {
-    // TODO: save more state here!!
     if (state instanceof State) {
       State s = (State) state;
       super.onRestoreInstanceState(s.getSuperState());
@@ -1057,7 +1072,13 @@ public class AnalyzeView extends View {
       this.xShift = s.xS;
       this.yShift = s.yS;
       this.axisBounds = s.bounds;
+      
       this.tmpSpectrum = s.tmpS;
+      
+      this.nFreqPoints = s.nFP;
+      this.spectrogramColorsPt = s.nSCP;
+      this.spectrogramColors = s.tmpSC;
+      this.spectrogramColorsShifting = new int[this.spectrogramColors.length];
       Log.i("onRestoreInstanceState()", "xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     } else {
       super.onRestoreInstanceState(state);
@@ -1075,6 +1096,10 @@ public class AnalyzeView extends View {
     RectF bounds;
     int nfq;
     double[] tmpS;
+    int nsc;  // size of tmpSC 
+    int nFP;
+    int nSCP;
+    int[] tmpSC;
     
     State(Parcelable state) {
       super(state);
@@ -1090,8 +1115,14 @@ public class AnalyzeView extends View {
       out.writeFloat(xS);
       out.writeFloat(yS);
       bounds.writeToParcel(out, flags);
+      
       out.writeInt(nfq);
       out.writeDoubleArray(tmpS);
+      
+      out.writeInt(nsc);
+      out.writeInt(nFP);
+      out.writeInt(nSCP);
+      out.writeIntArray(tmpSC);
     }
     
     public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {
@@ -1115,9 +1146,16 @@ public class AnalyzeView extends View {
       xS = in.readFloat();
       yS = in.readFloat();
       bounds = RectF.CREATOR.createFromParcel(in);
+      
       nfq = in.readInt();
       tmpS = new double[nfq];
       in.readDoubleArray(tmpS);
+      
+      nsc = in.readInt();
+      nFP = in.readInt();
+      nSCP = in.readInt();
+      tmpSC = new int[nsc];
+      in.readIntArray(tmpSC);
     }
   }
   
