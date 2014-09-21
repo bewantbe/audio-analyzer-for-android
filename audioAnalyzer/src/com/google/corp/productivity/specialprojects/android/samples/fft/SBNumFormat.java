@@ -1,14 +1,18 @@
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
+import android.util.Log;
+
 public class SBNumFormat {
   static final char charDigits[] = {'0','1','2','3','4','5','6','7','8','9'};
 
   // Invent wheel... so we can eliminate GC
   static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac, char padChar) {
     if (d<0) {
-      for (int i = 3; i < nInt+nFrac+(nFrac>0?1:0); i++) {
-        sb.append("don't");
+      for (int i = 0; i < nInt+nFrac+(nFrac>0?1:0); i++) {
+        sb.append(padChar);
       }
+      Log.w("SBNumFormat", "fillInNumFixedWidthPositive: negative number");
+      return;
     }
     if (d >= Math.pow(10,nInt)) {
       sb.append("OFL");

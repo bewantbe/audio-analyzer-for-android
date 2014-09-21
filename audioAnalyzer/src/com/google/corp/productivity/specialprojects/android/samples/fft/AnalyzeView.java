@@ -44,7 +44,7 @@ import android.view.View;
 public class AnalyzeView extends View {
   private final String TAG = "AnalyzeView::";
   static float DPRatio;
-  private float cursorX, cursorY; // cursor location
+  private float cursorFreq, cursorDB; // cursor location
   private float xZoom, yZoom;     // horizontal and vertical scaling
   private float xShift, yShift;   // horizontal and vertical translation
   private float minDB = -144f;    // hard lower bound limit
@@ -128,7 +128,7 @@ public class AnalyzeView extends View {
     backgroundPaint = new Paint();
     backgroundPaint.setColor(Color.BLACK);
 
-    cursorX = cursorY = 0f;
+    cursorFreq = cursorDB = 0f;
     xZoom=1f;
     xShift=0f;
     yZoom=1f;
@@ -333,6 +333,14 @@ public class AnalyzeView extends View {
   
   float canvasViewY4axis(float y) {
     return (canvasY4axis(y) - yShift) * yZoom;
+  }
+  
+  float axisX4canvasView(float x) {
+    return axisBounds.width()  * (xShift + x/xZoom) / canvasWidth;
+  }
+  
+  float axisY4canvasView(float y) {
+    return axisBounds.height() * (yShift + y/yZoom) / canvasHeight;
   }
   
   private void drawGridLines(Canvas c, float nx, float ny) {
@@ -555,36 +563,70 @@ public class AnalyzeView extends View {
   // return true if the coordinate (x,y) is inside graphView
   public boolean setCursor(float x, float y) {
     if (intersects(x, y)) {
-      cursorX = xShift + (x - myLocation[0])/xZoom;  // coordinate in canvas
-      cursorY = yShift + (y - myLocation[1])/yZoom;
-      cursorX = axisBounds.width() * cursorX / canvasWidth;  // coordinate in axis (frequency)
-      cursorY = axisBounds.height() * cursorY / canvasHeight;
+      x = x - myLocation[0];
+      y = y - myLocation[1];
+      // Convert to coordinate in axis
+      if (showMode == 0) {
+        cursorFreq = axisX4canvasView(x);  // frequency
+        cursorDB   = axisX4canvasView(y);  // decibel
+      } else {
+        cursorDB   = 0;  // disabled
+        if (showFreqAlongX) {
+          cursorFreq = axisBounds.width() * (xShift + (x-labelBeginX)/(canvasWidth-labelBeginX)*canvasWidth/xZoom) / canvasWidth;  // frequency
+        } else {
+          cursorFreq = axisBounds.width() * (canvasHeight - yShift - y/labelBeginY*canvasHeight/yZoom) / canvasHeight;  // frequency
+        }
+        if (cursorFreq < 0) {
+          cursorFreq = 0;
+        }
+      }
       return true;
     } else {
       return false;
     }
   }
   
-  public float getCursorX() {
-    return  canvasWidth == 0 ? 0 : cursorX;
+  public float getCursorFreq() {
+    return  canvasWidth == 0 ? 0 : cursorFreq;
   }
   
-  public float getCursorY() {
-    return  canvasHeight == 0 ? 0 : cursorY;
+  public float getCursorDB() {
+    if (showMode == 0) {
+      return canvasHeight == 0 ?   0 : cursorDB;
+    } else {
+      return 0;
+    }
   }
   
-  // In the (Zoomed) canvas frame
+  // In the original canvas view frame
   private void drawCursor(Canvas c) {
-    float cX = cursorX / axisBounds.width() * canvasWidth;
-    float cY = cursorY / axisBounds.height() * canvasHeight;
-    if (xShift < cX && cX <= xShift + canvasWidth/xZoom) {
-      c.drawLine(cX, yShift, cX, yShift + canvasHeight/yZoom, cursorPaint); 
-    }
-    if (yShift < cY && cY <= yShift + canvasHeight/yZoom) {
-      c.drawLine(xShift, cY, xShift + canvasWidth/xZoom, cY, cursorPaint); 
+    float cX, cY;
+    if (showMode == 0) {
+      cX = canvasViewX4axis(cursorFreq);
+      cY = canvasViewY4axis(cursorDB);
+      if (cursorFreq != 0) {
+        c.drawLine(cX, 0, cX, canvasHeight, cursorPaint); 
+      }
+      if (cursorDB != 0) {
+        c.drawLine(0, cY, canvasWidth, cY, cursorPaint); 
+      }
+    } else {
+      // Show only the frequency cursor
+      if (showFreqAlongX) {
+        cX = (cursorFreq / axisBounds.width() * canvasWidth - xShift) * xZoom / canvasWidth * (canvasWidth-labelBeginX) + labelBeginX;
+        if (cursorFreq != 0) {
+          c.drawLine(cX, 0, cX, labelBeginY, cursorPaint); 
+        }
+      } else {
+        cY = (canvasHeight - yShift - cursorFreq / axisBounds.width() * canvasHeight) * yZoom / canvasHeight * labelBeginY;
+        Log.i(TAG, "cY = " + cY + "  labelBeginX = " + labelBeginX + "  canvasWidth = " + canvasWidth);
+        if (cursorFreq != 0) {
+          c.drawLine(labelBeginX, cY, canvasWidth, cY, cursorPaint); 
+        }
+      }
     }
   }
-  
+
   // In axis frame
   public float getMinX() {
     return canvasWidth == 0 ? 0 : axisBounds.width() * xShift / canvasWidth;
@@ -753,6 +795,7 @@ public class AnalyzeView extends View {
   private static final int[] cma = ColorMapArray.hot;
   private double dBLowerBound = -120;
   private Paint smoothBmpPaint;
+  float labelBeginX, labelBeginY;
   
   public int getShowMode() {
     return showMode;
@@ -895,8 +938,8 @@ public class AnalyzeView extends View {
       c.restore();
       drawGridLabels(c);
     } else {
-      float labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
-      float labelBeginY = getLabelBeginY();
+      labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
+      labelBeginY = getLabelBeginY();
       // show Spectrogram
       float halfFreqResolutionShift = xZoom*(canvasWidth-labelBeginX)/nFreqPoints/2;
       matrixSpectrogram.reset();
@@ -935,6 +978,7 @@ public class AnalyzeView extends View {
         c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint);
       }
       c.restore();
+      drawCursor(c);
       if (showFreqAlongX) {
         drawFreqAxis(c, labelBeginX, labelBeginY, canvasWidth * gridDensity / DPRatio, showFreqAlongX);
         if (labelBeginX > 0) {
@@ -960,8 +1004,8 @@ public class AnalyzeView extends View {
   protected Parcelable onSaveInstanceState() {
     Parcelable parentState = super.onSaveInstanceState();
     State state = new State(parentState);
-    state.cx = cursorX;
-    state.cy = cursorY;
+    state.cx = cursorFreq;
+    state.cy = cursorDB;
     state.scale = xZoom;
     state.xlate = xShift;
     state.bounds = axisBounds;
@@ -974,8 +1018,8 @@ public class AnalyzeView extends View {
     if (state instanceof State) {
       State s = (State) state;
       super.onRestoreInstanceState(s.getSuperState());
-      this.cursorX = s.cx;
-      this.cursorY = s.cy;
+      this.cursorFreq = s.cx;
+      this.cursorDB = s.cy;
       this.xZoom = s.scale;
       this.xShift = s.xlate;
       this.axisBounds = s.bounds;

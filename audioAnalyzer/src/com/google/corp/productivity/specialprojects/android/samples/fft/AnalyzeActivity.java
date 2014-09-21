@@ -807,7 +807,7 @@ public class AnalyzeActivity extends Activity
   }
 
   private void refreshCursorLabel() {
-    double f1 = graphView.getCursorX();
+    double f1 = graphView.getCursorFreq();
     
     textCur.setLength(0);
     textCur.append("Cur :");
@@ -815,7 +815,7 @@ public class AnalyzeActivity extends Activity
     textCur.append("Hz(");
     freq2Cent(textCur, f1, " ");
     textCur.append(") ");
-    SBNumFormat.fillInNumFixedWidth(textCur, graphView.getCursorY(), 3, 1);
+    SBNumFormat.fillInNumFixedWidth(textCur, graphView.getCursorDB(), 3, 1);
     textCur.append("dB");
     textCur.getChars(0, Math.min(textCur.length(), textCurChar.length), textCurChar, 0);
 
