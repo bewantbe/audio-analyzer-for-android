@@ -101,7 +101,14 @@ public class AnalyzeActivity extends Activity
   
   Object oblock = new Object();
 
+  double dtRMS = 0;
+  double dtRMSFromFT = 0;
+  double maxAmpDB;
+  double maxAmpFreq;
+
   StringBuilder textCur = new StringBuilder("");  // for textCurChar
+  StringBuilder textRMS  = new StringBuilder("");
+  StringBuilder textPeak = new StringBuilder("");
   StringBuilder textRec = new StringBuilder("");  // for textCurChar
   char[] textRMSChar;   // for text in R.id.textview_RMS
   char[] textCurChar;   // for text in R.id.textview_cur
@@ -267,13 +274,24 @@ public class AnalyzeActivity extends Activity
   }
 
   @Override
-  public void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
+  public void onSaveInstanceState(Bundle savedInstanceState) {
+    savedInstanceState.putDouble("dtRMS",       dtRMS);
+    savedInstanceState.putDouble("dtRMSFromFT", dtRMSFromFT);
+    savedInstanceState.putDouble("maxAmpDB",    maxAmpDB);
+    savedInstanceState.putDouble("maxAmpFreq",  maxAmpFreq);
+
+    super.onSaveInstanceState(savedInstanceState);
   }
 
   @Override
-  public void onRestoreInstanceState(Bundle bundle) {
-    super.onRestoreInstanceState(bundle);
+  public void onRestoreInstanceState(Bundle savedInstanceState) {
+    // will be calls after the onStart()
+    super.onRestoreInstanceState(savedInstanceState);
+    
+    dtRMS       = savedInstanceState.getDouble("dtRMS");
+    dtRMSFromFT = savedInstanceState.getDouble("dtRMSFromFT");
+    maxAmpDB    = savedInstanceState.getDouble("maxAmpDB");
+    maxAmpFreq  = savedInstanceState.getDouble("maxAmpFreq");
   }
   
   
@@ -823,6 +841,33 @@ public class AnalyzeActivity extends Activity
       .setText(textCurChar, 0, Math.min(textCur.length(), textCurChar.length));
   }
   
+  private void refreshRMSLabel() {
+    textRMS.setLength(0);
+    textRMS.append("RMS:dB \n");
+    SBNumFormat.fillInNumFixedWidth(textRMS, 20*Math.log10(dtRMSFromFT), 3, 1);
+    textRMS.getChars(0, Math.min(textRMS.length(), textRMSChar.length), textRMSChar, 0);
+    
+    TextView tv = (TextView) findViewById(R.id.textview_RMS);
+    tv.setText(textRMSChar, 0, textRMSChar.length);
+    tv.invalidate();
+  }
+  
+  private void refreshPeakLabel() {
+    textPeak.setLength(0);
+    textPeak.append("Peak:");
+    SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
+    textPeak.append("Hz(");
+    freq2Cent(textPeak, maxAmpFreq, " ");
+    textPeak.append(") ");
+    SBNumFormat.fillInNumFixedWidth(textPeak, maxAmpDB, 3, 1);
+    textPeak.append("dB");
+    textPeak.getChars(0, Math.min(textPeak.length(), textPeakChar.length), textPeakChar, 0);
+    
+    TextView tv = (TextView) findViewById(R.id.textview_peak);
+    tv.setText(textPeakChar, 0, textPeakChar.length);
+    tv.invalidate();
+  }
+  
   private void refreshRecTimeLable() {
     // consist with @string/textview_rec_text
     textRec.setLength(0);
@@ -896,21 +941,12 @@ public class AnalyzeActivity extends Activity
       // and then here just do invalidate().
       if ((viewMask & VIEW_MASK_graphView) != 0)
         graphView.invalidate();
-      TextView tv;
+      // RMS
       if ((viewMask & VIEW_MASK_textview_RMS) != 0)
-        synchronized (oblock) {
-          // RMS
-          tv = (TextView) findViewById(R.id.textview_RMS);
-          tv.setText(textRMSChar, 0, textRMSChar.length);
-          tv.invalidate();
-        }
+        refreshRMSLabel();
+      // peak frequency
       if ((viewMask & VIEW_MASK_textview_peak) != 0)
-        synchronized (oblock) {
-          // peak frequency
-          tv = (TextView) findViewById(R.id.textview_peak);
-          tv.setText(textPeakChar, 0, textPeakChar.length);
-          tv.invalidate();
-        }
+        refreshPeakLabel();
       if ((viewMask & VIEW_MASK_CursorLabel) != 0)
         refreshCursorLabel();
       if ((viewMask & VIEW_MASK_RecTimeLable) != 0)
@@ -1006,10 +1042,6 @@ public class AnalyzeActivity extends Activity
     volatile boolean isRunning = true;
     volatile boolean isPaused1 = false;
     double wavSecOld = 0;      // used to reduce frame rate
-    double dtRMS = 0;
-    double dtRMSFromFT = 0;
-    double maxAmpDB;
-    double maxAmpFreq;
     public STFT stft;   // use with care
 
     DoubleSineGen sineGen1;
@@ -1257,27 +1289,7 @@ public class AnalyzeActivity extends Activity
       });
     }
 
-    StringBuilder textRMS  = new StringBuilder("");
-    StringBuilder textPeak = new StringBuilder("");
-    
     private void update(final double[] data) {
-      synchronized (oblock) {
-        textRMS.setLength(0);
-        textRMS.append("RMS:dB \n");
-        SBNumFormat.fillInNumFixedWidth(textRMS, 20*Math.log10(dtRMSFromFT), 3, 1);
-        textRMS.getChars(0, Math.min(textRMS.length(), textRMSChar.length), textRMSChar, 0);
-      }
-      synchronized (oblock) {
-        textPeak.setLength(0);
-        textPeak.append("Peak:");
-        SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
-        textPeak.append("Hz(");
-        freq2Cent(textPeak, maxAmpFreq, " ");
-        textPeak.append(") ");
-        SBNumFormat.fillInNumFixedWidth(textPeak, maxAmpDB, 3, 1);
-        textPeak.append("dB");
-        textPeak.getChars(0, Math.min(textPeak.length(), textPeakChar.length), textPeakChar, 0);
-      }
       if (graphView.getShowMode() == 1) {
         // data is synchronized here
         graphView.pushRawSpectrum(spectrumDBcopy);
@@ -1374,5 +1386,6 @@ public class AnalyzeActivity extends Activity
   public void ready() {
     // put code here for the moment that graph size just changed
     Log.v(TAG, "ready()");
+    invalidateGraphView();
   }
 }
