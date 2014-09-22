@@ -96,7 +96,6 @@ public class AnalyzeView extends View {
   }
   
   public void setReady(Ready ready) {
-    // Log.i(AnalyzeActivity.TAG, "Setting Ready");
     this.readyCallback = ready;
   }
   
@@ -179,6 +178,19 @@ public class AnalyzeView extends View {
       endValue = startValue;
       startValue = t;
     }
+    if (scale_mode == 0 || scale_mode == 2) {
+      if (gridDensity < 3.2) {
+        // 3.2 >= 2 * 5/sqrt(2*5), so that there are at least 2 bigger grid.
+        // The constant here is because: if gridIntervalGuess = sqrt(2*5), then gridIntervalBig = 5
+        // i.e. grid size become larger by factor 5/sqrt(2*5).
+        // By setting gridDensity = 3.2, we can make sure minimum gridDensity > 2
+        gridDensity = 3.2;
+      }
+    } else {
+      if (gridDensity < 3.5) {  // similar discussion as above
+        gridDensity = 3.5;      // 3.5 >= 2 * 3/sqrt(1*3)
+      }
+    }
     double intervalValue = endValue - startValue;
     double gridIntervalGuess = intervalValue / gridDensity;
     double gridIntervalBig;
@@ -250,18 +262,8 @@ public class AnalyzeView extends View {
       smallGridPoints[i] = gridStartValueSmall + i*gridIntervalSmall;
     }
     
-//    if (scale_mode == 2) {
-//      Log.d(TAG, "startValue="+startValue + "  endValue="+endValue +
-//          "\n  p0min=" + gridPointsArray[0][0] + "  p0max=" + gridPointsArray[0][gridPointsArray[0].length-1] + 
-//          "\n  p1min=" + gridPointsArray[1][0] + "  p1max=" + gridPointsArray[1][gridPointsArray[1].length-1] +
-//          "\n  gridIntervalBig=" + gridIntervalBig + "  gridIntervalSmall="+gridIntervalSmall +
-//          "\n  gridStartValueBig="+gridStartValueBig + "  gridStartValueSmall="+gridStartValueSmall);
-//    }
   }
   
-  private DecimalFormat smallFormatter = new DecimalFormat("@@");
-  private DecimalFormat largeFormatter = new DecimalFormat("#");
-  private DecimalFormat largeFormatter2 = new DecimalFormat("#.#");
   private double[][] oldGridPointBoundaryArray = new double[3][2];
   
   private double[][][] gridPointsArray = {gridPoints2, gridPoints2dB, gridPoints2T};
@@ -432,10 +434,6 @@ public class AnalyzeView extends View {
     double[][]      gridPoints    = gridPointsArray[scale_mode_id];
     StringBuilder[] gridPointsStr = gridPointsStrArray[scale_mode_id];
     char[][]        gridPointsSt  = gridPointsStArray[scale_mode_id];
-    
-//    Log.d(TAG, "labelBeginY=" + labelBeginY + " axisMin="+axisMin + " axisMax="+axisMax +
-//        "\n  p0min="+gridPoints[0][0] + " p0max="+gridPoints[0][gridPoints[0].length-1] +
-//        "\n  p1min="+gridPoints[1][0] + " p1max="+gridPoints[1][gridPoints[1].length-1]);
     
     // plot axis mark
     float posAlongAxis;
@@ -626,7 +624,6 @@ public class AnalyzeView extends View {
       if (showMode == 0) {
         cursorFreq = axisX4canvasView(x);  // frequency
         cursorDB   = axisY4canvasView(y);  // decibel
-        //Log.i(TAG, "cursorDB = " + cursorDB + "  y = " + y);
       } else {
         cursorDB   = 0;  // disabled
         if (showFreqAlongX) {
