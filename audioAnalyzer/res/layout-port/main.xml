@@ -132,7 +132,7 @@
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
             android:tag="select"
-            android:text="cursor"
+            android:text="scale"
             android:textSize="20sp"
             custom:items="cursor scale" />
 

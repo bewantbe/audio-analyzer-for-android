@@ -31,7 +31,9 @@ public class SBNumFormat {
     while (nInt > 0) {
       nInt--;
       if (d < Math.pow(10,nInt) && nInt>0) {
-        sb.append(padChar);
+        if (padChar != '\0') {
+          sb.append(padChar);
+        }
       } else {
         sb.append(charDigits[(int)(d / Math.pow(10,nInt) % 10.0)]);
       }
@@ -46,6 +48,14 @@ public class SBNumFormat {
   
   static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac) {
     fillInNumFixedWidthPositive(sb, d, nInt, nFrac, ' ');
+  }
+  
+  static public void fillInNumFixedFrac(StringBuilder sb, double d, int nInt, int nFrac) {
+    if (d < 0) {
+      sb.append('-');
+      d = -d;
+    }
+    fillInNumFixedWidthPositive(sb, d, nInt, nFrac, '\0');
   }
   
   static public void fillInNumFixedWidth(StringBuilder sb, double d, int nInt, int nFrac) {
