@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/FFTLibrary/FFTLibrary.iml" filepath="$PROJECT_DIR$/FFTLibrary/FFTLibrary.iml" />
-      <module fileurl="file://$PROJECT_DIR$/audioAnalyzer.iml" filepath="$PROJECT_DIR$/audioAnalyzer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/audio-analyzer-for-android.iml" filepath="$PROJECT_DIR$/audio-analyzer-for-android.iml" />
       <module fileurl="file://$PROJECT_DIR$/audioSpectrumAnalyzer/audioSpectrumAnalyzer.iml" filepath="$PROJECT_DIR$/audioSpectrumAnalyzer/audioSpectrumAnalyzer.iml" />
     </modules>
   </component>
