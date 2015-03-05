@@ -1,0 +1,25 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 20
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        applicationId "com.google.corp.productivity.specialprojects.android.samples.fft"
+        minSdkVersion 8
+        targetSdkVersion 20
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+}
+
+dependencies {
+    compile project(':FFTLibrary')
+    compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.android.support:appcompat-v7:20.0.0'
+}
