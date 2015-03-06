@@ -183,7 +183,7 @@ public class AnalyzeActivity extends Activity
     mTestPaint.setTextSize(tv.getTextSize());
     mTestPaint.setTypeface(Typeface.MONOSPACE);
     
-    final String text = "Peak:XXXXX.XHz(AX#+XX) -XXX.XdB";
+    final String text = getString(R.string.textview_peak_text);
     Display display = getWindowManager().getDefaultDisplay();
     
     // pixels left
@@ -417,7 +417,7 @@ public class AnalyzeActivity extends Activity
     // Set window width according to max text width
     popupWindow.setWidth((int)w);
     // also set button width
-    ((Button) findViewById(resId)).setWidth((int)(w + 2 * DPRatio));
+    ((Button) findViewById(resId)).setWidth((int)(w + 4 * DPRatio));
     // Set the text on button in updatePreferenceSaved()
     
     // set the list view as pop up window content
