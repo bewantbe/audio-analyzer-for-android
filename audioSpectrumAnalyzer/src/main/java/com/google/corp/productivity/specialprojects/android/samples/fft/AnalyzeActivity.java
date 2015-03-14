@@ -936,7 +936,7 @@ public class AnalyzeActivity extends Activity
         timeToUpdate = t+frameTime;
       }
       idPaddingInvalidate = false;
-      // Here graphView.isBusy() can be true because graphView.pushRawSpectrum() is running on Looper thread
+      // Here graphView.isBusy() can be true because graphView.saveRowSpectrumAsColor() is running on Looper thread
       // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
       // and then here just do invalidate().
       if ((viewMask & VIEW_MASK_graphView) != 0)
@@ -1292,13 +1292,13 @@ public class AnalyzeActivity extends Activity
     private void update(final double[] data) {
       if (graphView.getShowMode() == 1) {
         // data is synchronized here
-        graphView.pushRawSpectrum(spectrumDBcopy);
+        graphView.saveRowSpectrumAsColor(spectrumDBcopy);
       }
       AnalyzeActivity.this.runOnUiThread(new Runnable() {
         @Override
         public void run() {
           if (graphView.getShowMode() == 0) {
-            graphView.replotRawSpectrum(spectrumDBcopy);
+            graphView.saveSpectrum(spectrumDBcopy);
           }
           // data will get out of synchronize here
           AnalyzeActivity.this.invalidateGraphView();
