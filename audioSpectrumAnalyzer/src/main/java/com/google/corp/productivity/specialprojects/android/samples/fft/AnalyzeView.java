@@ -114,11 +114,13 @@ public class AnalyzeView extends View {
     linePaintLight = new Paint(linePaint);
     linePaintLight.setColor(Color.parseColor("#3AB3E2"));
 
-    cursorPaint = new Paint(linePaint);
-    cursorPaint.setColor(Color.BLUE);
-
-    gridPaint = new Paint(linePaint);
+    gridPaint = new Paint();
     gridPaint.setColor(Color.DKGRAY);
+    gridPaint.setStyle(Paint.Style.STROKE);
+    gridPaint.setStrokeWidth(0.6f * DPRatio);
+
+    cursorPaint = new Paint(gridPaint);
+    cursorPaint.setColor(Color.BLUE);
 
     rulerBrightPaint = new Paint(linePaint);
     rulerBrightPaint.setColor(Color.rgb(99, 99, 99));  // 99: between Color.DKGRAY and Color.GRAY
@@ -362,20 +364,21 @@ public class AnalyzeView extends View {
     return axisBounds.height() * (yShift + y / canvasHeight / yZoom) + axisBounds.top;
   }
 
-  private void drawGridLines(Canvas c, float nx, float ny) {
-    updateGridLabels(getFreqMin(), getFreqMax(), nx, GridScaleType.FREQ);
+  private void drawGridLines(Canvas c) {
     for(int i = 0; i < gridPoints2[0].length; i++) {
-      float xPos = canvasViewX4axis((float)gridPoints2[0][i]);
+      float xPos = canvasViewX4axis((float) gridPoints2[0][i]);
       c.drawLine(xPos, 0, xPos, canvasHeight, gridPaint);
     }
-    for(int i = 0; i < gridPoints2[1].length; i++) {
-      float xPos = canvasViewX4axis((float)gridPoints2[1][i]);
-      c.drawLine(xPos, 0, xPos, 0.02f * canvasHeight, gridPaint);
-    }
-    updateGridLabels(getMinY(), getMaxY(), ny, GridScaleType.DB);
     for(int i = 0; i < gridPoints2dB[0].length; i++) {
       float yPos = canvasViewY4axis((float)gridPoints2dB[0][i]);
       c.drawLine(0, yPos, canvasWidth, yPos, gridPaint);
+    }
+  }
+
+  private void drawGridTicks(Canvas c) {
+    for(int i = 0; i < gridPoints2[1].length; i++) {
+      float xPos = canvasViewX4axis((float) gridPoints2[1][i]);
+      c.drawLine(xPos, 0, xPos, 0.02f * canvasHeight, gridPaint);
     }
     for(int i = 0; i < gridPoints2dB[1].length; i++) {
       float yPos = canvasViewY4axis((float)gridPoints2dB[1][i]);
@@ -573,7 +576,7 @@ public class AnalyzeView extends View {
   }
 
   // Plot the spectrum into the Canvas c
-  public void plotSpectrumFitCanvas(Canvas c, double[] db) {
+  public void drawSpectrumOnCanvas(Canvas c, double[] db) {
     if (canvasHeight < 1 || db == null || db.length == 0) {
       return;
     }
@@ -1079,9 +1082,14 @@ public class AnalyzeView extends View {
 
   // Plot spectrum with axis and ticks on the whole canvas c
   public void drawSpectrumPlot(Canvas c) {
-    drawGridLines(c, canvasWidth * gridDensity / DPRatio, canvasHeight * gridDensity / DPRatio);
-    plotSpectrumFitCanvas(c, savedDBSpectrum);
+    updateGridLabels(getFreqMin(), getFreqMax(),
+            canvasWidth * gridDensity / DPRatio, GridScaleType.FREQ);
+    updateGridLabels(getMinY(), getMaxY(),
+            canvasHeight * gridDensity / DPRatio, GridScaleType.DB);
+    drawGridLines(c);
+    drawSpectrumOnCanvas(c, savedDBSpectrum);
     drawCursor(c);
+    drawGridTicks(c);
     drawGridLabels(c);
   }
 
