@@ -53,7 +53,7 @@ public class AnalyzeView extends View {
 
   private boolean showLines;
   private int canvasWidth, canvasHeight;   // size of my canvas
-  private Paint linePaint, backgroundPaint;
+  private Paint linePaint, linePaintLight, backgroundPaint;
   private Paint cursorPaint;
   private Paint gridPaint, rulerBrightPaint;
   private Paint labelPaint;
@@ -107,9 +107,12 @@ public class AnalyzeView extends View {
     path = new Path();
 
     linePaint = new Paint();
-    linePaint.setColor(Color.RED);
+    linePaint.setColor(Color.parseColor("#0D2C6D"));
     linePaint.setStyle(Paint.Style.STROKE);
     linePaint.setStrokeWidth(0);
+
+    linePaintLight = new Paint(linePaint);
+    linePaintLight.setColor(Color.parseColor("#3AB3E2"));
 
     cursorPaint = new Paint(linePaint);
     cursorPaint.setColor(Color.BLUE);
@@ -571,11 +574,10 @@ public class AnalyzeView extends View {
 
   // Plot the spectrum into the Canvas c
   public void plotSpectrumFitCanvas(Canvas c, double[] db) {
-    if (canvasHeight < 1) {
+    if (canvasHeight < 1 || db == null || db.length == 0) {
       return;
     }
     isBusy = true;
-    path.reset();
 
     float canvasMinFreq = getFreqMin();
     float canvasMaxFreq = getFreqMax();
@@ -596,6 +598,9 @@ public class AnalyzeView extends View {
       endFreqPt += 1;
     }
 
+    // spectrum bar
+    c.save();
+    path.reset();
     if (endFreqPt - beginFreqPt >= getCanvasWidth() / 2) {
       // plot directly to the canvas
       for (int i = beginFreqPt; i < endFreqPt; i++) {
@@ -636,6 +641,25 @@ public class AnalyzeView extends View {
       c.drawPath(path, linePaint);
     }
     c.restore();
+
+    // spectrum line
+    c.save();
+    path.reset();
+    float xLineEnd = (beginFreqPt * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+    float yLineEnd = canvasY4axis(clampDB((float)db[beginFreqPt]));
+    path.moveTo(xLineEnd, yLineEnd);
+    for (int i = beginFreqPt+1; i < endFreqPt; i++) {
+      float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+      float y = canvasY4axis(clampDB((float)db[i]));
+      path.lineTo(x, y);
+    }
+    matrix.reset();
+    matrix.setTranslate(0, -yShift*canvasHeight);
+    matrix.postScale(1, yZoom);
+    c.concat(matrix);
+    c.drawPath(path, linePaintLight);
+    c.restore();
+
     isBusy = false;
   }
 
