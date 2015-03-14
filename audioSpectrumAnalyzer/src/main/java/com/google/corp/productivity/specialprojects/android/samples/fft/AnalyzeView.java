@@ -561,6 +561,7 @@ public class AnalyzeView extends View {
     return value;
   }
 
+  // All FFT data will enter this view through this interface
   public void saveSpectrum(double[] db) {
     if (savedDBSpectrum == null || savedDBSpectrum.length != db.length) {
       savedDBSpectrum = new double[db.length];
@@ -568,44 +569,7 @@ public class AnalyzeView extends View {
     System.arraycopy(db, 0, savedDBSpectrum, 0, db.length);
   }
 
-  /**
-   * Re-plot the spectrum
-   */
-  public void replotRawSpectrum(double[] db) {
-    saveSpectrum(db);
-    if (canvasHeight < 1) {
-      return;
-    }
-    isBusy = true;
-//    long t = SystemClock.uptimeMillis();
-    if (showMode == 0) {      float minYcanvas = canvasY4axis(minDB);
-      path.reset();
-      if (!showLines) {
-        for (int i = 1; i < db.length; i++) {
-          float x = (float) i / (db.length-1) * canvasWidth;
-          float y = canvasY4axis(clampDB((float)db[i]));
-          if (y != canvasHeight) {
-            //path.moveTo(x, canvasHeight);
-            path.moveTo(x, minYcanvas);
-            path.lineTo(x, y);
-          }
-        }
-      } else {
-        // (0,0) is the upper left of the View, in pixel unit
-        path.moveTo((float) 1 / (db.length-1) * canvasWidth, canvasY4axis(clampDB((float)db[1])));
-        for (int i = 1+1; i < db.length; i++) {
-          float x = (float) i / (db.length-1) * canvasWidth;
-          float y = canvasY4axis(clampDB((float)db[i]));
-          path.lineTo(x, y);
-        }
-      }
-    } else {
-      //use saveRowSpectrumAsColor(db);
-    }
-//    Log.i(TAG, " replotRawSpectrum: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
-    isBusy = false;
-  }
-
+  // Plot the spectrum into the Canvas c
   public void plotSpectrumFitCanvas(Canvas c, double[] db) {
     if (canvasHeight < 1) {
       return;
@@ -913,9 +877,6 @@ public class AnalyzeView extends View {
     if (h > 0 && readyCallback != null) {
       readyCallback.ready();
     }
-    if (showMode == 0 && savedDBSpectrum != null && savedDBSpectrum.length > 1) {
-      saveSpectrum(savedDBSpectrum);
-    }
     isBusy = false;
   }
 
@@ -1005,9 +966,6 @@ public class AnalyzeView extends View {
     }
     yShift = oldYShift;
     yZoom = oldYZoom;
-    if (savedDBSpectrum != null && savedDBSpectrum.length > 1) {
-      saveSpectrum(savedDBSpectrum);
-    }
   }
 
   public void switch2Spectrogram(int sampleRate, int fftLen, double timeDurationE) {
