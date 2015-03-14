@@ -18,7 +18,6 @@
 
 package com.google.corp.productivity.specialprojects.android.samples.fft;
 
-import java.text.DecimalFormat;
 import java.util.Arrays;
 
 import android.content.Context;
@@ -32,7 +31,6 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -51,7 +49,7 @@ public class AnalyzeView extends View {
   private float minDB = -144f;    // hard lower bound for dB
   private float maxDB = 12f;      // hard upper bound for dB
   private RectF axisBounds;
-  private double[] tmpSpectrum = new double[0];
+  private double[] savedDBSpectrum = new double[0];
 
   private boolean showLines;
   private int canvasWidth, canvasHeight;   // size of my canvas
@@ -564,10 +562,10 @@ public class AnalyzeView extends View {
   }
 
   public void saveSpectrum(double[] db) {
-    if (tmpSpectrum == null || tmpSpectrum.length != db.length) {
-      tmpSpectrum = new double[db.length];
+    if (savedDBSpectrum == null || savedDBSpectrum.length != db.length) {
+      savedDBSpectrum = new double[db.length];
     }
-    System.arraycopy(db, 0, tmpSpectrum, 0, db.length);
+    System.arraycopy(db, 0, savedDBSpectrum, 0, db.length);
   }
 
   /**
@@ -626,8 +624,15 @@ public class AnalyzeView extends View {
     //float minYCanvas = canvasY4axis(getMinY()); // canvasY4axis(minDB);
     float minYCanvas = canvasY4axis(minDB);
 
-    if (endFreqPt - beginFreqPt >= getCanvasWidth()/2) {
-    //if (true) {
+    // add one more boundary points
+    if (beginFreqPt > 0) {
+      beginFreqPt -= 1;
+    }
+    if (endFreqPt < db.length) {
+      endFreqPt += 1;
+    }
+
+    if (endFreqPt - beginFreqPt >= getCanvasWidth() / 2) {
       // plot directly to the canvas
       for (int i = beginFreqPt; i < endFreqPt; i++) {
         float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
@@ -641,6 +646,12 @@ public class AnalyzeView extends View {
       matrix.setTranslate(0, -yShift*canvasHeight);
       matrix.postScale(1, yZoom);
       c.concat(matrix);
+//      float barWidthInPixel = 0.5f * freqDelta / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+//      if (barWidthInPixel > 2) {
+//        linePaint.setStrokeWidth(barWidthInPixel);
+//      } else {
+//        linePaint.setStrokeWidth(0);
+//      }
       c.drawPath(path, linePaint);
     } else {
       int pixelStep = 2;
@@ -654,8 +665,9 @@ public class AnalyzeView extends View {
         }
       }
       matrix.reset();
-      matrix.setTranslate(-xShift*nFreqPointsTotal*pixelStep, -yShift*canvasHeight);
-      matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq)/freqDelta*pixelStep), yZoom);
+      float extraPixelAlignOffset = 0.5f;
+      matrix.setTranslate(-xShift * nFreqPointsTotal * pixelStep - extraPixelAlignOffset, -yShift * canvasHeight);
+      matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep), yZoom);
       c.concat(matrix);
       c.drawPath(path, linePaint);
     }
@@ -901,8 +913,8 @@ public class AnalyzeView extends View {
     if (h > 0 && readyCallback != null) {
       readyCallback.ready();
     }
-    if (showMode == 0 && tmpSpectrum != null && tmpSpectrum.length > 1) {
-      saveSpectrum(tmpSpectrum);
+    if (showMode == 0 && savedDBSpectrum != null && savedDBSpectrum.length > 1) {
+      saveSpectrum(savedDBSpectrum);
     }
     isBusy = false;
   }
@@ -993,8 +1005,8 @@ public class AnalyzeView extends View {
     }
     yShift = oldYShift;
     yZoom = oldYZoom;
-    if (tmpSpectrum != null && tmpSpectrum.length > 1) {
-      saveSpectrum(tmpSpectrum);
+    if (savedDBSpectrum != null && savedDBSpectrum.length > 1) {
+      saveSpectrum(savedDBSpectrum);
     }
   }
 
@@ -1086,7 +1098,7 @@ public class AnalyzeView extends View {
   // Plot spectrum with axis and ticks on the whole canvas c
   public void drawSpectrumPlot(Canvas c) {
     drawGridLines(c, canvasWidth * gridDensity / DPRatio, canvasHeight * gridDensity / DPRatio);
-    plotSpectrumFitCanvas(c, tmpSpectrum);
+    plotSpectrumFitCanvas(c, savedDBSpectrum);
     drawCursor(c);
     drawGridLabels(c);
   }
@@ -1194,8 +1206,8 @@ public class AnalyzeView extends View {
     state.OyS = oldYShift;
     state.bounds = axisBounds;
 
-    state.nfq = tmpSpectrum.length;
-    state.tmpS = tmpSpectrum;
+    state.nfq = savedDBSpectrum.length;
+    state.tmpS = savedDBSpectrum;
 
     state.nsc = spectrogramColors.length;
     state.nFP = nFreqPoints;
@@ -1222,7 +1234,7 @@ public class AnalyzeView extends View {
       this.oldYShift = s.OyS;
       this.axisBounds = s.bounds;
 
-      this.tmpSpectrum = s.tmpS;
+      this.savedDBSpectrum = s.tmpS;
 
       this.nFreqPoints = s.nFP;
       this.spectrogramColorsPt = s.nSCP;
