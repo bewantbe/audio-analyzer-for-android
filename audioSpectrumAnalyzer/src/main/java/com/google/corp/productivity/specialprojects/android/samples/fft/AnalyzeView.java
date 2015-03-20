@@ -576,6 +576,8 @@ public class AnalyzeView extends View {
     System.arraycopy(db, 0, savedDBSpectrum, 0, db.length);
   }
 
+  float[] tmpLineXY = new float[0];
+
   // Plot the spectrum into the Canvas c
   public void drawSpectrumOnCanvas(Canvas c, double[] db) {
     if (canvasHeight < 1 || db == null || db.length == 0) {
@@ -602,20 +604,14 @@ public class AnalyzeView extends View {
       endFreqPt += 1;
     }
 
+    if (tmpLineXY.length != 4*(db.length)) {
+      tmpLineXY = new float[4*(db.length)];
+    }
+
     // spectrum bar
     if (showLines == false) {
       c.save();
-      path.reset();
       if (endFreqPt - beginFreqPt >= getCanvasWidth() / 2) {
-        // plot directly to the canvas
-        for (int i = beginFreqPt; i < endFreqPt; i++) {
-          float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
-          float y = canvasY4axis(clampDB((float) db[i]));
-          if (y != canvasHeight) {
-            path.moveTo(x, minYCanvas);
-            path.lineTo(x, y);
-          }
-        }
         matrix.reset();
         matrix.setTranslate(0, -yShift * canvasHeight);
         matrix.postScale(1, yZoom);
@@ -626,51 +622,70 @@ public class AnalyzeView extends View {
         //      } else {
         //        linePaint.setStrokeWidth(0);
         //      }
-        c.drawPath(path, linePaint);
+        // plot directly to the canvas
+        for (int i = beginFreqPt; i < endFreqPt; i++) {
+          float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+          float y = canvasY4axis(clampDB((float) db[i]));
+          if (y != canvasHeight) {
+            //c.drawLine(x, minYCanvas, x, y, linePaint);
+            tmpLineXY[4*i  ] = x;
+            tmpLineXY[4*i+1] = minYCanvas;
+            tmpLineXY[4*i+2] = x;
+            tmpLineXY[4*i+3] = y;
+          }
+        }
+        c.drawLines(tmpLineXY, 4*beginFreqPt, 4*(endFreqPt-beginFreqPt), linePaint);
       } else {
         int pixelStep = 2;
+        matrix.reset();
+        float extraPixelAlignOffset = 0.0f;
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//          // There is an shift for Android 4.4, while no shift for Android 2.3
+//          // I guess that is relate to GL ES acceleration
+//          if (c.isHardwareAccelerated()) {
+//            extraPixelAlignOffset = 0.5f;
+//          }
+//        }
+        matrix.setTranslate(-xShift * nFreqPointsTotal * pixelStep - extraPixelAlignOffset, -yShift * canvasHeight);
+        matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep), yZoom);
+        c.concat(matrix);
         // fill interval same as canvas pixel width.
         for (int i = beginFreqPt; i < endFreqPt; i++) {
           float x = i * pixelStep;
           float y = canvasY4axis(clampDB((float) db[i]));
           if (y != canvasHeight) {
-            path.moveTo(x, minYCanvas);
-            path.lineTo(x, y);
+            //c.drawLine(x, minYCanvas, x, y, linePaint);
+            tmpLineXY[4*i  ] = x;
+            tmpLineXY[4*i+1] = minYCanvas;
+            tmpLineXY[4*i+2] = x;
+            tmpLineXY[4*i+3] = y;
           }
         }
-        matrix.reset();
-        float extraPixelAlignOffset = 0.0f;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-          // There is an shift for Android 4.4, while no shift for Android 2.3
-          // I guess that is relate to GL ES acceleration
-          if (c.isHardwareAccelerated()) {
-            extraPixelAlignOffset = 0.5f;
-          }
-        }
-        matrix.setTranslate(-xShift * nFreqPointsTotal * pixelStep - extraPixelAlignOffset, -yShift * canvasHeight);
-        matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep), yZoom);
-        c.concat(matrix);
-        c.drawPath(path, linePaint);
+        c.drawLines(tmpLineXY, 4*beginFreqPt, 4*(endFreqPt-beginFreqPt), linePaint);
       }
       c.restore();
     }
 
     // spectrum line
     c.save();
-    path.reset();
-    float xLineEnd = (beginFreqPt * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
-    float yLineEnd = canvasY4axis(clampDB((float)db[beginFreqPt]));
-    path.moveTo(xLineEnd, yLineEnd);
-    for (int i = beginFreqPt+1; i < endFreqPt; i++) {
-      float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
-      float y = canvasY4axis(clampDB((float)db[i]));
-      path.lineTo(x, y);
-    }
     matrix.reset();
     matrix.setTranslate(0, -yShift*canvasHeight);
     matrix.postScale(1, yZoom);
     c.concat(matrix);
-    c.drawPath(path, linePaintLight);
+    float o_x = (beginFreqPt * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+    float o_y = canvasY4axis(clampDB((float)db[beginFreqPt]));
+    for (int i = beginFreqPt+1; i < endFreqPt; i++) {
+      float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+      float y = canvasY4axis(clampDB((float)db[i]));
+      tmpLineXY[4*i  ] = o_x;
+      tmpLineXY[4*i+1] = o_y;
+      tmpLineXY[4*i+2] = x;
+      tmpLineXY[4*i+3] = y;
+      o_x = x;
+      o_y = y;
+      //c.drawLine(o_x,o_y,x,y,linePaintLight);
+    }
+    c.drawLines(tmpLineXY, 4*(beginFreqPt+1), 4*(endFreqPt-beginFreqPt-1), linePaintLight);
     c.restore();
 
     isBusy = false;

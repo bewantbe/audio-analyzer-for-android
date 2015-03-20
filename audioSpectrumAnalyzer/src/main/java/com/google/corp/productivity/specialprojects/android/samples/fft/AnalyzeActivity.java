@@ -931,7 +931,8 @@ public class AnalyzeActivity extends Activity
       frameTime = 1000/60;
     }
     long t = SystemClock.uptimeMillis();
-    if (t >= timeToUpdate && !graphView.isBusy()) {    // limit frame rate
+    //  && !graphView.isBusy()
+    if (t >= timeToUpdate) {    // limit frame rate
       timeToUpdate += frameTime;
       if (timeToUpdate < t) {            // catch up current time
         timeToUpdate = t+frameTime;
