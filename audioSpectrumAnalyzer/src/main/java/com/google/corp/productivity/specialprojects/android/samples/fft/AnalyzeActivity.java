@@ -528,9 +528,9 @@ public class AnalyzeActivity extends Activity
   void updatePreferenceSaved() {
     // load preferences for buttons
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    sampleRate  = sharedPref.getInt("button_sample_rate", 16000);
-    fftLen      = sharedPref.getInt("button_fftlen",       2048);
-    nFFTAverage = sharedPref.getInt("button_average",         2);
+    sampleRate  = sharedPref.getInt("button_sample_rate", 8000);
+    fftLen      = sharedPref.getInt("button_fftlen",      1024);
+    nFFTAverage = sharedPref.getInt("button_average",        1);
     isAWeighting = sharedPref.getBoolean("dbA", false);
     if (isAWeighting) {
       ((SelectorText) findViewById(R.id.dbA)).nextValue();

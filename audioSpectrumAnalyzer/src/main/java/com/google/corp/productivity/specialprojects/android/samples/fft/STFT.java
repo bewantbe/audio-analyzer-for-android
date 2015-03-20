@@ -61,6 +61,24 @@ public class STFT {
       for (int i=0; i<wnd.length; i++) {  // Blackman_Harris, hw=3
         wnd[i] = (0.35875-0.48829*Math.cos(2*Math.PI*i/(wnd.length-1))+0.14128*Math.cos(4*Math.PI*i/(wnd.length-1))-0.01168*Math.cos(6*Math.PI*i/(wnd.length-1))) *2;
       }
+    } else if (wndName.equals("Kaiser, a=2.0")) {
+      double a = 2.0;
+      double dn = besselCal.i0(Math.PI * a);
+      for (int i=0; i<wnd.length; i++) {  // Kaiser, a=2.0
+        wnd[i] = besselCal.i0(Math.PI*a*Math.sqrt(1-(2.0*i/(wnd.length-1)-1.0)*(2.0*i/(wnd.length-1)-1.0))) / dn;
+      }
+    } else if (wndName.equals("Kaiser, a=3.0")) {
+      double a = 3.0;
+      double dn = besselCal.i0(Math.PI * a);
+      for (int i=0; i<wnd.length; i++) {  // Kaiser, a=3.0
+        wnd[i] = besselCal.i0(Math.PI*a*Math.sqrt(1-(2.0*i/(wnd.length-1)-1.0)*(2.0*i/(wnd.length-1)-1.0))) / dn;
+      }
+    } else if (wndName.equals("Kaiser, a=4.0")) {
+      double a = 4.0;
+      double dn = besselCal.i0(Math.PI * a);
+      for (int i=0; i<wnd.length; i++) {  // Kaiser, a=4.0
+        wnd[i] = besselCal.i0(Math.PI*a*Math.sqrt(1-(2.0*i/(wnd.length-1)-1.0)*(2.0*i/(wnd.length-1)-1.0))) / dn;
+      }
     } else {
       for (int i=0; i<wnd.length; i++) {
         wnd[i] = 1;

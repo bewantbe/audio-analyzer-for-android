@@ -27,8 +27,8 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="showLines"
-            android:summary="Use lines instead of bars for spectrum"
-            android:title="Spectrum use bars" />
+            android:summary="Use lines instead of bars (area) for spectrum"
+            android:title="Spectrum use lines" />
 
         <ListPreference
             android:defaultValue="-120"

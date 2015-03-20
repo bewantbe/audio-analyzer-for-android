@@ -21,6 +21,9 @@
         <item>Hanning</item>
         <item>Blackman</item>
         <item>Blackman Harris</item>
+        <item>Kaiser, a=2.0</item>
+        <item>Kaiser, a=3.0</item>
+        <item>Kaiser, a=4.0</item>
     </string-array>
     <string-array name="audio_source">
         <item>VOICE_RECOGNITION</item>
@@ -30,8 +33,8 @@
         <item>VOICE_DOWNLINK</item>
         <item>VOICE_CALL</item>
         <item>CAMCORDER</item>
-        <item>test signal 1</item>
-        <item>test signal 2</item>
+        <item>test signal 1\n\t 440Hz @ -6dB</item>
+        <item>test signal 2\n\t 625Hz @ -6dB\n +1875Hz @ -12dB</item>
         <item>white noise</item>
     </string-array>
     <string-array name="audio_source_id">

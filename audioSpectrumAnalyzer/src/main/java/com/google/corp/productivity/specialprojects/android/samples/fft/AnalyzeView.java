@@ -29,6 +29,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -109,7 +110,7 @@ public class AnalyzeView extends View {
     linePaint = new Paint();
     linePaint.setColor(Color.parseColor("#0D2C6D"));
     linePaint.setStyle(Paint.Style.STROKE);
-    linePaint.setStrokeWidth(0);
+    linePaint.setStrokeWidth(1);
 
     linePaintLight = new Paint(linePaint);
     linePaintLight.setColor(Color.parseColor("#3AB3E2"));
@@ -602,48 +603,57 @@ public class AnalyzeView extends View {
     }
 
     // spectrum bar
-    c.save();
-    path.reset();
-    if (endFreqPt - beginFreqPt >= getCanvasWidth() / 2) {
-      // plot directly to the canvas
-      for (int i = beginFreqPt; i < endFreqPt; i++) {
-        float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
-        float y = canvasY4axis(clampDB((float)db[i]));
-        if (y != canvasHeight) {
-          path.moveTo(x, minYCanvas);
-          path.lineTo(x, y);
+    if (showLines == false) {
+      c.save();
+      path.reset();
+      if (endFreqPt - beginFreqPt >= getCanvasWidth() / 2) {
+        // plot directly to the canvas
+        for (int i = beginFreqPt; i < endFreqPt; i++) {
+          float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+          float y = canvasY4axis(clampDB((float) db[i]));
+          if (y != canvasHeight) {
+            path.moveTo(x, minYCanvas);
+            path.lineTo(x, y);
+          }
         }
-      }
-      matrix.reset();
-      matrix.setTranslate(0, -yShift*canvasHeight);
-      matrix.postScale(1, yZoom);
-      c.concat(matrix);
-//      float barWidthInPixel = 0.5f * freqDelta / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
-//      if (barWidthInPixel > 2) {
-//        linePaint.setStrokeWidth(barWidthInPixel);
-//      } else {
-//        linePaint.setStrokeWidth(0);
-//      }
-      c.drawPath(path, linePaint);
-    } else {
-      int pixelStep = 2;
-      // fill interval same as canvas pixel width.
-      for (int i = beginFreqPt; i < endFreqPt; i++) {
-        float x = i*pixelStep;
-        float y = canvasY4axis(clampDB((float)db[i]));
-        if (y != canvasHeight) {
-          path.moveTo(x, minYCanvas);
-          path.lineTo(x, y);
+        matrix.reset();
+        matrix.setTranslate(0, -yShift * canvasHeight);
+        matrix.postScale(1, yZoom);
+        c.concat(matrix);
+        //      float barWidthInPixel = 0.5f * freqDelta / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+        //      if (barWidthInPixel > 2) {
+        //        linePaint.setStrokeWidth(barWidthInPixel);
+        //      } else {
+        //        linePaint.setStrokeWidth(0);
+        //      }
+        c.drawPath(path, linePaint);
+      } else {
+        int pixelStep = 2;
+        // fill interval same as canvas pixel width.
+        for (int i = beginFreqPt; i < endFreqPt; i++) {
+          float x = i * pixelStep;
+          float y = canvasY4axis(clampDB((float) db[i]));
+          if (y != canvasHeight) {
+            path.moveTo(x, minYCanvas);
+            path.lineTo(x, y);
+          }
         }
+        matrix.reset();
+        float extraPixelAlignOffset = 0.0f;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+          // There is an shift for Android 4.4, while no shift for Android 2.3
+          // I guess that is relate to GL ES acceleration
+          if (c.isHardwareAccelerated()) {
+            extraPixelAlignOffset = 0.5f;
+          }
+        }
+        matrix.setTranslate(-xShift * nFreqPointsTotal * pixelStep - extraPixelAlignOffset, -yShift * canvasHeight);
+        matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep), yZoom);
+        c.concat(matrix);
+        c.drawPath(path, linePaint);
       }
-      matrix.reset();
-      float extraPixelAlignOffset = 0.5f;
-      matrix.setTranslate(-xShift * nFreqPointsTotal * pixelStep - extraPixelAlignOffset, -yShift * canvasHeight);
-      matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep), yZoom);
-      c.concat(matrix);
-      c.drawPath(path, linePaint);
+      c.restore();
     }
-    c.restore();
 
     // spectrum line
     c.save();
@@ -1138,7 +1148,10 @@ public class AnalyzeView extends View {
     }
 //      Log.i(TAG, " onDraw: dt = " + (SystemClock.uptimeMillis() - t) + " ms");
     if (showModeSpectrogram == 1) {
-      c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint);
+      Paint cursorPaint0 = new Paint(cursorPaint);
+      cursorPaint0.setStyle(Paint.Style.STROKE);
+      cursorPaint0.setStrokeWidth(0);
+      c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorPaint0);
     }
     c.restore();
     drawCursor(c);
