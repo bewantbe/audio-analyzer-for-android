@@ -121,7 +121,7 @@ public class AnalyzeView extends View {
     gridPaint.setStrokeWidth(0.6f * DPRatio);
 
     cursorPaint = new Paint(gridPaint);
-    cursorPaint.setColor(Color.BLUE);
+    cursorPaint.setColor(Color.parseColor("#00CD00"));
 
     rulerBrightPaint = new Paint(linePaint);
     rulerBrightPaint.setColor(Color.rgb(99, 99, 99));  // 99: between Color.DKGRAY and Color.GRAY
@@ -627,7 +627,6 @@ public class AnalyzeView extends View {
           float x = (i * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
           float y = canvasY4axis(clampDB((float) db[i]));
           if (y != canvasHeight) {
-            //c.drawLine(x, minYCanvas, x, y, linePaint);
             tmpLineXY[4*i  ] = x;
             tmpLineXY[4*i+1] = minYCanvas;
             tmpLineXY[4*i+2] = x;
@@ -654,7 +653,6 @@ public class AnalyzeView extends View {
           float x = i * pixelStep;
           float y = canvasY4axis(clampDB((float) db[i]));
           if (y != canvasHeight) {
-            //c.drawLine(x, minYCanvas, x, y, linePaint);
             tmpLineXY[4*i  ] = x;
             tmpLineXY[4*i+1] = minYCanvas;
             tmpLineXY[4*i+2] = x;
@@ -683,7 +681,6 @@ public class AnalyzeView extends View {
       tmpLineXY[4*i+3] = y;
       o_x = x;
       o_y = y;
-      //c.drawLine(o_x,o_y,x,y,linePaintLight);
     }
     c.drawLines(tmpLineXY, 4*(beginFreqPt+1), 4*(endFreqPt-beginFreqPt-1), linePaintLight);
     c.restore();

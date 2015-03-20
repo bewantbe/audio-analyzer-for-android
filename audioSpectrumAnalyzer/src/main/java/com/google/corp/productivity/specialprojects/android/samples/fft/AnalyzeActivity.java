@@ -613,7 +613,7 @@ public class AnalyzeActivity extends Activity
       shiftingVelocity = (float) Math.sqrt(velocityX*velocityX + velocityY*velocityY);
       shiftingComponentX = velocityX / shiftingVelocity;
       shiftingComponentY = velocityY / shiftingVelocity;
-      flyAcceleration = 600f * DPRatio;
+      flyAcceleration = 1200f * DPRatio;
       timeFlingStart = SystemClock.uptimeMillis();
       flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
