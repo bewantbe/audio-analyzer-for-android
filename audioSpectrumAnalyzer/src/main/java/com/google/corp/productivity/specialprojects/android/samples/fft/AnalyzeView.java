@@ -1064,7 +1064,6 @@ public class AnalyzeView extends View {
   }
 
   public void saveRowSpectrumAsColor(double[] db) {
-    isBusy = true;
     saveSpectrum(db);
     synchronized (this) {
       int c;
@@ -1087,7 +1086,6 @@ public class AnalyzeView extends View {
         spectrogramColorsPt = 0;
       }
     }
-    isBusy = false;
   }
 
   // Plot spectrum with axis and ticks on the whole canvas c
@@ -1172,12 +1170,12 @@ public class AnalyzeView extends View {
     }
   }
 
-//  FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("View");
+  FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("View");
 //  long t_old;
 
   @Override
   protected void onDraw(Canvas c) {
-//    fpsCounter.inc();
+    fpsCounter.inc();
 //    Log.i(TAG, " onDraw last call dt = " + (t - t_old));
 //    t_old = t;
     isBusy = true;

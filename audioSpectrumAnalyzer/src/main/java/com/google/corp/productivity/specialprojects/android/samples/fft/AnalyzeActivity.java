@@ -613,6 +613,7 @@ public class AnalyzeActivity extends Activity
       shiftingVelocity = (float) Math.sqrt(velocityX*velocityX + velocityY*velocityY);
       shiftingComponentX = velocityX / shiftingVelocity;
       shiftingComponentY = velocityY / shiftingVelocity;
+      flyAcceleration = 600f * DPRatio;
       timeFlingStart = SystemClock.uptimeMillis();
       flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
@@ -624,7 +625,7 @@ public class AnalyzeActivity extends Activity
     float shiftingVelocity;                  // fling velocity
     float shiftingComponentX;                // fling direction x
     float shiftingComponentY;                // fling direction y
-    float flyAcceleration = 600f * DPRatio;  // damping acceleration of fling, pixels/second^2
+    float flyAcceleration = 1200f;           // damping acceleration of fling, pixels/second^2
     
     Runnable flyingMoveRunnable = new Runnable() {
       @Override
@@ -927,18 +928,17 @@ public class AnalyzeActivity extends Activity
     if (graphView.getShowMode() != 0) {
       frameTime = 1000/8;  // use a much lower frame rate for spectrogram
     } else {
-      frameTime = 1000/20;
+      frameTime = 1000/60;
     }
     long t = SystemClock.uptimeMillis();
-    if (t >= timeToUpdate) {             // limit frame rate
+    if (t >= timeToUpdate && !graphView.isBusy()) {    // limit frame rate
       timeToUpdate += frameTime;
       if (timeToUpdate < t) {            // catch up current time
         timeToUpdate = t+frameTime;
       }
       idPaddingInvalidate = false;
-      // Here graphView.isBusy() can be true because graphView.saveRowSpectrumAsColor() is running on Looper thread
       // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
-      // and then here just do invalidate().
+      // and then just do invalidate() here.
       if ((viewMask & VIEW_MASK_graphView) != 0)
         graphView.invalidate();
       // RMS
