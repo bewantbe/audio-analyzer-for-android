@@ -99,8 +99,6 @@ public class AnalyzeActivity extends Activity
   float listItemTextSize = 20;        // see R.dimen.button_text_fontsize
   float listItemTitleTextSize = 12;   // see R.dimen.button_text_small_fontsize
   
-  Object oblock = new Object();
-
   double dtRMS = 0;
   double dtRMSFromFT = 0;
   double maxAmpDB;
@@ -587,25 +585,31 @@ public class AnalyzeActivity extends Activity
       flyingMoveHandler.removeCallbacks(flyingMoveRunnable);
       return true;
     }
+
+    @Override
+    public void onLongPress(MotionEvent event) {
+      if (isInGraphView(event.getX(0), event.getY(0))) {
+        if (!isMeasure) {  // go from "scale" mode to "cursor" mode
+          switchMeasureAndScaleMode();
+        }
+      }
+      measureEvent(event);  // force insert this event
+    }
     
     @Override
     public boolean onDoubleTap(MotionEvent event) {
-      if (isInGraphView(event.getX(0), event.getY(0))) {
-        if (isMeasure == false) {  // go from "scale" mode to "cursor" mode
-          isMeasure = !isMeasure;
-          SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
-          st.performClick();
-        } else {
-//          graphView.resetViewScale();
-        }
+      if (!isMeasure) {
+        scaleEvent(event);            // ends scale mode
+        graphView.resetViewScale();
       }
-      return false;
+      return true;
     }
 
     @Override
     public boolean onFling(MotionEvent event1, MotionEvent event2, 
             float velocityX, float velocityY) {
       if (isMeasure) {
+        // seems never reach here...
         return true;
       }
 //      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
@@ -647,6 +651,12 @@ public class AnalyzeActivity extends Activity
       }
     };
   }
+
+  private void switchMeasureAndScaleMode() {
+    isMeasure = !isMeasure;
+    SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
+    st.performClick();
+  }
   
   @Override
   public boolean onTouchEvent(MotionEvent event) {
@@ -658,6 +668,18 @@ public class AnalyzeActivity extends Activity
         scaleEvent(event);
       }
       invalidateGraphView();
+      // Go to scaling mode when user release finger in measure mode.
+      if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+        if (isMeasure) {
+          switchMeasureAndScaleMode();
+        }
+      }
+    } else {
+      // When finger is outside the plot, hide the cursor and go to scaling mode.
+      if (isMeasure) {
+        graphView.hideCursor();
+        switchMeasureAndScaleMode();
+      }
     }
     return super.onTouchEvent(event);
   }
@@ -673,9 +695,7 @@ public class AnalyzeActivity extends Activity
         break;
       case 2:
         if (isInGraphView(event.getX(1), event.getY(1))) {
-          isMeasure = !isMeasure;
-          SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
-          st.performClick();
+          switchMeasureAndScaleMode();
         }
     }
   }
@@ -905,7 +925,7 @@ public class AnalyzeActivity extends Activity
     }
   }
   
-  long timeToUpdate = SystemClock.uptimeMillis();;
+  long timeToUpdate = SystemClock.uptimeMillis();
   volatile boolean isInvalidating = false;
   
   // Invalidate graphView in a limited frame rate

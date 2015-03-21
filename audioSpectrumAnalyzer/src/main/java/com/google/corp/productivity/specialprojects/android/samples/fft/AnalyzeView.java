@@ -732,6 +732,11 @@ public class AnalyzeView extends View {
     }
   }
 
+  public void hideCursor() {
+    cursorFreq = 0;
+    cursorDB = 0;
+  }
+
   // In the original canvas view frame
   private void drawCursor(Canvas c) {
     float cX, cY;
@@ -1143,6 +1148,10 @@ public class AnalyzeView extends View {
     // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
     //                         int width, int height, boolean hasAlpha, Paint paint)
 //      long t = SystemClock.uptimeMillis();
+    // drawBitmap(int[] ...) was deprecated in API level 21.
+    // http://developer.android.com/reference/android/graphics/Canvas.html#drawBitmap(int[], int, int, float, float, int, int, boolean, android.graphics.Paint)
+    // Consider use Bitmap
+    // http://developer.android.com/reference/android/graphics/Bitmap.html#setPixels(int[], int, int, int, int, int, int)
     synchronized (this) {
       if (showModeSpectrogram == 0) {
         System.arraycopy(spectrogramColors, 0, spectrogramColorsShifting,
