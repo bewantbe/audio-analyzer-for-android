@@ -801,12 +801,12 @@ public class AnalyzeActivity extends Activity
       case R.id.button_recording:
         bSaveWav = value.equals("Rec");
         SelectorText st = (SelectorText) findViewById(R.id.run);
-        if (bSaveWav && ! st.getText().toString().equals("stop")) {
-          st.nextValue();
-          if (samplingThread != null) {
-            samplingThread.setPause(true);
-          }
-        }
+//        if (bSaveWav && ! st.getText().toString().equals("stop")) {
+//          st.nextValue();
+//          if (samplingThread != null) {
+//            samplingThread.setPause(true);
+//          }
+//        }
         if (bSaveWav) {
           wavSec = 0;
           ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
