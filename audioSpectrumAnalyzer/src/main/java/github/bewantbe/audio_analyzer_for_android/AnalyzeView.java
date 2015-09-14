@@ -16,7 +16,7 @@
  * @author bewantbe@gmail.com
  */
 
-package com.google.corp.productivity.specialprojects.android.samples.fft;
+package github.bewantbe.audio_analyzer_for_android;
 
 import java.util.Arrays;
 
@@ -29,7 +29,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.graphics.Typeface;
-import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;

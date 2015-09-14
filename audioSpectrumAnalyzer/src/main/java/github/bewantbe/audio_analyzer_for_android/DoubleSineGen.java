@@ -15,7 +15,7 @@
  * @author Stephen Uhler
  */
 
-package com.google.corp.productivity.specialprojects.android.samples.fft;
+package github.bewantbe.audio_analyzer_for_android;
 
 /**
  * Recursive sine wave generator

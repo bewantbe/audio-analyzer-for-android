@@ -10,7 +10,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="0.32"
-        class="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeView"
+        class="github.bewantbe.audio_analyzer_for_android.AnalyzeView"
         custom:cutoffDb="-25"
         custom:sampleRate="16000" />
 
@@ -59,7 +59,7 @@
         android:gravity="center"
         android:orientation="horizontal" >
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/button_recording"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -103,7 +103,7 @@
         android:layout_height="wrap_content"
         android:gravity="center" >
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/spectrum_spectrogram_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -114,7 +114,7 @@
             android:textSize="20sp"
             custom:items="spum spam" />
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/dbA"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -125,7 +125,7 @@
             android:textSize="20sp"
             custom:items="dB dBA" />
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/graph_view_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -136,7 +136,7 @@
             android:textSize="20sp"
             custom:items="cursor scale" />
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/run"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

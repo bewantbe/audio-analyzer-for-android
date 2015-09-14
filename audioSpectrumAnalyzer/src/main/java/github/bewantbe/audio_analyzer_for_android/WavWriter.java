@@ -1,4 +1,4 @@
-package com.google.corp.productivity.specialprojects.android.samples.fft;
+package github.bewantbe.audio_analyzer_for_android;
 
 import java.io.File;
 import java.io.FileOutputStream;

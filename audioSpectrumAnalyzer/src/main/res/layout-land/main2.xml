@@ -16,14 +16,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.32"
-            class="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeView" />
+            class="github.bewantbe.audio_analyzer_for_android.AnalyzeView" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
             android:orientation="vertical" >
 
-            <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+            <github.bewantbe.audio_analyzer_for_android.SelectorText
                 android:id="@+id/spectrum_spectrogram_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -33,7 +33,7 @@
                 android:text="spum"
                 android:textSize="20sp"
                 custom:items="spum spam" />
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/dbA"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -44,7 +44,7 @@
             android:textSize="20sp"
             custom:items="dB dBA" />
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/graph_view_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -55,7 +55,7 @@
             android:textSize="20sp"
             custom:items="cursor scale" />
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/run"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -66,7 +66,7 @@
             android:textSize="20sp"
             custom:items="run stop" />
 
-        <com.google.corp.productivity.specialprojects.android.samples.fft.SelectorText
+        <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/button_recording"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

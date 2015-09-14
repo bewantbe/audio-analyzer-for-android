@@ -16,9 +16,7 @@
  * @author bewantbe@gmail.com
  */
 
-package com.google.corp.productivity.specialprojects.android.samples.fft;
-
-import com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeView.Ready;
+package github.bewantbe.audio_analyzer_for_android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -71,7 +69,7 @@ import java.util.Arrays;
 
 public class AnalyzeActivity extends Activity
     implements OnLongClickListener, OnClickListener,
-               OnItemClickListener, Ready {
+               OnItemClickListener, AnalyzeView.Ready {
   static final String TAG="AnalyzeActivity";
   static float DPRatio;
 

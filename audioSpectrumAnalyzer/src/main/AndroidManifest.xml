@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.google.corp.productivity.specialprojects.android.samples.fft"
+    package="github.bewantbe.audio_analyzer_for_android"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -18,7 +18,7 @@
         android:label="@string/app_name"
         android:theme="@style/Theme.AppCompat" >
         <activity
-            android:name="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeActivity"
+            android:name="github.bewantbe.audio_analyzer_for_android.AnalyzeActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -27,16 +27,16 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.google.corp.productivity.specialprojects.android.samples.fft.MyPreferences"
+            android:name="github.bewantbe.audio_analyzer_for_android.MyPreferences"
             android:label="Preferences" >
         </activity>
         <activity
-            android:name="com.google.corp.productivity.specialprojects.android.samples.fft.InfoRecActivity"
+            android:name="github.bewantbe.audio_analyzer_for_android.InfoRecActivity"
             android:label="@string/title_activity_info_rec"
-            android:parentActivityName="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeActivity" >
+            android:parentActivityName="github.bewantbe.audio_analyzer_for_android.AnalyzeActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.google.corp.productivity.specialprojects.android.samples.fft.AnalyzeActivity" />
+                android:value="github.bewantbe.audio_analyzer_for_android.AnalyzeActivity" />
         </activity>
     </application>
 
