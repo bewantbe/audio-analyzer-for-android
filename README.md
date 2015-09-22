@@ -5,6 +5,8 @@ Audio Spectrum Analyzer for Android
 
   This software shows the frequency components' magnitude distribution (called spectrum) of the sound heard by your cell phone.
 
+  You may install this app through google play: [Audio Spectrum Analyzer](https://play.google.com/store/apps/details?id=github.bewantbe.audio_analyzer_for_android)
+
 Features
 --------
 
