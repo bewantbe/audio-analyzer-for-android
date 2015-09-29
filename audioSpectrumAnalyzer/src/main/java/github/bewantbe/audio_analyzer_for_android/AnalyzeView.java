@@ -13,7 +13,10 @@
  *limitations under the License.
  *
  * @author Stephen Uhler
- * @author bewantbe@gmail.com
+ *
+ * 2014 Eddy Xiao <bewantbe@gmail.com>
+ * GUI extensively modified.
+ * Add some naive auto refresh rate control logic.
  */
 
 package github.bewantbe.audio_analyzer_for_android;

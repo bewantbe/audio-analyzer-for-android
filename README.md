@@ -7,6 +7,9 @@ Audio Spectrum Analyzer for Android
 
   You may install this app through google play: [Audio Spectrum Analyzer](https://play.google.com/store/apps/details?id=github.bewantbe.audio_analyzer_for_android)
 
+  This software, [Audio Spectrum Analyzer for Android](https://github.com/bewantbe/audio-analyzer-for-android), is released under the Apache License, Version 2.0.
+
+
 Features
 --------
 
