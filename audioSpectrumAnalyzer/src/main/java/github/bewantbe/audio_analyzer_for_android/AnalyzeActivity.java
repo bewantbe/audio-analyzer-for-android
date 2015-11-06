@@ -216,7 +216,7 @@ public class AnalyzeActivity extends Activity
     }
     
     audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
-    wndFuncName = sharedPref.getString("windowFunction", "Blackman Harris");
+    wndFuncName = sharedPref.getString("windowFunction", "Hanning");
 
     // spectrum
     graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
@@ -236,7 +236,7 @@ public class AnalyzeActivity extends Activity
     d = Double.parseDouble(sharedPref.getString("spectrogramRange", Double.toString(d)));
     graphView.setLowerBound(d);
     timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
-                                          Double.toString(4.0)));
+                                          Double.toString(6.0)));
     
     bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
     

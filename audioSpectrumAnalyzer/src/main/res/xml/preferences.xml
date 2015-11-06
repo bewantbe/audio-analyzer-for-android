@@ -14,7 +14,7 @@
         android:summary="Audio source for spectrum"
         android:title="Audio source" />
     <ListPreference
-        android:defaultValue="Blackman Harris"
+        android:defaultValue="Hanning"
         android:entries="@array/wnd_func_names"
         android:entryValues="@array/wnd_func_names"
         android:key="windowFunction"
@@ -69,7 +69,7 @@
             android:summary="Show range of spectrogram in dB"
             android:title="Spectrogram range" />
         <ListPreference
-            android:defaultValue="4.0"
+            android:defaultValue="6.0"
             android:entries="@array/spectrogram_duration_array"
             android:entryValues="@array/spectrogram_duration_array"
             android:key="spectrogramDuration"
@@ -82,7 +82,7 @@
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="warnOverrun"
-            android:summary="Show a warning if audio buffer overrun."
+            android:summary="Show a warning if audio buffer keep overrun."
             android:title="Ovrrun Warning" />
     </PreferenceCategory>
 
