@@ -222,7 +222,8 @@ public class AnalyzeActivity extends Activity
     graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
     // set spectrum show range
     float b = graphView.getBounds().bottom;
-    b = Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(b)));
+    //b = Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(b)));
+    b = -1.0f;
     graphView.setBoundsBottom(b);
 
     // spectrogram
@@ -1253,7 +1254,7 @@ public class AnalyzeActivity extends Activity
         // If there is new spectrum data, do plot
         if (stft.nElemSpectrumAmp() >= nFFTAverage) {
           // Update spectrum or spectrogram
-          final double[] spectrumDB = stft.getSpectrumAmpDB();
+          final double[] spectrumDB = stft.getSpectrumAmp();
           System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
           update(spectrumDBcopy);
 //          fpsCounter.inc();

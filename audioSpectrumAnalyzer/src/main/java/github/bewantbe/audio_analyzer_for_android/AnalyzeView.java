@@ -110,7 +110,8 @@ public class AnalyzeView extends View {
     path = new Path();
 
     linePaint = new Paint();
-    linePaint.setColor(Color.parseColor("#0D2C6D"));
+//    linePaint.setColor(Color.parseColor("#0D2C6D"));
+    linePaint.setColor(Color.parseColor("#FF3C53"));
     linePaint.setStyle(Paint.Style.STROKE);
     linePaint.setStrokeWidth(1);
 
@@ -140,12 +141,16 @@ public class AnalyzeView extends View {
     xZoom=1f;
     xShift=0f;
     yZoom=1f;
-    yShift=0f;
+    //yShift=0f;
+    yShift=-1f;
     canvasWidth = canvasHeight = 0;
-    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -120.0f);
+    //axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -120.0f);
+    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -1.0f);
     gridDensity = 1/85f;  // every 85 pixel one grid line, on average
     Resources res = getResources();
-    minDB = Float.parseFloat(res.getString(R.string.max_DB_range));
+    //minDB = Float.parseFloat(res.getString(R.string.max_DB_range));
+    minDB = 0.0f;
+    maxDB = 1.5f;
   }
 
   public void setBounds(RectF bounds) {
@@ -203,7 +208,7 @@ public class AnalyzeView extends View {
     double gridIntervalSmall;
 
     // Determine a suitable grid interval from guess
-    if (scale_mode == 0 || scale_mode == 2 || intervalValue <= 1) {  // Linear scale (Hz, Time)
+    if (scale_mode == 0 || scale_mode == 2 || gridIntervalGuess <= 1) {  // Linear scale (Hz, Time)
       double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
       double fraction = gridIntervalGuess / exponent;
       // grid interval is 1, 2, 5, 10, ...
@@ -334,7 +339,8 @@ public class AnalyzeView extends View {
         } else if (gridPointsBig[1] - gridPointsBig[0] >= 0.1) {
           SBNumFormat.fillInNumFixedFrac(gridPointsStr[i], gridPointsBig[i], 7, 1);
         } else {
-          SBNumFormat.fillInNumFixedFrac(gridPointsStr[i], gridPointsBig[i], 7, 2);
+          int n_prec = (int)Math.ceil(-Math.log10(gridPointsBig[1] - gridPointsBig[0]));
+          SBNumFormat.fillInNumFixedFrac(gridPointsStr[i], gridPointsBig[i], 7, n_prec);
         }
         gridPointsStr[i].getChars(0, gridPointsStr[i].length(), gridPointsSt[i], 0);
       }
@@ -419,7 +425,7 @@ public class AnalyzeView extends View {
     }
   }
 
-  static final String[] axisLabels = {"Hz", "dB", "Sec"};
+  static final String[] axisLabels = {"Hz", "power", "Sec"};
 
   // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
   // drawOnXAxis == true : draw on X axis, otherwise Y axis
@@ -671,6 +677,8 @@ public class AnalyzeView extends View {
     matrix.reset();
     matrix.setTranslate(0, -yShift*canvasHeight);
     matrix.postScale(1, yZoom);
+    linePaintLight.setStyle(Paint.Style.STROKE);
+    linePaintLight.setStrokeWidth(DPRatio/yZoom);
     c.concat(matrix);
     float o_x = (beginFreqPt * freqDelta - canvasMinFreq) / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
     float o_y = canvasY4axis(clampDB((float)db[beginFreqPt]));
@@ -896,7 +904,8 @@ public class AnalyzeView extends View {
     float limitYZoom;
     if (showMode == 0) {
       limitXZoom = axisBounds.width()/200f;
-      limitYZoom = -axisBounds.height()/6f;
+//      limitYZoom = -axisBounds.height()/6f;
+      limitYZoom = -axisBounds.height()/0.0000001f;
     } else {
       if (showFreqAlongX) {
         limitXZoom = axisBounds.width()/200f;
