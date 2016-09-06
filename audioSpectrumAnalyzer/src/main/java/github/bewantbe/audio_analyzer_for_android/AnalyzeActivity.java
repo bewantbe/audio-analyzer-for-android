@@ -42,6 +42,7 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.Menu;
@@ -173,28 +174,30 @@ public class AnalyzeActivity extends Activity
 
   // Set text font size of textview_cur and textview_peak
   // according to space left
-  @SuppressWarnings("deprecation")
+  //@SuppressWarnings("deprecation")
   private void setTextViewFontSize() {
     TextView tv = (TextView) findViewById(R.id.textview_cur);
     // At this point tv.getWidth(), tv.getLineCount() will return 0
 
-    Paint mTestPaint = new Paint();
-    mTestPaint.setTextSize(tv.getTextSize());
-    mTestPaint.setTypeface(Typeface.MONOSPACE);
-    
-    final String text = getString(R.string.textview_peak_text);
     Display display = getWindowManager().getDefaultDisplay();
-    
     // pixels left
     float px = display.getWidth() - getResources().getDimension(R.dimen.textview_RMS_layout_width) - 5;
     
     float fs = tv.getTextSize();  // size in pixel
+
+    // shrink font size if it can not fit in one line.
+    final String text = getString(R.string.textview_peak_text);
+    // note: mTestPaint.measureText(text) can be inaccurate(coolpad A8-930), don't know why.
+    Paint mTestPaint = new Paint();
+    mTestPaint.setTextSize(fs);
+    mTestPaint.setTypeface(Typeface.MONOSPACE);
     while (mTestPaint.measureText(text) > px && fs > 5) {
       fs -= 0.5;
       mTestPaint.setTextSize(fs);
     }
-    ((TextView) findViewById(R.id.textview_cur)).setTextSize(fs / DPRatio);
-    ((TextView) findViewById(R.id.textview_peak)).setTextSize(fs / DPRatio);
+
+    ((TextView) findViewById(R.id.textview_cur)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fs);
+    ((TextView) findViewById(R.id.textview_peak)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fs);
   }
   
   /**
@@ -1141,13 +1144,13 @@ public class AnalyzeActivity extends Activity
       LimitFrameRate(1000.0*sizeInShorts / sampleRate);
       return sizeInShorts;
     }
-    
+
     @Override
     public void run() {
       setupView();
       // Wait until previous instance of AudioRecord fully released.
       SleepWithoutInterrupt(500);
-      
+
       int minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
                                                   AudioFormat.ENCODING_PCM_16BIT);
       if (minBytes == AudioRecord.ERROR_BAD_VALUE) {
