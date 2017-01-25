@@ -34,7 +34,7 @@ Installation Requirements
 Development
 -----------
 
-git clone then open it use Android Studio. Install the SDK platform if requested (e.g. rev 116 need API level 20), or tune the android:targetSdkVersion to the value that fit your needs.
+`git clone` then open it use Android Studio. Install the SDK platform if requested (e.g. rev 116 needs API level 20), or tune the `compileSdkVersion` to the value that fits your needs.
 
 
 ### For old revision (rev <= 115)
