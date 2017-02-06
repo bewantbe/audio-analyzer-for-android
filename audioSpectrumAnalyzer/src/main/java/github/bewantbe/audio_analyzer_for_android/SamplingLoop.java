@@ -26,8 +26,8 @@ class SamplingLoop extends Thread {
 
     private AnalyzerActivity activity;
 
-    double wavSecRemain;
-    double wavSec = 0;
+    volatile double wavSecRemain;
+    volatile double wavSec = 0;
 
     SamplingLoop(AnalyzerActivity _activity, AnalyzerParameters _analyzerParam) {
         activity = _activity;
@@ -112,7 +112,7 @@ class SamplingLoop extends Thread {
     public void run() {
         AudioRecord record;
 
-        activity.setupView();
+        activity.analyzerViews.setupView(analyzerParam);
         // Wait until previous instance of AudioRecord fully released.
         SleepWithoutInterrupt(500);
 
@@ -200,14 +200,14 @@ class SamplingLoop extends Thread {
             }
             if ( recorderMonitor.updateState(numOfReadShort) ) {  // performed a check
                 if (recorderMonitor.getLastCheckOverrun())
-                    activity.notifyOverrun();
+                    activity.analyzerViews.notifyOverrun();
                 if (bSaveWavLoop)
                     wavSecRemain = wavWriter.secondsLeft();
             }
             if (bSaveWavLoop) {
                 wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // Maybe move this to another thread?
                 wavSec = wavWriter.secondsWritten();
-                activity.updateRec(wavSec);
+                activity.analyzerViews.updateRec(wavSec);
             }
             if (isPaused1) {
 //          fpsCounter.inc();
@@ -222,7 +222,7 @@ class SamplingLoop extends Thread {
                 // Update spectrum or spectrogram
                 final double[] spectrumDB = stft.getSpectrumAmpDB();
                 System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
-                activity.update(spectrumDBcopy);
+                activity.analyzerViews.update(spectrumDBcopy);
 //          fpsCounter.inc();
 
                 stft.calculatePeak();
@@ -238,11 +238,10 @@ class SamplingLoop extends Thread {
         Log.i(TAG, "SamplingLoop::Run(): Stopping and releasing recorder.");
         record.stop();
         record.release();
-        record = null;
         if (bSaveWavLoop) {
             Log.i(TAG, "SamplingLoop::Run(): Ending saved wav.");
             wavWriter.stop();
-            activity.notifyWAVSaved(wavWriter.relativeDir);
+            activity.analyzerViews.notifyWAVSaved(wavWriter.relativeDir);
         }
     }
 

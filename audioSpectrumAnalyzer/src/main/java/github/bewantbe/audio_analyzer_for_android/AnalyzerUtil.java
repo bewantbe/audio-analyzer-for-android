@@ -1,9 +1,13 @@
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.util.Log;
 
+import java.util.ArrayList;
+
 /**
- * Created by xyy on 2/6/17.
+ * Utility functions for audio analyzer.
  */
 
 class AnalyzerUtil {
@@ -56,5 +60,31 @@ class AnalyzerUtil {
                 cmpDB[i] = data[i];
             }
         }
+    }
+
+    /**
+     * Return a array of verified audio sampling rates.
+     * @param requested: the sampling rates to be verified
+     */
+    static String[] validateAudioRates(String[] requested) {
+        ArrayList<String> validated = new ArrayList<>();
+        for (String s : requested) {
+            int rate;
+            String[] sv = s.split("::");
+            if (sv.length == 1) {
+                rate = Integer.parseInt(sv[0]);
+            } else {
+                rate = Integer.parseInt(sv[1]);
+            }
+            if (rate != 0) {
+                if (AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT) != AudioRecord.ERROR_BAD_VALUE) {
+                    validated.add(s);
+                }
+            } else {
+                validated.add(s);
+            }
+        }
+        return validated.toArray(new String[0]);
     }
 }
