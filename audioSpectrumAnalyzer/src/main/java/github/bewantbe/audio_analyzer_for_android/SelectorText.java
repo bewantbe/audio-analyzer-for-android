@@ -131,7 +131,7 @@ public class SelectorText extends TextView {
       String items = a.getString(R.styleable.SelectorText_items);
       String delim = getValue(a, R.styleable.SelectorText_itemDelim, " ");
       if (items != null) {
-//        Log.i(AnalyzeActivity.TAG, "items: " + items);
+//        Log.i(AnalyzerActivity.TAG, "items: " + items);
         setValues(items.split(delim));
       }
       a.recycle();

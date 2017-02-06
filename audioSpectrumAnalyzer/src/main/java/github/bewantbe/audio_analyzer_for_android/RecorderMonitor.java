@@ -70,7 +70,7 @@ public class RecorderMonitor {
 //        + " sampleRate = " + Math.round(sampleRateReal*100)/100.0);
     // Check if buffer overrun occur
     if (nSamplesFromTime > bufferSampleSize + nSamplesRead) {
-      Log.w(TAG, "Looper::run(): Buffer Overrun occured !\n"
+      Log.w(TAG, "SamplingLoop::run(): Buffer Overrun occured !\n"
           + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
           + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
           + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
@@ -83,7 +83,7 @@ public class RecorderMonitor {
     if (nSamplesRead > 10*sampleRate) {
       sampleRateReal = 0.9*sampleRateReal + 0.1*(nSamplesRead * 1000.0 / (timeNow - timeStarted));
       if (Math.abs(sampleRateReal-sampleRate) > 0.0145*sampleRate) {  // 0.0145 = 25 cent
-        Log.w(TAG, "Looper::run(): Sample rate inaccurate, possible hardware problem !\n"
+        Log.w(TAG, "SamplingLoop::run(): Sample rate inaccurate, possible hardware problem !\n"
             + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
             + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
             + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"

@@ -5,7 +5,7 @@
         <attr name="items" format="string" />
         <attr name="itemDelim" format="string" />
     </declare-styleable>
-    <declare-styleable name="AnalyzeView">
+    <declare-styleable name="AnalyzerGraphic">
         <attr name="sampleRate" format="integer" />
         <attr name="cutoffDb" format="integer" />
     </declare-styleable>

@@ -19,7 +19,7 @@
         android:label="@string/app_name"
         android:theme="@style/DarkThemeSelector" >
         <activity
-            android:name="github.bewantbe.audio_analyzer_for_android.AnalyzeActivity"
+            android:name="github.bewantbe.audio_analyzer_for_android.AnalyzerActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -34,10 +34,10 @@
         <activity
             android:name="github.bewantbe.audio_analyzer_for_android.InfoRecActivity"
             android:label="@string/title_activity_info_rec"
-            android:parentActivityName="github.bewantbe.audio_analyzer_for_android.AnalyzeActivity" >
+            android:parentActivityName="github.bewantbe.audio_analyzer_for_android.AnalyzerActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="github.bewantbe.audio_analyzer_for_android.AnalyzeActivity" />
+                android:value="github.bewantbe.audio_analyzer_for_android.AnalyzerActivity" />
         </activity>
     </application>
 

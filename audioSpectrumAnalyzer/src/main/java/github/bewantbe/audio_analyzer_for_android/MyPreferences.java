@@ -45,8 +45,8 @@ public class MyPreferences extends PreferenceActivity {
     addPreferencesFromResource(R.xml.preferences);
     
     Intent intent = getIntent();
-    asid = intent.getIntArrayExtra(AnalyzeActivity.MYPREFERENCES_MSG_SOURCE_ID);
-    as = intent.getStringArrayExtra(AnalyzeActivity.MYPREFERENCES_MSG_SOURCE_NAME);
+    asid = intent.getIntArrayExtra(AnalyzerActivity.MYPREFERENCES_MSG_SOURCE_ID);
+    as = intent.getStringArrayExtra(AnalyzerActivity.MYPREFERENCES_MSG_SOURCE_NAME);
 
     // as soon as the user modifies a preference,
     // the system saves the changes to a default SharedPreferences file

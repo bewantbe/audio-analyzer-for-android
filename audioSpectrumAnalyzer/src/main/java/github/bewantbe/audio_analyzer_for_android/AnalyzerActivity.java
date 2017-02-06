@@ -33,7 +33,6 @@ import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -64,21 +63,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Audio "FFT" analyzer.
  * @author suhler@google.com (Stephen Uhler)
  */
 
-public class AnalyzeActivity extends Activity
+public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
-               OnItemClickListener, AnalyzeView.Ready {
-  static final String TAG="AnalyzeActivity";
+               OnItemClickListener, AnalyzerGraphic.Ready {
+  static final String TAG="AnalyzerActivity";
   static float DPRatio;
 
-  private AnalyzeView graphView;
-  private Looper samplingThread;
+  private AnalyzerGraphic graphView;
+  private SamplingLoop samplingThread;
   private GestureDetectorCompat mDetector;
 
   AnalyzerParameters analyzerParam = null;
@@ -132,14 +130,14 @@ public class AnalyzeActivity extends Activity
     textRecChar = new char[getString(R.string.textview_rec_text).length()];
     textPeakChar = new char[getString(R.string.textview_peak_text).length()];
 
-    graphView = (AnalyzeView) findViewById(R.id.plot);
+    graphView = (AnalyzerGraphic) findViewById(R.id.plot);
 
     // travel Views, and attach ClickListener to the views that contain android:tag="select"  
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
-        view.setOnLongClickListener(AnalyzeActivity.this);
-        view.setOnClickListener(AnalyzeActivity.this);
+        view.setOnLongClickListener(AnalyzerActivity.this);
+        view.setOnClickListener(AnalyzerActivity.this);
         ((TextView) view).setFreezesText(true);
       }
     }, "select");
@@ -241,7 +239,7 @@ public class AnalyzeActivity extends Activity
     }, "select");
     graphView.setReady(this);
 
-    samplingThread = new Looper(this, analyzerParam);
+    samplingThread = new SamplingLoop(this, analyzerParam);
     if (bSaveWav) {
       ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
     } else {
@@ -289,7 +287,7 @@ public class AnalyzeActivity extends Activity
       @Override
       public void run() {
         // data will get out of synchronize here
-        AnalyzeActivity.this.invalidateGraphView(AnalyzeActivity.VIEW_MASK_RecTimeLable);
+        AnalyzerActivity.this.invalidateGraphView(AnalyzerActivity.VIEW_MASK_RecTimeLable);
       }
     });
   }
@@ -369,8 +367,8 @@ public class AnalyzeActivity extends Activity
   }
   
   // for pass audioSourceIDs and audioSourceNames to MyPreferences
-  public final static String MYPREFERENCES_MSG_SOURCE_ID = "AnalyzeActivity.SOURCE_ID";
-  public final static String MYPREFERENCES_MSG_SOURCE_NAME = "AnalyzeActivity.SOURCE_NAME";
+  public final static String MYPREFERENCES_MSG_SOURCE_ID = "AnalyzerActivity.SOURCE_ID";
+  public final static String MYPREFERENCES_MSG_SOURCE_NAME = "AnalyzerActivity.SOURCE_NAME";
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
@@ -507,7 +505,7 @@ public class AnalyzeActivity extends Activity
           String id = itemArr[1];
 
           // visual settings for the list item
-          TextView listItem = new TextView(AnalyzeActivity.this);
+          TextView listItem = new TextView(AnalyzerActivity.this);
 
           if (id.equals("0")) {
             listItem.setText(text);
@@ -590,7 +588,7 @@ public class AnalyzeActivity extends Activity
   }
 
   // Load preferences for Views
-  // When this function is called, the Looper must not running in the meanwhile.
+  // When this function is called, the SamplingLoop must not running in the meanwhile.
   void updatePreferenceSaved() {
     // load preferences for buttons
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -690,7 +688,7 @@ public class AnalyzeActivity extends Activity
           graphView.setXShift(graphView.getXShift() - shiftingComponentX*shiftingPixel / graphView.getCanvasWidth() / graphView.getXZoom());
           graphView.setYShift(graphView.getYShift() - shiftingComponentY*shiftingPixel / graphView.getCanvasHeight() / graphView.getYZoom());
           // Am I need to use runOnUiThread() ?
-          AnalyzeActivity.this.invalidateGraphView();
+          AnalyzerActivity.this.invalidateGraphView();
           flyingMoveHandler.postDelayed(flyingMoveRunnable, (int)(1000*flyDt));
         }
       }
@@ -825,7 +823,7 @@ public class AnalyzeActivity extends Activity
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    samplingThread = new Looper(this, analyzerParam);
+    samplingThread = new SamplingLoop(this, analyzerParam);
     samplingThread.start();
   }
 
@@ -1011,7 +1009,7 @@ public class AnalyzeActivity extends Activity
     public void run() {
       if (idPaddingInvalidate) {
         // It is possible that t-timeToUpdate <= 0 here, don't know why
-        AnalyzeActivity.this.invalidateGraphView(paddingViewMask);
+        AnalyzerActivity.this.invalidateGraphView(paddingViewMask);
       }
     }
   };

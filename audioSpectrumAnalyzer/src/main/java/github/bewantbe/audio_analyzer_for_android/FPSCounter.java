@@ -18,13 +18,15 @@ package github.bewantbe.audio_analyzer_for_android;
 import android.os.SystemClock;
 import android.util.Log;
 
-public class FramesPerSecondCounter {
+// Frames Per Second Counter
+
+public class FPSCounter {
   long frameCount;
   long timeOld, timeUpdateInterval;  // in ms
   double fps;
   String TAG_OUTSIDE;
   
-  FramesPerSecondCounter(String TAG) {
+  FPSCounter(String TAG) {
     timeUpdateInterval = 2000;
     TAG_OUTSIDE = TAG;
     frameCount = 0;

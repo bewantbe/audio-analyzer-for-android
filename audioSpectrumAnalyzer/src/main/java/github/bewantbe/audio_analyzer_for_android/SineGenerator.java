@@ -25,7 +25,7 @@ package github.bewantbe.audio_analyzer_for_android;
  * w = 2 pi f / fs
  */
 
-class DoubleSineGen {
+class SineGenerator {
   private double fs; 	// sampling frequency
   private double k;	// recursion constant
   private double n0, n1;	// first (next) 2 samples
@@ -37,7 +37,7 @@ class DoubleSineGen {
    * @param a       Amplitude
    */
 
-  DoubleSineGen(double f, double fs, double a) {
+  SineGenerator(double f, double fs, double a) {
     this.fs = fs;
     double w = 2.0 * Math.PI * f / fs;
     this.n0 = 0d;

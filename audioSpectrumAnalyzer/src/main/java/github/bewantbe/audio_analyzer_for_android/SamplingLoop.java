@@ -13,23 +13,23 @@ import java.util.Arrays;
  *         bewantbe@gmail.com
  */
 
-class Looper extends Thread {
-    private final String TAG = "Looper";
+class SamplingLoop extends Thread {
+    private final String TAG = "SamplingLoop";
     private volatile boolean isRunning = true;
     private volatile boolean isPaused1 = false;
     private STFT stft;   // use with care
     private AnalyzerParameters analyzerParam = null;
 
-    private DoubleSineGen sineGen1;
-    private DoubleSineGen sineGen2;
-    private double[] spectrumDBcopy;   // XXX, transfers data from Looper to AnalyzeView
+    private SineGenerator sineGen1;
+    private SineGenerator sineGen2;
+    private double[] spectrumDBcopy;   // XXX, transfers data from SamplingLoop to AnalyzerGraphic
 
-    private AnalyzeActivity activity;
+    private AnalyzerActivity activity;
 
     double wavSecRemain;
     double wavSec = 0;
 
-    Looper(AnalyzeActivity _activity, AnalyzerParameters _analyzerParam) {
+    SamplingLoop(AnalyzerActivity _activity, AnalyzerParameters _analyzerParam) {
         activity = _activity;
         analyzerParam = _analyzerParam;
 
@@ -42,11 +42,11 @@ class Looper extends Thread {
         double fq2 = Double.parseDouble(activity.getString(R.string.test_signal_2_freq2));
         double amp2 = Math.pow(10, 1/20.0 * Double.parseDouble(activity.getString(R.string.test_signal_2_db2)));
         if (analyzerParam.audioSourceId == 1000) {
-            sineGen1 = new DoubleSineGen(fq0, analyzerParam.sampleRate, analyzerParam.SAMPLE_VALUE_MAX * amp0);
+            sineGen1 = new SineGenerator(fq0, analyzerParam.sampleRate, analyzerParam.SAMPLE_VALUE_MAX * amp0);
         } else {
-            sineGen1 = new DoubleSineGen(fq1, analyzerParam.sampleRate, analyzerParam.SAMPLE_VALUE_MAX * amp1);
+            sineGen1 = new SineGenerator(fq1, analyzerParam.sampleRate, analyzerParam.SAMPLE_VALUE_MAX * amp1);
         }
-        sineGen2 = new DoubleSineGen(fq2, analyzerParam.sampleRate, analyzerParam.SAMPLE_VALUE_MAX * amp2);
+        sineGen2 = new SineGenerator(fq2, analyzerParam.sampleRate, analyzerParam.SAMPLE_VALUE_MAX * amp2);
     }
 
     private void SleepWithoutInterrupt(long millis) {
@@ -119,7 +119,7 @@ class Looper extends Thread {
         int minBytes = AudioRecord.getMinBufferSize(analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
         if (minBytes == AudioRecord.ERROR_BAD_VALUE) {
-            Log.e(TAG, "Looper::run(): Invalid AudioRecord parameter.\n");
+            Log.e(TAG, "SamplingLoop::run(): Invalid AudioRecord parameter.\n");
             return;
         }
 
@@ -145,7 +145,7 @@ class Looper extends Thread {
             record = new AudioRecord(analyzerParam.RECORDER_AGC_OFF, analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
                     AudioFormat.ENCODING_PCM_16BIT, analyzerParam.BYTE_OF_SAMPLE * bufferSampleSize);
         }
-        Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
+        Log.i(TAG, "SamplingLoop::Run(): Starting recorder... \n" +
                 "  source          : " + analyzerParam.getAudioSourceName() + "\n" +
                 String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), analyzerParam.sampleRate) +
                 String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / analyzerParam.BYTE_OF_SAMPLE, minBytes) +
@@ -156,7 +156,7 @@ class Looper extends Thread {
         analyzerParam.sampleRate = record.getSampleRate();
 
         if (record.getState() == AudioRecord.STATE_UNINITIALIZED) {
-            Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()");
+            Log.e(TAG, "SamplingLoop::run(): Fail to initialize AudioRecord()");
             // If failed somehow, leave user a chance to change preference.
             return;
         }
@@ -170,10 +170,10 @@ class Looper extends Thread {
             spectrumDBcopy = new double[analyzerParam.fftLen/2+1];
         }
 
-        RecorderMonitor recorderMonitor = new RecorderMonitor(analyzerParam.sampleRate, bufferSampleSize, "Looper::run()");
+        RecorderMonitor recorderMonitor = new RecorderMonitor(analyzerParam.sampleRate, bufferSampleSize, "SamplingLoop::run()");
         recorderMonitor.start();
 
-//      FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
+//      FPSCounter fpsCounter = new FPSCounter("SamplingLoop::run()");
 
         WavWriter wavWriter = new WavWriter(analyzerParam.sampleRate);
         boolean bSaveWavLoop = activity.bSaveWav;  // change of bSaveWav during loop will only affect next enter.
@@ -234,13 +234,13 @@ class Looper extends Thread {
                 activity.dtRMSFromFT = stft.getRMSFromFT();
             }
         }
-        Log.i(TAG, "Looper::Run(): Actual sample rate: " + recorderMonitor.getSampleRate());
-        Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
+        Log.i(TAG, "SamplingLoop::Run(): Actual sample rate: " + recorderMonitor.getSampleRate());
+        Log.i(TAG, "SamplingLoop::Run(): Stopping and releasing recorder.");
         record.stop();
         record.release();
         record = null;
         if (bSaveWavLoop) {
-            Log.i(TAG, "Looper::Run(): Ending saved wav.");
+            Log.i(TAG, "SamplingLoop::Run(): Ending saved wav.");
             wavWriter.stop();
             activity.notifyWAVSaved(wavWriter.relativeDir);
         }

@@ -10,7 +10,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="0.32"
-        class="github.bewantbe.audio_analyzer_for_android.AnalyzeView"
+        class="github.bewantbe.audio_analyzer_for_android.AnalyzerGraphic"
         custom:cutoffDb="-25"
         custom:sampleRate="16000" />
 

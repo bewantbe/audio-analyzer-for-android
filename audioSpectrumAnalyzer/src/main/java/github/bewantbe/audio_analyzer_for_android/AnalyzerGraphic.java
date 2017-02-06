@@ -42,8 +42,8 @@ import android.view.View;
  * Custom view to draw the FFT graph
  */
 
-public class AnalyzeView extends View {
-  private final String TAG = "AnalyzeView::";
+public class AnalyzerGraphic extends View {
+  private final String TAG = "AnalyzerGraphic::";
   private Ready readyCallback = null;      // callback to caller when rendering is complete
   static float DPRatio;
   private float cursorFreq, cursorDB; // cursor location
@@ -81,17 +81,17 @@ public class AnalyzeView extends View {
     return isBusy;
   }
 
-  public AnalyzeView(Context context, AttributeSet attrs, int defStyle) {
+  public AnalyzerGraphic(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
     setup(attrs, context);
   }
 
-  public AnalyzeView(Context context, AttributeSet attrs) {
+  public AnalyzerGraphic(Context context, AttributeSet attrs) {
     super(context, attrs);
     setup(attrs, context);
   }
 
-  public AnalyzeView(Context context) {
+  public AnalyzerGraphic(Context context) {
     super(context);
     setup(null, context);
   }
@@ -943,7 +943,7 @@ public class AnalyzeView extends View {
   private boolean showFreqAlongX = false;
   private int nFreqPoints;
   private double timeWatch = 4.0;
-  private volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzeActivity
+  private volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzerActivity
   private boolean bShowTimeAxis = true;
   private int nTimePoints;
   private int spectrogramColorsPt;          // pointer to the row to be filled (row major)
@@ -1193,7 +1193,7 @@ public class AnalyzeView extends View {
     }
   }
 
-  FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("View");
+  FPSCounter fpsCounter = new FPSCounter("View");
 //  long t_old;
 
   @Override
