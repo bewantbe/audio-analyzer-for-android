@@ -81,30 +81,19 @@ public class AnalyzeActivity extends Activity
   private Looper samplingThread;
   private GestureDetectorCompat mDetector;
 
-  private final static double SAMPLE_VALUE_MAX = 32767.0;   // Maximum signal value
-  private final static int RECORDER_AGC_OFF = MediaRecorder.AudioSource.VOICE_RECOGNITION;
-  private final static int BYTE_OF_SAMPLE = 2;
-  
-  private static int fftLen = 2048;
-  private static int sampleRate = 16000;
-  private static int nFFTAverage = 2;
-  private static String wndFuncName;
+  AnalyzerParameters analyzerParam = null;
 
-  private static boolean bSaveWav;
-  private static int audioSourceId = RECORDER_AGC_OFF;
-  private boolean isMeasure = true;
-  private boolean isAWeighting = false;
-  private boolean bWarnOverrun = true;
-  private double timeDurationPref = 4.0;
-  private double wavSec, wavSecRemain;
-  
-  float listItemTextSize = 20;        // see R.dimen.button_text_fontsize
-  float listItemTitleTextSize = 12;   // see R.dimen.button_text_small_fontsize
-  
+  boolean bWarnOverrun = true;
   double dtRMS = 0;
   double dtRMSFromFT = 0;
   double maxAmpDB;
   double maxAmpFreq;
+
+  private boolean isMeasure = true;
+  volatile boolean bSaveWav = false;
+
+  float listItemTextSize = 20;        // see R.dimen.button_text_fontsize
+  float listItemTitleTextSize = 12;   // see R.dimen.button_text_small_fontsize
 
   StringBuilder textCur = new StringBuilder("");  // for textCurChar
   StringBuilder textRMS  = new StringBuilder("");
@@ -124,7 +113,10 @@ public class AnalyzeActivity extends Activity
 //  Debug.startMethodTracing("calc");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
-    
+
+    Resources res = getResources();
+    analyzerParam = new AnalyzerParameters(res);
+
     DPRatio = getResources().getDisplayMetrics().density;
     
     final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
@@ -152,9 +144,6 @@ public class AnalyzeActivity extends Activity
       }
     }, "select");
     
-    Resources res = getResources();
-    getAudioSourceNameFromIdPrepare(res);
-
     listItemTextSize      = res.getDimension(R.dimen.button_text_fontsize);
     listItemTitleTextSize = res.getDimension(R.dimen.button_text_small_fontsize);
     
@@ -187,7 +176,7 @@ public class AnalyzeActivity extends Activity
 
     // shrink font size if it can not fit in one line.
     final String text = getString(R.string.textview_peak_text);
-    // note: mTestPaint.measureText(text) can be inaccurate(coolpad A8-930), don't know why.
+    // note: mTestPaint.measureText(text) do not scale like sp.
     Paint mTestPaint = new Paint();
     mTestPaint.setTextSize(fs);
     mTestPaint.setTypeface(Typeface.MONOSPACE);
@@ -208,7 +197,7 @@ public class AnalyzeActivity extends Activity
   @Override
   protected void onResume() {
     super.onResume();
-    
+
     // load preferences
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     boolean keepScreenOn = sharedPref.getBoolean("keepScreenOn", true);
@@ -217,9 +206,9 @@ public class AnalyzeActivity extends Activity
     } else {
       getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
-    
-    audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(RECORDER_AGC_OFF)));
-    wndFuncName = sharedPref.getString("windowFunction", "Hanning");
+
+    analyzerParam.audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(analyzerParam.RECORDER_AGC_OFF)));
+    analyzerParam.wndFuncName = sharedPref.getString("windowFunction", "Hanning");
 
     // spectrum
     graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
@@ -238,18 +227,12 @@ public class AnalyzeActivity extends Activity
     double d = graphView.getLowerBound();
     d = Double.parseDouble(sharedPref.getString("spectrogramRange", Double.toString(d)));
     graphView.setLowerBound(d);
-    timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
+    analyzerParam.timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
                                           Double.toString(6.0)));
     
     bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
-    
-    if (bSaveWav) {
-      ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
-    } else {
-      ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(0*DPRatio));
-    }
-    
-    // travel the views with android:tag="select" to get default setting values  
+
+    // travel the views with android:tag="select" to get default setting values
     visit((ViewGroup) graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -258,8 +241,89 @@ public class AnalyzeActivity extends Activity
     }, "select");
     graphView.setReady(this);
 
-    samplingThread = new Looper();
+    samplingThread = new Looper(this, analyzerParam);
+    if (bSaveWav) {
+      ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
+    } else {
+      ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(0*DPRatio));
+    }
     samplingThread.start();
+  }
+
+  void setupView() {
+    // Maybe move these out of this class
+    RectF bounds = graphView.getBounds();
+    bounds.right = analyzerParam.sampleRate / 2;
+    graphView.setBounds(bounds);
+    graphView.setupSpectrogram(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref);
+    graphView.setTimeMultiplier(analyzerParam.nFFTAverage);
+  }
+
+  void update(final double[] spectrumDBcopy) {
+    if (graphView.getShowMode() == 1) {
+      // data is synchronized here
+      graphView.saveRowSpectrumAsColor(spectrumDBcopy);
+    }
+    this.runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        if (graphView.getShowMode() == 0) {
+          graphView.saveSpectrum(spectrumDBcopy);
+        }
+        // data will get out of synchronize here
+        invalidateGraphView();
+      }
+    });
+  }
+
+  private double wavSecOld = 0;      // used to reduce frame rate
+  void updateRec(double wavSec) {
+    if (wavSecOld > wavSec) {
+      wavSecOld = wavSec;
+    }
+    if (wavSec - wavSecOld < 0.1) {
+      return;
+    }
+    wavSecOld = wavSec;
+    this.runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        // data will get out of synchronize here
+        AnalyzeActivity.this.invalidateGraphView(AnalyzeActivity.VIEW_MASK_RecTimeLable);
+      }
+    });
+  }
+
+  void notifyWAVSaved(final String path) {
+    this.runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        Context context = getApplicationContext();
+        String text = "WAV saved to " + path;
+        Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+        toast.show();
+      }
+    });
+  }
+
+  private long lastTimeNotifyOverrun = 0;
+  void notifyOverrun() {
+    if (!bWarnOverrun) {
+      return;
+    }
+    long t = SystemClock.uptimeMillis();
+    if (t - lastTimeNotifyOverrun > 6000) {
+      lastTimeNotifyOverrun = t;
+      this.runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          Context context = getApplicationContext();
+          String text = "Recorder buffer overrun!\nYour cell phone is too slow.\nTry lower sampling rate or higher average number.";
+          Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
+          toast.show();
+        }
+      });
+    }
   }
 
   @Override
@@ -289,7 +353,7 @@ public class AnalyzeActivity extends Activity
   public void onRestoreInstanceState(Bundle savedInstanceState) {
     // will be calls after the onStart()
     super.onRestoreInstanceState(savedInstanceState);
-    
+
     dtRMS       = savedInstanceState.getDouble("dtRMS");
     dtRMSFromFT = savedInstanceState.getDouble("dtRMSFromFT");
     maxAmpDB    = savedInstanceState.getDouble("maxAmpDB");
@@ -317,8 +381,8 @@ public class AnalyzeActivity extends Activity
         return true;
       case R.id.settings:
         Intent settings = new Intent(getBaseContext(), MyPreferences.class);
-        settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, audioSourceIDs);
-        settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, audioSourceNames);
+        settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, analyzerParam.audioSourceIDs);
+        settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
         startActivity(settings);
         return true;
       case R.id.info_recoder:
@@ -494,24 +558,24 @@ public class AnalyzeActivity extends Activity
     switch (buttonId) {
     case R.id.button_sample_rate:
       popupMenuSampleRate.dismiss();
-      sampleRate = Integer.parseInt(selectedItemTag);
+      analyzerParam.sampleRate = Integer.parseInt(selectedItemTag);
       b_need_restart_audio = true;
-      editor.putInt("button_sample_rate", sampleRate);
+      editor.putInt("button_sample_rate", analyzerParam.sampleRate);
       break;
     case R.id.button_fftlen:
       popupMenuFFTLen.dismiss();
-      fftLen = Integer.parseInt(selectedItemTag);
+      analyzerParam.fftLen = Integer.parseInt(selectedItemTag);
       b_need_restart_audio = true;
-      editor.putInt("button_fftlen", fftLen);
+      editor.putInt("button_fftlen", analyzerParam.fftLen);
       break;
     case R.id.button_average:
       popupMenuAverage.dismiss();
-      nFFTAverage = Integer.parseInt(selectedItemTag);
+      analyzerParam.nFFTAverage = Integer.parseInt(selectedItemTag);
       if (graphView != null) {
-        graphView.setTimeMultiplier(nFFTAverage);
+        graphView.setTimeMultiplier(analyzerParam.nFFTAverage);
       }
       b_need_restart_audio = false;
-      editor.putInt("button_average", nFFTAverage);
+      editor.putInt("button_average", analyzerParam.nFFTAverage);
       break;
     default:
       Log.w(TAG, "onItemClick(): no this button");
@@ -530,11 +594,11 @@ public class AnalyzeActivity extends Activity
   void updatePreferenceSaved() {
     // load preferences for buttons
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    sampleRate  = sharedPref.getInt("button_sample_rate", 8000);
-    fftLen      = sharedPref.getInt("button_fftlen",      1024);
-    nFFTAverage = sharedPref.getInt("button_average",        1);
-    isAWeighting = sharedPref.getBoolean("dbA", false);
-    if (isAWeighting) {
+    analyzerParam.sampleRate  = sharedPref.getInt("button_sample_rate", 8000);
+    analyzerParam.fftLen      = sharedPref.getInt("button_fftlen",      1024);
+    analyzerParam.nFFTAverage = sharedPref.getInt("button_average",        1);
+    analyzerParam.isAWeighting = sharedPref.getBoolean("dbA", false);
+    if (analyzerParam.isAWeighting) {
       ((SelectorText) findViewById(R.id.dbA)).nextValue();
     }
     boolean isSpam = sharedPref.getBoolean("spectrum_spectrogram_mode", true);
@@ -542,35 +606,12 @@ public class AnalyzeActivity extends Activity
       ((SelectorText) findViewById(R.id.spectrum_spectrogram_mode)).nextValue();
     }
     
-    Log.i(TAG, "  updatePreferenceSaved(): sampleRate  = " + sampleRate);
-    Log.i(TAG, "  updatePreferenceSaved(): fftLen      = " + fftLen);
-    Log.i(TAG, "  updatePreferenceSaved(): nFFTAverage = " + nFFTAverage);
-    ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(sampleRate));
-    ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(fftLen));
-    ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(nFFTAverage));
-  }
-  
-  static String[] audioSourceNames;
-  static int[] audioSourceIDs;
-  private void getAudioSourceNameFromIdPrepare(Resources res) {
-    audioSourceNames   = res.getStringArray(R.array.audio_source);
-    String[] sasid = res.getStringArray(R.array.audio_source_id);
-    audioSourceIDs = new int[audioSourceNames.length];
-    for (int i = 0; i < audioSourceNames.length; i++) {
-      audioSourceIDs[i] = Integer.parseInt(sasid[i]);
-    }
-  }
-  
-  // Get audio source name from its ID
-  // Tell me if there is better way to do it.
-  private static String getAudioSourceNameFromId(int id) {
-    for (int i = 0; i < audioSourceNames.length; i++) {
-      if (audioSourceIDs[i] == id) {
-        return audioSourceNames[i];
-      }
-    }
-    Log.e(TAG, "getAudioSourceName(): no this entry.");
-    return "";
+    Log.i(TAG, "  updatePreferenceSaved(): sampleRate  = " + analyzerParam.sampleRate);
+    Log.i(TAG, "  updatePreferenceSaved(): fftLen      = " + analyzerParam.fftLen);
+    Log.i(TAG, "  updatePreferenceSaved(): nFFTAverage = " + analyzerParam.nFFTAverage);
+    ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(analyzerParam.sampleRate));
+    ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(analyzerParam.fftLen));
+    ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
   }
   
   private boolean isInGraphView(float x, float y) {
@@ -784,11 +825,8 @@ public class AnalyzeActivity extends Activity
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    samplingThread = new Looper();
+    samplingThread = new Looper(this, analyzerParam);
     samplingThread.start();
-    if (samplingThread.stft != null) {
-      samplingThread.stft.setAWeighting(isAWeighting);
-    }
   }
 
   /**
@@ -812,7 +850,6 @@ public class AnalyzeActivity extends Activity
 //          }
 //        }
         if (bSaveWav) {
-          wavSec = 0;
           ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
         } else {
           ((TextView) findViewById(R.id.textview_rec)).setHeight((int)(0*DPRatio));
@@ -828,18 +865,18 @@ public class AnalyzeActivity extends Activity
         isMeasure = !value.equals("scale");
         return false;
       case R.id.dbA:
-        isAWeighting = !value.equals("dB");
-        if (samplingThread != null && samplingThread.stft != null) {
-          samplingThread.stft.setAWeighting(isAWeighting);
+        analyzerParam.isAWeighting = !value.equals("dB");
+        if (samplingThread != null) {
+          samplingThread.setAWeighting(analyzerParam.isAWeighting);
         }
-        editor.putBoolean("dbA", isAWeighting);
+        editor.putBoolean("dbA", analyzerParam.isAWeighting);
         editor.commit();
         return false;
       case R.id.spectrum_spectrogram_mode:
         if (value.equals("spum")) {
           graphView.switch2Spectrum();
         } else {
-          graphView.switch2Spectrogram(sampleRate, fftLen, timeDurationPref);
+          graphView.switch2Spectrogram(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref);
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
         editor.commit();
@@ -856,7 +893,7 @@ public class AnalyzeActivity extends Activity
     textCur.append("Cur :");
     SBNumFormat.fillInNumFixedWidthPositive(textCur, f1, 5, 1);
     textCur.append("Hz(");
-    freq2Cent(textCur, f1, " ");
+    AnalyzerUtil.freq2Cent(textCur, f1, " ");
     textCur.append(") ");
     SBNumFormat.fillInNumFixedWidth(textCur, graphView.getCursorDB(), 3, 1);
     textCur.append("dB");
@@ -882,7 +919,7 @@ public class AnalyzeActivity extends Activity
     textPeak.append("Peak:");
     SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
     textPeak.append("Hz(");
-    freq2Cent(textPeak, maxAmpFreq, " ");
+    AnalyzerUtil.freq2Cent(textPeak, maxAmpFreq, " ");
     textPeak.append(") ");
     SBNumFormat.fillInNumFixedWidth(textPeak, maxAmpDB, 3, 1);
     textPeak.append("dB");
@@ -897,38 +934,14 @@ public class AnalyzeActivity extends Activity
     // consist with @string/textview_rec_text
     textRec.setLength(0);
     textRec.append("Rec: ");
-    SBNumFormat.fillTime(textRec, wavSec, 1);
+    SBNumFormat.fillTime(textRec, samplingThread.wavSec, 1);
     textRec.append(", Remain: ");
-    SBNumFormat.fillTime(textRec, wavSecRemain, 0);
+    SBNumFormat.fillTime(textRec, samplingThread.wavSecRemain, 0);
     textRec.getChars(0, Math.min(textRec.length(), textRecChar.length), textRecChar, 0);
     ((TextView) findViewById(R.id.textview_rec))
       .setText(textRecChar, 0, Math.min(textRec.length(), textRecChar.length));
   }
 
-  // used to detect if the data is unchanged
-  double[] cmpDB;
-  public void sameTest(double[] data) {
-    // test
-    if (cmpDB == null || cmpDB.length != data.length) {
-      Log.i(TAG, "sameTest(): new");
-      cmpDB = new double[data.length];
-    } else {
-      boolean same = true;
-      for (int i=0; i<data.length; i++) {
-        if (!Double.isNaN(cmpDB[i]) && !Double.isInfinite(cmpDB[i]) && cmpDB[i] != data[i]) {
-          same = false;
-          break;
-        }
-      }
-      if (same) {
-        Log.i(TAG, "sameTest(): same data row!!");
-      }
-      for (int i=0; i<data.length; i++) {
-        cmpDB[i] = data[i];
-      }
-    }
-  }
-  
   long timeToUpdate = SystemClock.uptimeMillis();
   volatile boolean isInvalidating = false;
   
@@ -1027,345 +1040,6 @@ public class AnalyzeActivity extends Activity
       }
     }
     return validated.toArray(new String[0]);
-  }
-
-  static final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
-
-  // Convert frequency to pitch
-  // Fill with sFill until length is 6. If sFill=="", do not fill
-  public void freq2Cent(StringBuilder a, double f, String sFill) {
-    if (f<=0 || Double.isNaN(f) || Double.isInfinite(f)) {
-      a.append("      ");
-      return;
-    }
-    int len0 = a.length();
-    // A4 = 440Hz
-    double p = 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
-    int pi = (int) Math.round(p);
-    int po = (int) Math.floor(pi/12.0);
-    int pm = pi-po*12;
-    a.append(LP[pm]);
-    SBNumFormat.fillInInt(a, po-1);
-    if (LP[pm].length() == 1) {
-      a.append(' ');
-    }
-    SBNumFormat.fillInNumFixedWidthSignedFirst(a, Math.round(100*(p-pi)), 2, 0);
-    while (a.length()-len0 < 6 && sFill!=null && sFill.length()>0) {
-      a.append(sFill);
-    }
-  }
-  
-  /**
-   * Read a snapshot of audio data at a regular interval, and compute the FFT
-   * @author suhler@google.com
-   *         bewantbe@gmail.com
-   */
-  double[] spectrumDBcopy;   // XXX, transfers data from Looper to AnalyzeView
-  
-  public class Looper extends Thread {
-    AudioRecord record;
-    volatile boolean isRunning = true;
-    volatile boolean isPaused1 = false;
-    double wavSecOld = 0;      // used to reduce frame rate
-    public STFT stft;   // use with care
-
-    DoubleSineGen sineGen1;
-    DoubleSineGen sineGen2;
-    double[] mdata;
-    
-    public Looper() {
-      isPaused1 = ((SelectorText) findViewById(R.id.run)).getText().toString().equals("stop");
-      // Signal sources for testing
-      double fq0 = Double.parseDouble(getString(R.string.test_signal_1_freq1));
-      double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_1_db1)));
-      double fq1 = Double.parseDouble(getString(R.string.test_signal_2_freq1));
-      double fq2 = Double.parseDouble(getString(R.string.test_signal_2_freq2));
-      double amp1 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db1)));
-      double amp2 = Math.pow(10, 1/20.0 * Double.parseDouble(getString(R.string.test_signal_2_db2)));
-      if (audioSourceId == 1000) {
-        sineGen1 = new DoubleSineGen(fq0, sampleRate, SAMPLE_VALUE_MAX * amp0);
-      } else {
-        sineGen1 = new DoubleSineGen(fq1, sampleRate, SAMPLE_VALUE_MAX * amp1);
-      }
-      sineGen2 = new DoubleSineGen(fq2, sampleRate, SAMPLE_VALUE_MAX * amp2);
-    }
-
-    private void SleepWithoutInterrupt(long millis) {
-      try {
-        Thread.sleep(millis);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-
-    private double baseTimeMs = SystemClock.uptimeMillis();
-
-    private void LimitFrameRate(double updateMs) {
-      // Limit the frame rate by wait `delay' ms.
-      baseTimeMs += updateMs;
-      long delay = (int) (baseTimeMs - SystemClock.uptimeMillis());
-//      Log.i(TAG, "delay = " + delay);
-      if (delay > 0) {
-        try {
-          Thread.sleep(delay);
-        } catch (InterruptedException e) {
-          Log.i(TAG, "Sleep interrupted");  // seems never reached
-        }
-      } else {
-        baseTimeMs -= delay;  // get current time
-        // Log.i(TAG, "time: cmp t="+Long.toString(SystemClock.uptimeMillis())
-        //            + " v.s. t'=" + Long.toString(baseTimeMs));
-      }
-    }
-    
-    // generate test data
-    private int readTestData(short[] a, int offsetInShorts, int sizeInShorts, int id) {
-      if (mdata == null || mdata.length != sizeInShorts) {
-        mdata = new double[sizeInShorts];
-      }
-      Arrays.fill(mdata, 0.0);
-      switch (id - 1000) {
-        case 1:
-          sineGen2.getSamples(mdata);
-        case 0:
-          sineGen1.addSamples(mdata);
-          for (int i = 0; i < sizeInShorts; i++) {
-            a[offsetInShorts + i] = (short) Math.round(mdata[i]);
-          }
-          break;
-        case 2:
-          for (int i = 0; i < sizeInShorts; i++) {
-            a[i] = (short) (SAMPLE_VALUE_MAX * (2.0*Math.random() - 1));
-          }
-          break;
-        default:
-          Log.w(TAG, "readTestData(): No this source id = " + audioSourceId);
-      }
-      LimitFrameRate(1000.0*sizeInShorts / sampleRate);
-      return sizeInShorts;
-    }
-
-    @Override
-    public void run() {
-      setupView();
-      // Wait until previous instance of AudioRecord fully released.
-      SleepWithoutInterrupt(500);
-
-      int minBytes = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                                                  AudioFormat.ENCODING_PCM_16BIT);
-      if (minBytes == AudioRecord.ERROR_BAD_VALUE) {
-        Log.e(TAG, "Looper::run(): Invalid AudioRecord parameter.\n");
-        return;
-      }
-
-      /**
-       * Develop -> Reference -> AudioRecord
-       *    Data should be read from the audio hardware in chunks of sizes
-       *    inferior to the total recording buffer size.
-       */
-      // Determine size of buffers for AudioRecord and AudioRecord::read()
-      int readChunkSize    = fftLen/2;  // /2 due to overlapped analyze window
-      readChunkSize        = Math.min(readChunkSize, 2048);  // read in a smaller chunk, hopefully smaller delay
-      int bufferSampleSize = Math.max(minBytes / BYTE_OF_SAMPLE, fftLen/2) * 2;
-      // tolerate up to about 1 sec.
-      bufferSampleSize = (int)Math.ceil(1.0 * sampleRate / bufferSampleSize) * bufferSampleSize; 
-
-      // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
-      // The buffer size here seems not relate to the delay.
-      // So choose a larger size (~1sec) so that overrun is unlikely.
-      if (audioSourceId < 1000) {
-        record = new AudioRecord(audioSourceId, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                                 AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
-      } else {
-        record = new AudioRecord(RECORDER_AGC_OFF, sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                                 AudioFormat.ENCODING_PCM_16BIT, BYTE_OF_SAMPLE * bufferSampleSize);
-      }
-      Log.i(TAG, "Looper::Run(): Starting recorder... \n" +
-        "  source          : " + (audioSourceId<1000?getAudioSourceNameFromId(audioSourceId):audioSourceId) + "\n" +
-        String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), sampleRate) +
-        String.format("  min buffer size : %d samples, %d Bytes\n", minBytes / BYTE_OF_SAMPLE, minBytes) +
-        String.format("  buffer size     : %d samples, %d Bytes\n", bufferSampleSize, BYTE_OF_SAMPLE*bufferSampleSize) +
-        String.format("  read chunk size : %d samples, %d Bytes\n", readChunkSize, BYTE_OF_SAMPLE*readChunkSize) +
-        String.format("  FFT length      : %d\n", fftLen) +
-        String.format("  nFFTAverage     : %d\n", nFFTAverage));
-      sampleRate = record.getSampleRate();
-
-      if (record.getState() == AudioRecord.STATE_UNINITIALIZED) {
-        Log.e(TAG, "Looper::run(): Fail to initialize AudioRecord()");
-        // If failed somehow, leave user a chance to change preference.
-        return;
-      }
-
-      short[] audioSamples = new short[readChunkSize];
-      int numOfReadShort;
-
-      stft = new STFT(fftLen, sampleRate, wndFuncName);
-      stft.setAWeighting(isAWeighting);
-      if (spectrumDBcopy == null || spectrumDBcopy.length != fftLen/2+1) {
-        spectrumDBcopy = new double[fftLen/2+1];
-      }
-
-      RecorderMonitor recorderMonitor = new RecorderMonitor(sampleRate, bufferSampleSize, "Looper::run()");
-      recorderMonitor.start();
-      
-//      FramesPerSecondCounter fpsCounter = new FramesPerSecondCounter("Looper::run()");
-      
-      WavWriter wavWriter = new WavWriter(sampleRate);
-      boolean bSaveWavLoop = bSaveWav;  // change of bSaveWav during loop will only affect next enter.
-      if (bSaveWavLoop) {
-        wavWriter.start();
-        wavSecRemain = wavWriter.secondsLeft();
-        wavSec = 0;
-        wavSecOld = 0;
-        Log.i(TAG, "PCM write to file " + wavWriter.getPath());
-      }
-
-      // Start recording
-      record.startRecording();
-
-      // Main loop
-      // When running in this loop (including when paused), you can not change properties
-      // related to recorder: e.g. audioSourceId, sampleRate, bufferSampleSize
-      // TODO: allow change of FFT length on the fly.
-      while (isRunning) {
-        // Read data
-        if (audioSourceId >= 1000) {
-          numOfReadShort = readTestData(audioSamples, 0, readChunkSize, audioSourceId);
-        } else {
-          numOfReadShort = record.read(audioSamples, 0, readChunkSize);   // pulling
-        }
-        if ( recorderMonitor.updateState(numOfReadShort) ) {  // performed a check
-          if (recorderMonitor.getLastCheckOverrun())
-            notifyOverrun();
-          if (bSaveWavLoop)
-            wavSecRemain = wavWriter.secondsLeft();
-        }
-        if (bSaveWavLoop) {
-          wavWriter.pushAudioShort(audioSamples, numOfReadShort);  // Maybe move this to another thread?
-          wavSec = wavWriter.secondsWritten();
-          updateRec();
-        }
-        if (isPaused1) {
-//          fpsCounter.inc();
-          // keep reading data, for overrun checker and for write wav data
-          continue;
-        }
-
-        stft.feedData(audioSamples, numOfReadShort);
-
-        // If there is new spectrum data, do plot
-        if (stft.nElemSpectrumAmp() >= nFFTAverage) {
-          // Update spectrum or spectrogram
-          final double[] spectrumDB = stft.getSpectrumAmpDB();
-          System.arraycopy(spectrumDB, 0, spectrumDBcopy, 0, spectrumDB.length);
-          update(spectrumDBcopy);
-//          fpsCounter.inc();
-          
-          stft.calculatePeak();
-          maxAmpFreq = stft.maxAmpFreq;
-          maxAmpDB = stft.maxAmpDB;
-          
-          // get RMS
-          dtRMS = stft.getRMS();
-          dtRMSFromFT = stft.getRMSFromFT();
-        }
-      }
-      Log.i(TAG, "Looper::Run(): Actual sample rate: " + recorderMonitor.getSampleRate());
-      Log.i(TAG, "Looper::Run(): Stopping and releasing recorder.");
-      record.stop();
-      record.release();
-      record = null;
-      if (bSaveWavLoop) {
-        Log.i(TAG, "Looper::Run(): Ending saved wav.");
-        wavWriter.stop();
-        notifyWAVSaved(wavWriter.relativeDir);
-      }
-    }
-    
-    long lastTimeNotifyOverrun = 0;
-    private void notifyOverrun() {
-      if (!bWarnOverrun) {
-        return;
-      }
-      long t = SystemClock.uptimeMillis();
-      if (t - lastTimeNotifyOverrun > 6000) {
-        lastTimeNotifyOverrun = t;
-        AnalyzeActivity.this.runOnUiThread(new Runnable() {
-          @Override
-          public void run() {
-            Context context = getApplicationContext();
-            String text = "Recorder buffer overrun!\nYour cell phone is too slow.\nTry lower sampling rate or higher average number.";
-            Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
-            toast.show();
-          }
-        });
-      }
-    }
-
-    private void notifyWAVSaved(final String path) {
-      AnalyzeActivity.this.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          Context context = getApplicationContext();
-          String text = "WAV saved to " + path;
-          Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
-          toast.show();
-        }
-      });
-    }
-
-    private void update(final double[] data) {
-      if (graphView.getShowMode() == 1) {
-        // data is synchronized here
-        graphView.saveRowSpectrumAsColor(spectrumDBcopy);
-      }
-      AnalyzeActivity.this.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          if (graphView.getShowMode() == 0) {
-            graphView.saveSpectrum(spectrumDBcopy);
-          }
-          // data will get out of synchronize here
-          AnalyzeActivity.this.invalidateGraphView();
-        }
-      });
-    }
-    
-    private void updateRec() {
-      if (wavSec - wavSecOld < 0.1) {
-        return;
-      }
-      wavSecOld = wavSec;
-      AnalyzeActivity.this.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          // data will get out of synchronize here
-          AnalyzeActivity.this.invalidateGraphView(VIEW_MASK_RecTimeLable);
-        }
-      });
-    }
-    
-    private void setupView() {
-      // Maybe move these out of this class
-      RectF bounds = graphView.getBounds();
-      bounds.right = sampleRate / 2;
-      graphView.setBounds(bounds);
-      graphView.setupSpectrogram(sampleRate, fftLen, timeDurationPref);
-      graphView.setTimeMultiplier(nFFTAverage);
-    }
-
-    public void setPause(boolean pause) {
-      this.isPaused1 = pause;
-    }
-
-    public boolean getPause() {
-      return this.isPaused1;
-    }
-    
-    public void finish() {
-      isRunning = false;
-      interrupt();
-    }
   }
 
   private void vibrate(int ms) {

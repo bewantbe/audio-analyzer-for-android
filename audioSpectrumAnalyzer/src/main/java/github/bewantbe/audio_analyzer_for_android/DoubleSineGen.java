@@ -25,7 +25,7 @@ package github.bewantbe.audio_analyzer_for_android;
  * w = 2 pi f / fs
  */
 
-public class DoubleSineGen {
+class DoubleSineGen {
   private double fs; 	// sampling frequency
   private double k;	// recursion constant
   private double n0, n1;	// first (next) 2 samples
@@ -37,7 +37,7 @@ public class DoubleSineGen {
    * @param a       Amplitude
    */
 
-  public DoubleSineGen(double f, double fs, double a) {
+  DoubleSineGen(double f, double fs, double a) {
     this.fs = fs;
     double w = 2.0 * Math.PI * f / fs;
     this.n0 = 0d;
@@ -75,7 +75,7 @@ public class DoubleSineGen {
    * @param count		# of samples (must be even)
    */
 
-  public void getSamples(double[] samples, int start, int count) {
+  void getSamples(double[] samples, int start, int count) {
     for(int cnt = start; cnt < count; cnt += 2) {
       samples[cnt] = n0 = (k * n1) - n0;
       samples[cnt + 1] = n1 = (k * n0) - n1;
@@ -86,7 +86,7 @@ public class DoubleSineGen {
    * Fill the supplied (even length) array with samples.
    */
 
-  public void getSamples(double[] samples) {
+  void getSamples(double[] samples) {
     getSamples(samples, 0, samples.length);
   }
 
@@ -96,7 +96,7 @@ public class DoubleSineGen {
    * @param start		Start sample
    * @param count		# of samples (must be even)
    */
-  public void addSamples(double[] samples, int start, int count) {
+  void addSamples(double[] samples, int start, int count) {
     for(int cnt=start; cnt<count; cnt+=2) {
       samples[cnt] += n0 = (k * n1) - n0;
       samples[cnt + 1] += n1 = (k * n0) - n1;
@@ -106,7 +106,7 @@ public class DoubleSineGen {
   /**
    * Add samples to the supplied (even length) array.
    */
-  public void addSamples(double[] samples) {
+  void addSamples(double[] samples) {
     addSamples(samples, 0, samples.length);
   }
   
