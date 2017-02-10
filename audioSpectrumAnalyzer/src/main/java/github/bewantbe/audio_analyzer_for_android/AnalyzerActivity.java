@@ -130,9 +130,9 @@ public class AnalyzerActivity extends Activity
     // spectrum
     analyzerViews.graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
     // set spectrum show range
-    float b = analyzerViews.graphView.getBounds().bottom;
-    b = Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(b)));
-    analyzerViews.graphView.setBoundsBottom(b);
+    analyzerViews.graphView.setSpectrumDBLowerBound(
+            Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(AnalyzerGraphic.minDB)))
+    );
 
     // spectrogram
     analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
@@ -140,9 +140,10 @@ public class AnalyzerActivity extends Activity
     analyzerViews.graphView.setShowFreqAlongX         (sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
     analyzerViews.graphView.setSmoothRender           (sharedPref.getBoolean("spectrogramSmoothRender", false));
     // set spectrogram show range
-    double d = analyzerViews.graphView.getLowerBound();
-    d = Double.parseDouble(sharedPref.getString("spectrogramRange", Double.toString(d)));
-    analyzerViews.graphView.setLowerBound(d);
+    analyzerViews.graphView.setSpectrogramDBLowerBound(
+            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))
+    );
+
     analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
 
     // Travel the views with android:tag="select" to get default setting values
@@ -503,7 +504,7 @@ public class AnalyzerActivity extends Activity
         isPinching = false;
         break;
       default:
-        Log.v(TAG, "Invalid touch count");
+        Log.i(TAG, "Invalid touch count");
         break;
     }
   }
@@ -579,7 +580,7 @@ public class AnalyzerActivity extends Activity
         if (value.equals("spum")) {
           analyzerViews.graphView.switch2Spectrum();
         } else {
-          analyzerViews.graphView.switch2Spectrogram(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref);
+          analyzerViews.graphView.switch2Spectrogram();
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
         editor.commit();

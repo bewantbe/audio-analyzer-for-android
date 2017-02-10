@@ -20,8 +20,8 @@ class GridLabel {
 //    private char[][] gridPoints2stT  = new char[0][];
 
     // Never null!
-    double[] values = new double[0];  // values
-    double[] ticks  = new double[0];  // never null!
+    double[] values = new double[0];  // TODO: use a better name?
+    double[] ticks  = new double[0];  // TODO: use a better name?
 
     enum GridScaleType {  // java's enum type is inconvenient
         FREQ(0), DB(1), TIME(2);
@@ -137,29 +137,19 @@ class GridLabel {
 
     }
 
-    //private double[][] oldGridPointBoundaryArray = new double[3][2];
-
     StringBuilder[] strings = new StringBuilder[0];
     char[][] chars = new char[0][];
-    private double[] oldGridBoundary = new double[2];
 
-//    private double[][][] gridPointsArray = {gridPoints2, gridPoints2dB, gridPoints2T};
-    // private StringBuilder[][] gridPointsStrArray = new StringBuilder[3][0];
-    // private char[][][] gridPointsStArray = new char[3][0][];
+    private double[] oldGridBoundary = new double[2];
+    private double[][] gridPointsArray = new double[2][];
 
     // It's so ugly to write these StringBuffer stuff -- in order to reduce garbage
     // Also, since there is no "pass by reference", modify array is also ugly...
     void updateGridLabels(double startValue, double endValue) {
         int scale_mode_id = gridType.getValue();
-        // double[][] gridPoints = gridPointsArray[scale_mode_id];
-        // StringBuilder[] strings = gridPointsStrArray[scale_mode_id];
-        // char[][] chars = gridPointsStArray[scale_mode_id];
-        // double[] oldGridPointBoundary = oldGridPointBoundaryArray[scale_mode_id];
-
-        double[][] gridPoints = new double[2][];
-        gridPoints[0] = values;
-        gridPoints[1] = ticks;
-        genLinearGridPoints(gridPoints, startValue, endValue, gridDensity, scale_mode_id);
+        gridPointsArray[0] = values;
+        gridPointsArray[1] = ticks;
+        genLinearGridPoints(gridPointsArray, startValue, endValue, gridDensity, scale_mode_id);
         boolean needUpdate = false;
         if (values.length != strings.length) {
             strings = new StringBuilder[values.length];

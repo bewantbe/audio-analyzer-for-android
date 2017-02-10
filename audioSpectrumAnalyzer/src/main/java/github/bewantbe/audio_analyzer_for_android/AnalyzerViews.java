@@ -109,11 +109,7 @@ class AnalyzerViews {
 
     void setupView(AnalyzerParameters analyzerParam) {
         // Maybe move these out of this class
-        RectF bounds = graphView.getBounds();
-        bounds.right = analyzerParam.sampleRate / 2;
-        graphView.setBounds(bounds);
-        graphView.setupSpectrogram(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref);
-        graphView.setTimeMultiplier(analyzerParam.nFFTAverage);
+        graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
     }
 
     // Will be called by SamplingLoop (in another thread)
