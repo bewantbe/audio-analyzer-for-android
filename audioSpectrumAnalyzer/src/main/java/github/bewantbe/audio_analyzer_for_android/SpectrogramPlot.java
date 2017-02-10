@@ -73,14 +73,17 @@ class SpectrogramPlot {
 
         cursorFreq = 0f;
 
-        fqGridLabel = new GridLabel(GridLabel.GridScaleType.FREQ, canvasWidth  * gridDensity / DPRatio);
-        tmGridLabel = new GridLabel(GridLabel.GridScaleType.TIME, canvasHeight * gridDensity / DPRatio);
+        fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth  * gridDensity / DPRatio);
+        tmGridLabel = new GridLabel(GridLabel.Type.TIME, canvasHeight * gridDensity / DPRatio);
 
         axisFreq = new ScreenPhysicalMapping(0, 0, 0, ScreenPhysicalMapping.Type.LINEAR);
         axisTime = new ScreenPhysicalMapping(0, 0, 0, ScreenPhysicalMapping.Type.LINEAR);
+
+        Log.i(TAG, "SpectrogramPlot() initialized");
     }
 
     void setCanvas(int _canvasWidth, int _canvasHeight, RectF axisBounds) {
+        Log.i(TAG, "setCanvas() ...");
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
         if (axisBounds != null) {
@@ -104,11 +107,13 @@ class SpectrogramPlot {
                 axisFreq.setNCanvasPixel(labelBeginY);
             }
         }
-        fqGridLabel = new GridLabel(GridLabel.GridScaleType.FREQ, canvasWidth  * gridDensity / DPRatio);
-        tmGridLabel = new GridLabel(GridLabel.GridScaleType.TIME, canvasHeight * gridDensity / DPRatio);
+        fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth  * gridDensity / DPRatio);
+        tmGridLabel = new GridLabel(GridLabel.Type.TIME, canvasHeight * gridDensity / DPRatio);
+        Log.i(TAG, "setCanvas() ... done");
     }
 
     void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
+        Log.i(TAG, "setZooms() ...");
         if (showFreqAlongX) {
             axisFreq.setZoomShift(xZoom, xShift);
             axisTime.setZoomShift(yZoom, yShift);
@@ -116,9 +121,11 @@ class SpectrogramPlot {
             axisFreq.setZoomShift(yZoom, yShift);
             axisTime.setZoomShift(xZoom, xShift);
         }
+        Log.i(TAG, "setZooms() ... done");
     }
 
     void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE, int nAve) {
+        Log.i(TAG, "setupSpectrogram() ...");
         timeWatch = timeDurationE;
         timeMultiplier = nAve;
         double timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
@@ -144,15 +151,16 @@ class SpectrogramPlot {
                 "\n  sampleRate    = " + sampleRate +
                 "\n  fftLen        = " + fftLen +
                 "\n  timeDurationE = " + timeDurationE);
+        Log.i(TAG, "setupSpectrogram() ... done");
     }
-
-    private GridLabel[] gridLabelArray = {fqGridLabel, fqGridLabel, tmGridLabel};
 
     // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
     // drawOnXAxis == true : draw on X axis, otherwise Y axis
     private void drawAxis(Canvas c, float labelBeginX, float labelBeginY, float ng, boolean drawOnXAxis,
-                          float axisMin, float axisMax, GridLabel.GridScaleType scale_mode) {
+                          float axisMin, float axisMax, GridLabel.Type scale_mode) {
         int scale_mode_id = scale_mode.getValue();
+        Log.i(TAG, "drawAxis()" + " labelBeginX=" + labelBeginX + " labelBeginY=" + labelBeginY + " drawOnXAxis=" + drawOnXAxis
+                + " axisMin=" + axisMin + " axisMax=" + axisMax + "  gt="+scale_mode_id);
         float canvasMin;
         float canvasMax;
         if (drawOnXAxis) {
@@ -162,13 +170,9 @@ class SpectrogramPlot {
             canvasMin = labelBeginY;
             canvasMax = 0;
         }
-//        updateGridLabels(axisMin, axisMax, ng, scale_mode);
+        GridLabel[] gridLabelArray = {fqGridLabel, null, tmGridLabel};
         gridLabelArray[scale_mode_id].updateGridLabels(axisMin, axisMax);
         String axisLabel = axisLabels[scale_mode_id];
-
-//        double[][]      gridPoints    = gridPointsArray[scale_mode_id];
-//        StringBuilder[] gridPointsStr = gridPointsStrArray[scale_mode_id];
-//        char[][]        gridPointsSt  = gridPointsStArray[scale_mode_id];
 
         double[][] gridPoints = {gridLabelArray[scale_mode_id].values, gridLabelArray[scale_mode_id].ticks};
         StringBuilder[] gridPointsStr = gridLabelArray[scale_mode_id].strings;
@@ -231,10 +235,10 @@ class SpectrogramPlot {
     private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, float nt, boolean drawOnXAxis) {
         if (showFreqAlongX ^ (showModeSpectrogram == 0)) {
             drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
-                    getTimeMax(), getTimeMin(), GridLabel.GridScaleType.TIME);
+                    getTimeMax(), getTimeMin(), GridLabel.Type.TIME);
         } else {
             drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
-                    getTimeMin(), getTimeMax(), GridLabel.GridScaleType.TIME);
+                    getTimeMin(), getTimeMax(), GridLabel.Type.TIME);
         }
     }
 
@@ -243,7 +247,7 @@ class SpectrogramPlot {
     // nx: number of grid lines on average
     private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, float nx, boolean drawOnXAxis) {
         drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
-                getFreqMin(), getFreqMax(), GridLabel.GridScaleType.FREQ);
+                getFreqMin(), getFreqMax(), GridLabel.Type.FREQ);
     }
 
     private float getTimeMin() {

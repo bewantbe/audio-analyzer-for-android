@@ -7,7 +7,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
-import android.util.Log;
 
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
@@ -60,8 +59,8 @@ class SpectrumPlot {
 
         cursorFreq = cursorDB = 0f;
 
-        fqGridLabel = new GridLabel(GridLabel.GridScaleType.FREQ, canvasWidth * gridDensity / DPRatio);
-        dbGridLabel = new GridLabel(GridLabel.GridScaleType.DB,   canvasHeight * gridDensity / DPRatio);
+        fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth * gridDensity / DPRatio);
+        dbGridLabel = new GridLabel(GridLabel.Type.DB,   canvasHeight * gridDensity / DPRatio);
 
         axisX = new ScreenPhysicalMapping(0, 0, 0, ScreenPhysicalMapping.Type.LINEAR);
         axisY = new ScreenPhysicalMapping(0, 0, 0, ScreenPhysicalMapping.Type.LINEAR);
@@ -71,8 +70,8 @@ class SpectrumPlot {
 //        Log.i("SpectrumPlot", "setCanvas: W="+_canvasWidth+"  H="+_canvasHeight);
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
-        fqGridLabel = new GridLabel(GridLabel.GridScaleType.FREQ, canvasWidth * gridDensity / DPRatio);
-        dbGridLabel = new GridLabel(GridLabel.GridScaleType.DB,   canvasHeight * gridDensity / DPRatio);
+        fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth * gridDensity / DPRatio);
+        dbGridLabel = new GridLabel(GridLabel.Type.DB,   canvasHeight * gridDensity / DPRatio);
         if (axisBounds != null) {
             axisX = new ScreenPhysicalMapping(canvasWidth,
                     axisBounds.left, axisBounds.right, ScreenPhysicalMapping.Type.LINEAR);

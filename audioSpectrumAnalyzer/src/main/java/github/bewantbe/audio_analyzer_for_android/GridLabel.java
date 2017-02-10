@@ -23,18 +23,18 @@ class GridLabel {
     double[] values = new double[0];  // TODO: use a better name?
     double[] ticks  = new double[0];  // TODO: use a better name?
 
-    enum GridScaleType {  // java's enum type is inconvenient
+    enum Type {  // java's enum type is inconvenient
         FREQ(0), DB(1), TIME(2);
 
         private final int value;
-        private GridScaleType(int value) { this.value = value; }
+        private Type(int value) { this.value = value; }
         public int getValue() { return value; }
     }
 
-    private GridScaleType gridType;
+    private Type gridType;
     private float gridDensity;
 
-    GridLabel(GridScaleType _gridType, float _gridDensity) {
+    GridLabel(Type _gridType, float _gridDensity) {
         gridType = _gridType;
         gridDensity = _gridDensity;
     }
@@ -146,7 +146,6 @@ class GridLabel {
     // It's so ugly to write these StringBuffer stuff -- in order to reduce garbage
     // Also, since there is no "pass by reference", modify array is also ugly...
     void updateGridLabels(double startValue, double endValue) {
-//        Log.i("GridLabel(): ", "startValue="+startValue+"  endValue="+endValue+"  values.length="+values.length+"  strings.length="+strings.length+"  ticks.length="+ticks.length);
         int scale_mode_id = gridType.getValue();
         gridPointsArray[0] = values;
         gridPointsArray[1] = ticks;
