@@ -146,10 +146,14 @@ class GridLabel {
     // It's so ugly to write these StringBuffer stuff -- in order to reduce garbage
     // Also, since there is no "pass by reference", modify array is also ugly...
     void updateGridLabels(double startValue, double endValue) {
+//        Log.i("GridLabel(): ", "startValue="+startValue+"  endValue="+endValue+"  values.length="+values.length+"  strings.length="+strings.length+"  ticks.length="+ticks.length);
         int scale_mode_id = gridType.getValue();
         gridPointsArray[0] = values;
         gridPointsArray[1] = ticks;
         genLinearGridPoints(gridPointsArray, startValue, endValue, gridDensity, scale_mode_id);
+        values = gridPointsArray[0];
+        ticks  = gridPointsArray[1];
+//        Log.i("GridLabel(): ", "  values.length="+values.length+"  ticks.length="+ticks.length);
         boolean needUpdate = false;
         if (values.length != strings.length) {
             strings = new StringBuilder[values.length];
@@ -179,5 +183,4 @@ class GridLabel {
             }
         }
     }
-
 }

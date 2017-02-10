@@ -135,7 +135,7 @@ class SamplingLoop extends Thread {
         // tolerate up to about 1 sec.
         bufferSampleSize = (int)Math.ceil(1.0 * analyzerParam.sampleRate / bufferSampleSize) * bufferSampleSize;
 
-        // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION
+        // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION for measurement
         // The buffer size here seems not relate to the delay.
         // So choose a larger size (~1sec) so that overrun is unlikely.
         if (analyzerParam.audioSourceId < 1000) {

@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.util.Log;
 
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
@@ -16,6 +17,7 @@ import static java.lang.Math.floor;
  */
 
 class SpectrumPlot {
+    static final String TAG = "SpectrumPlot";
     boolean showLines;
     private Paint linePaint, linePaintLight;
     private Paint cursorPaint;
@@ -66,6 +68,7 @@ class SpectrumPlot {
     }
 
     void setCanvas(int _canvasWidth, int _canvasHeight, RectF axisBounds) {
+//        Log.i("SpectrumPlot", "setCanvas: W="+_canvasWidth+"  H="+_canvasHeight);
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
         fqGridLabel = new GridLabel(GridLabel.GridScaleType.FREQ, canvasWidth * gridDensity / DPRatio);
@@ -301,8 +304,12 @@ class SpectrumPlot {
 
     // Plot spectrum with axis and ticks on the whole canvas c
     void drawSpectrumPlot(Canvas c, double[] savedDBSpectrum) {
+//        Log.i(TAG, "drawSpectrumPlot(): axisX nC="+axisX.nCanvasPixel+" vL="+axisX.vLowerBound+" vH="+axisX.vHigherBound+" Z="+axisX.zoom+" S="+axisX.shift);
+//        Log.i(TAG, "drawSpectrumPlot(): axisY nC="+axisY.nCanvasPixel+" vL="+axisY.vLowerBound+" vH="+axisY.vHigherBound+" Z="+axisY.zoom+" S="+axisY.shift);
         fqGridLabel.updateGridLabels(axisX.vMinInView(), axisX.vMaxInView());
         dbGridLabel.updateGridLabels(axisY.vMinInView(), axisY.vMaxInView());
+//        Log.i(TAG, "drawSpectrumPlot(): fqGridLabel.values.length = " + fqGridLabel.values.length);
+//        Log.i(TAG, "drawSpectrumPlot(): dbGridLabel.values.length = " + dbGridLabel.values.length);
         drawGridLines(c);
         drawSpectrumOnCanvas(c, savedDBSpectrum);
         drawCursor(c);
