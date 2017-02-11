@@ -86,25 +86,25 @@ class SpectrogramPlot {
         Log.i(TAG, "setCanvas() ...");
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
-        if (axisBounds != null) {
-            if (showFreqAlongX) {  // TODO: canvasWidth, canvasHeight - some magin
-                axisFreq = new ScreenPhysicalMapping(canvasWidth - labelBeginX,
-                        axisBounds.left, axisBounds.right, ScreenPhysicalMapping.Type.LINEAR);
-                axisTime = new ScreenPhysicalMapping(labelBeginY,
-                        axisBounds.top, axisBounds.bottom, ScreenPhysicalMapping.Type.LINEAR);
-            } else {
-                axisTime = new ScreenPhysicalMapping(canvasWidth - labelBeginX,
-                        axisBounds.left, axisBounds.right, ScreenPhysicalMapping.Type.LINEAR);
-                axisFreq = new ScreenPhysicalMapping(labelBeginY,
-                        axisBounds.top, axisBounds.bottom, ScreenPhysicalMapping.Type.LINEAR);
-            }
+        if (showFreqAlongX) {
+            axisFreq.setNCanvasPixel(canvasWidth - labelBeginX);
+            axisTime.setNCanvasPixel(labelBeginY);
         } else {
+            axisTime.setNCanvasPixel(canvasWidth - labelBeginX);
+            axisFreq.setNCanvasPixel(labelBeginY);
+        }
+        if (axisBounds != null) {
             if (showFreqAlongX) {
-                axisFreq.setNCanvasPixel(canvasWidth - labelBeginX);
-                axisTime.setNCanvasPixel(labelBeginY);
+                axisFreq.setBounds(axisBounds.left, axisBounds.right);
+                axisTime.setBounds(axisBounds.top,  axisBounds.bottom);
             } else {
-                axisTime.setNCanvasPixel(canvasWidth - labelBeginX);
-                axisFreq.setNCanvasPixel(labelBeginY);
+                axisTime.setBounds(axisBounds.left, axisBounds.right);
+                axisFreq.setBounds(axisBounds.top,  axisBounds.bottom);
+            }
+            if (showModeSpectrogram == 0) {
+                float b1 = axisTime.vLowerBound;
+                float b2 = axisTime.vHigherBound;
+                axisTime.setBounds(b2, b1);
             }
         }
         fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth  * gridDensity / DPRatio);
@@ -159,8 +159,6 @@ class SpectrogramPlot {
     private void drawAxis(Canvas c, float labelBeginX, float labelBeginY, float ng, boolean drawOnXAxis,
                           float axisMin, float axisMax, GridLabel.Type scale_mode) {
         int scale_mode_id = scale_mode.getValue();
-        Log.i(TAG, "drawAxis()" + " labelBeginX=" + labelBeginX + " labelBeginY=" + labelBeginY + " drawOnXAxis=" + drawOnXAxis
-                + " axisMin=" + axisMin + " axisMax=" + axisMax + "  gt="+scale_mode_id);
         float canvasMin;
         float canvasMax;
         if (drawOnXAxis) {
@@ -233,7 +231,11 @@ class SpectrogramPlot {
     // Draw time axis for spectrogram
     // Working in the original canvas frame
     private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, float nt, boolean drawOnXAxis) {
-        if (showFreqAlongX ^ (showModeSpectrogram == 0)) {
+//            Log.i(TAG, "drawTimeAxis(): max=" + getTimeMax() + "  min=" + getTimeMin());
+//        drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
+//                getTimeMax(), getTimeMin(), GridLabel.Type.TIME);
+
+        if (showFreqAlongX) {
             drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
                     getTimeMax(), getTimeMin(), GridLabel.Type.TIME);
         } else {
@@ -246,8 +248,13 @@ class SpectrogramPlot {
     // Working in the original canvas frame
     // nx: number of grid lines on average
     private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, float nx, boolean drawOnXAxis) {
-        drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
-                getFreqMin(), getFreqMax(), GridLabel.Type.FREQ);
+        if (showFreqAlongX) {
+            drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
+                    getFreqMin(), getFreqMax(), GridLabel.Type.FREQ);
+        } else {
+            drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
+                    getFreqMax(), getFreqMin(), GridLabel.Type.FREQ);
+        }
     }
 
     private float getTimeMin() {
@@ -327,6 +334,12 @@ class SpectrogramPlot {
     }
 
     void setSpectrogramModeShifting(boolean b) {
+        if ((showModeSpectrogram==0) != b) {
+            // mode change, swap time bounds.
+            float b1 = axisTime.vLowerBound;
+            float b2 = axisTime.vHigherBound;
+            axisTime.setBounds(b2, b1);
+        }
         if (b) {
             showModeSpectrogram = 0;
         } else {

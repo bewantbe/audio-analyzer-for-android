@@ -96,7 +96,6 @@ public class AnalyzerGraphic extends View {
     yZoom=1f;
     yShift=0f;
     canvasWidth = canvasHeight = 0;
-//    axisBounds = new RectF(0.0f, 0.0f, 8000.0f, -120.0f);
 
     // Demo of full initialization
     spectrumPlot    = new SpectrumPlot(context);
@@ -110,26 +109,6 @@ public class AnalyzerGraphic extends View {
 
     spectrumPlot.axisY.vLowerBound = minDB;
   }
-
-//  public void setBounds(RectF bounds) {
-//    this.axisBounds = bounds;
-//  }
-//
-//  public void setBoundsBottom(float b) {
-//    this.axisBounds.bottom = b;
-//  }
-//
-//  public void setLowerBound(double b) {
-//    this.spectrogramPlot.dBLowerBound = b;
-//  }
-//
-//  public RectF getBounds() {
-//    return new RectF(axisBounds);
-//  }
-//
-//  public double getLowerBound() {
-//    return spectrogramPlot.dBLowerBound;
-//  }
 
   void setSpectrumDBLowerBound(float b) {
     spectrumPlot.axisY.vHigherBound = b;
@@ -202,43 +181,21 @@ public class AnalyzerGraphic extends View {
     spectrogramPlot.hideCursor();
   }
 
-//  // In the original canvas view frame
-//  private void drawCursor(Canvas c) {
-//    if (showMode == 0) {
-//      spectrumPlot.drawCursor(c);
-//    } else {
-//      spectrogramPlot.drawCursor(c);
-//    }
-//  }
+  public float getFreqMax() {
+    if (showMode == 0) {
+      return spectrumPlot.getFreqMax();
+    } else {
+      return spectrogramPlot.getFreqMax();
+    }
+  }
 
-//  // In axis frame
-//  public float getMaxY() {
-//    return canvasHeight == 0 ? 0 : axisBounds.height() * yShift;
-//  }
-//
-//  public float getMinY() {
-//    return canvasHeight == 0 ? 0 : axisBounds.height() * (yShift + 1 / yZoom);
-//  }
-//
-//  public float getFreqBound() {
-//    return axisBounds.width();
-//  }
-//
-//  public float getFreqMax() {
-//    if (showMode == 0) {
-//      return spectrumPlot.getFreqMax();
-//    } else {
-//      return spectrogramPlot.getFreqMax();
-//    }
-//  }
-//
-//  public float getFreqMin() {
-//    if (showMode == 0) {
-//      return spectrumPlot.getFreqMin();
-//    } else {
-//      return spectrogramPlot.getFreqMin();
-//    }
-//  }
+  public float getFreqMin() {
+    if (showMode == 0) {
+      return spectrumPlot.getFreqMin();
+    } else {
+      return spectrogramPlot.getFreqMin();
+    }
+  }
 
   public float getXZoom() {
     return xZoom;
@@ -354,7 +311,7 @@ public class AnalyzerGraphic extends View {
         limitYZoom = spectrogramPlot.axisFreq.diffVBounds()/200f;
       }
     }
-    Log.i(TAG, "setShiftScale: limit: xZ="+limitXZoom+"  yZ="+limitYZoom);
+//    Log.i(TAG, "setShiftScale: limit: xZ="+limitXZoom+"  yZ="+limitYZoom);
     if (canvasWidth*0.13f < xDiffOld) {  // if fingers are not very close in x direction, do scale in x direction
       xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, limitXZoom);
     }
@@ -363,7 +320,7 @@ public class AnalyzerGraphic extends View {
       yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, limitYZoom);
     }
     yShift = clampYShift(yShiftOld + (yMidOld/yZoomOld - (y1+y2)/2f/yZoom) / canvasHeight);
-    Log.i(TAG, "setShiftScale: xZ="+xZoom+"  xS="+xShift+"  yZ="+yZoom+"  yS="+yShift);
+//    Log.i(TAG, "setShiftScale: xZ="+xZoom+"  xS="+xShift+"  yZ="+yZoom+"  yS="+yShift);
     updateAxisZoomShift();
   }
 
@@ -558,17 +515,7 @@ public class AnalyzerGraphic extends View {
       this.spectrogramPlot.spectrogramColorsShifting = new int[this.spectrogramPlot.spectrogramColors.length];
 
       // Will constructor of this class been called?
-      if (spectrumPlot == null || spectrumPlot.axisX == null) {
-        Log.w(TAG, "onRestoreInstanceState() reinitialize spectrumPlot and spectrogramPlot");
-        spectrumPlot = new SpectrumPlot(context);
-        spectrogramPlot = new SpectrogramPlot(context);
-
-        spectrumPlot.setCanvas(canvasWidth, canvasHeight, null);
-        spectrogramPlot.setCanvas(canvasWidth, canvasHeight, null);
-
-        spectrumPlot.setZooms(xZoom, xShift, yZoom, yShift);
-        spectrogramPlot.setZooms(xZoom, xShift, yZoom, yShift);
-      }
+      // spectrumPlot == null || spectrumPlot.axisX == null is always false
 
       Log.i(TAG, "onRestoreInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
     } else {
@@ -615,7 +562,8 @@ public class AnalyzerGraphic extends View {
       out.writeInt(nsc);
       out.writeInt(nFP);
       out.writeInt(nSCP);
-      out.writeIntArray(tmpSC);
+      out.writeIntArray(tmpSC);  // TODO: consider use compress
+      // https://developer.android.com/reference/java/util/zip/Deflater.html
     }
 
     public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {

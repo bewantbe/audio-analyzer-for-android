@@ -37,20 +37,25 @@ class ScreenPhysicalMapping {
         nCanvasPixel = _nCanvasPixel;
     }
 
+    void setBounds(float _vLowerBound, float _vHigherBound) {
+        vLowerBound  = _vLowerBound;
+        vHigherBound = _vHigherBound;
+    }
+
     void setZoomShift(float _zoom, float _shift) {
         zoom = _zoom;
         shift = _shift;
     }
 
     //  | lower bound    ...       higher bound |     physcial unit
-    //  | 0              ...                  1 |     "unit 1"
+    //  | 0              ...                  1 |     "unit 1" (Mapping can be linear or log)
 
     // In LINEAR mode (default):
     //    |lower value  ...    higher value|  physical unit
     //    | shift       ... shift + 1/zoom |  "unit 1", 0=vLowerBound, 1=vHigherBound
     //    | 0 | 1 |     ...          | n-1 |  pixel
 
-    // In LINEAR_ON mode:
+    // In LINEAR_ON mode (not implemented):
     //      |lower value ...    higher value|     physical unit
     //      | shift      ... shift + 1/zoom |     "unit 1" window
     //    | 0 | 1 |      ...             | n-1 |  pixel

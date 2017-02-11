@@ -51,6 +51,10 @@ import android.widget.TextView;
  * @author suhler@google.com (Stephen Uhler)
  */
 
+// TODO: Require the permission for android >=6.
+// https://developer.android.com/training/permissions/requesting.html
+// https://developer.android.com/guide/topics/permissions/requesting.html
+
 public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
                OnItemClickListener, AnalyzerGraphic.Ready {

@@ -72,14 +72,11 @@ class SpectrumPlot {
         canvasHeight = _canvasHeight;
         fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth * gridDensity / DPRatio);
         dbGridLabel = new GridLabel(GridLabel.Type.DB,   canvasHeight * gridDensity / DPRatio);
+        axisX.setNCanvasPixel(canvasWidth);
+        axisY.setNCanvasPixel(canvasHeight);
         if (axisBounds != null) {
-            axisX = new ScreenPhysicalMapping(canvasWidth,
-                    axisBounds.left, axisBounds.right, ScreenPhysicalMapping.Type.LINEAR);
-            axisY = new ScreenPhysicalMapping(canvasHeight,
-                    axisBounds.top, axisBounds.bottom, ScreenPhysicalMapping.Type.LINEAR);
-        } else {
-            axisX.setNCanvasPixel(canvasWidth);
-            axisY.setNCanvasPixel(canvasHeight);
+            axisX.setBounds(axisBounds.left, axisBounds.right);
+            axisY.setBounds(axisBounds.top,  axisBounds.bottom);
         }
     }
 
@@ -205,7 +202,7 @@ class SpectrumPlot {
                 //      }
                 // plot directly to the canvas
                 for (int i = beginFreqPt; i < endFreqPt; i++) {
-                    float x = axisX.pixelNoZoomFromV(i * freqDelta);
+                    float x = axisX.pixelFromV(i * freqDelta);
                     float y = axisY.pixelNoZoomFromV(clampDB((float) db_cache[i]));
                     if (y != canvasHeight) { // ...forgot why
                         tmpLineXY[4 * i] = x;
