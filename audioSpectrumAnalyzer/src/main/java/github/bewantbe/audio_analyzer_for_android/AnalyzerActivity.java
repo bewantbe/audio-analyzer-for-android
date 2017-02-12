@@ -130,6 +130,17 @@ public class AnalyzerActivity extends Activity
     analyzerParam.timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
             Double.toString(6.0)));
 
+    // Crash detection and recovery.
+    SharedPreferences.Editor editor = sharedPref.edit();
+    boolean bCrashed = sharedPref.getBoolean("Crashed", false);
+    if (bCrashed) {  // If crashed last time, use default audio source.
+      Log.w(TAG, "onResume(): abnormal exit detected. Changing default audio source.");
+      analyzerParam.audioSourceId = analyzerParam.RECORDER_AGC_OFF;
+      editor.putInt("audioSource", analyzerParam.audioSourceId);
+    }
+    editor.putBoolean("Crashed", true);  // will be reset in normal exit.
+    editor.commit();
+
     // Settings of graph view
     // spectrum
     analyzerViews.graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
@@ -170,6 +181,10 @@ public class AnalyzerActivity extends Activity
     super.onPause();
     samplingThread.finish();
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    SharedPreferences.Editor editor = sharedPref.edit();
+    editor.putBoolean("Crashed", false);  // will be reset in normal exit.
+    editor.commit();
   }
 
   @Override
@@ -308,9 +323,9 @@ public class AnalyzerActivity extends Activity
       ((SelectorText) findViewById(R.id.spectrum_spectrogram_mode)).nextValue();
     }
     
-    Log.i(TAG, "  loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
-    Log.i(TAG, "  loadPreferenceForView(): fftLen      = " + analyzerParam.fftLen);
-    Log.i(TAG, "  loadPreferenceForView(): nFFTAverage = " + analyzerParam.nFFTAverage);
+    Log.i(TAG, "loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
+    Log.i(TAG, "loadPreferenceForView(): fftLen      = " + analyzerParam.fftLen);
+    Log.i(TAG, "loadPreferenceForView(): nFFTAverage = " + analyzerParam.nFFTAverage);
     ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(analyzerParam.sampleRate));
     ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(analyzerParam.fftLen));
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
