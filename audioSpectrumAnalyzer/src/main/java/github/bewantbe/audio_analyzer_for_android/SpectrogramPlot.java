@@ -16,7 +16,7 @@ import java.util.Arrays;
  */
 
 class SpectrogramPlot {
-    static final String TAG = "SpectrogramPlot";
+    static final String TAG = "SpectrogramPlot:";
     static final String[] axisLabels = {"Hz", "dB", "Sec"};
     boolean showFreqAlongX = false;
 
@@ -83,7 +83,7 @@ class SpectrogramPlot {
     }
 
     void setCanvas(int _canvasWidth, int _canvasHeight, RectF axisBounds) {
-        Log.i(TAG, "setCanvas() ...");
+        Log.i(TAG, "setCanvas()");
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
         if (showFreqAlongX) {
@@ -109,11 +109,10 @@ class SpectrogramPlot {
         }
         fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth  * gridDensity / DPRatio);
         tmGridLabel = new GridLabel(GridLabel.Type.TIME, canvasHeight * gridDensity / DPRatio);
-        Log.i(TAG, "setCanvas() ... done");
     }
 
     void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
-        Log.i(TAG, "setZooms() ...");
+        Log.i(TAG, "setZooms()");
         if (showFreqAlongX) {
             axisFreq.setZoomShift(xZoom, xShift);
             axisTime.setZoomShift(yZoom, yShift);
@@ -121,11 +120,9 @@ class SpectrogramPlot {
             axisFreq.setZoomShift(yZoom, yShift);
             axisTime.setZoomShift(xZoom, xShift);
         }
-        Log.i(TAG, "setZooms() ... done");
     }
 
     void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE, int nAve) {
-        Log.i(TAG, "setupSpectrogram() ...");
         timeWatch = timeDurationE;
         timeMultiplier = nAve;
         double timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
@@ -147,11 +144,10 @@ class SpectrogramPlot {
                 Arrays.fill(spectrogramColors, 0);
             }
         }
-        Log.i(TAG, "setupSpectrogram() is ready"+
+        Log.i(TAG, "setupSpectrogram() done"+
                 "\n  sampleRate    = " + sampleRate +
                 "\n  fftLen        = " + fftLen +
                 "\n  timeDurationE = " + timeDurationE);
-        Log.i(TAG, "setupSpectrogram() ... done");
     }
 
     // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
@@ -368,6 +364,7 @@ class SpectrogramPlot {
             float t = axisFreq.nCanvasPixel;
             axisFreq.setNCanvasPixel(axisTime.nCanvasPixel);
             axisTime.setNCanvasPixel(t);
+            // TODO: exchange zoom shift
         }
         showFreqAlongX = b;
     }

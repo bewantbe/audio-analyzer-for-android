@@ -37,7 +37,7 @@ import android.view.View;
  */
 
 public class AnalyzerGraphic extends View {
-  private final String TAG = "AnalyzerGraphic::";
+  private final String TAG = "AnalyzerGraphic:";
   private Ready readyCallback = null;      // callback to caller when rendering is complete
   private float xZoom, yZoom;     // horizontal and vertical scaling
   private float xShift, yShift;   // horizontal and vertical translation, in unit 1 unit
@@ -419,10 +419,17 @@ public class AnalyzerGraphic extends View {
     }
   }
 
+  float freq_lower_bound = 0f;
+
   // Call this when settings changed.
   void setupPlot(int sampleRate, int fftLen, double timeDurationE, int nAve) {
+    freq_lower_bound = sampleRate/fftLen;
+    float freq_lower_bound_local = 0;
+    if (spectrumPlot.axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
+      freq_lower_bound_local = freq_lower_bound;
+    }
     // Spectrum
-    RectF axisBounds = new RectF(0.0f, 0.0f, sampleRate/2.0f, spectrumPlot.axisY.vHigherBound);
+    RectF axisBounds = new RectF(freq_lower_bound_local, 0.0f, sampleRate/2.0f, spectrumPlot.axisY.vHigherBound);
     Log.i(TAG, "setupPlot(): W=" + canvasWidth + "  H=" + canvasHeight + "  dB=" + spectrumPlot.axisY.vHigherBound);
     spectrumPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
 
@@ -434,6 +441,16 @@ public class AnalyzerGraphic extends View {
       axisBounds = new RectF(0.0f, 0.0f, (float)timeDurationE * nAve, sampleRate/2.0f);
     }
     spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
+  }
+
+  void setLinearLogRulerMode(boolean b) {
+    if (showMode == 0) {
+      if (b) {
+        spectrumPlot.setAxisMode(ScreenPhysicalMapping.Type.LINEAR, 0f);
+      } else {
+        spectrumPlot.setAxisMode(ScreenPhysicalMapping.Type.LOG, freq_lower_bound);
+      }
+    }
   }
 
   FPSCounter fpsCounter = new FPSCounter("View");

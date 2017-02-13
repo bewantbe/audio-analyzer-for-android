@@ -18,18 +18,18 @@ package github.bewantbe.audio_analyzer_for_android;
 import android.os.SystemClock;
 import android.util.Log;
 
-public class RecorderMonitor {
-  final String TAG0 = "RecorderMonitor::";
-  String TAG;
-  long timeUpdateOld, timeUpdateInterval, timeStarted;  // in ms
-  long lastOverrunTime;
-  long nSamplesRead;
-  int sampleRate;
-  int bufferSampleSize;
-  double sampleRateReal;
-  boolean lastCheckOverrun = false;
+class RecorderMonitor {
+  static final String TAG0 = "RecorderMonitor:";
+  private String TAG;
+  private long timeUpdateOld, timeUpdateInterval, timeStarted;  // in ms
+  private long lastOverrunTime;
+  private long nSamplesRead;
+  private int sampleRate;
+  private int bufferSampleSize;
+  private double sampleRateReal;
+  private boolean lastCheckOverrun = false;
   
-  public RecorderMonitor(int sampleRateIn, int bufferSampleSizeIn, String TAG1) {
+  RecorderMonitor(int sampleRateIn, int bufferSampleSizeIn, String TAG1) {
     sampleRate = sampleRateIn;
     bufferSampleSize = bufferSampleSizeIn;
     timeUpdateInterval = 2000;
@@ -37,7 +37,7 @@ public class RecorderMonitor {
   }
 
   // When start recording, call this
-  public void start() {
+  void start() {
     nSamplesRead = 0;
     lastOverrunTime = 0;
     timeStarted = SystemClock.uptimeMillis();
@@ -47,7 +47,7 @@ public class RecorderMonitor {
 
   // Input number of audio frames that read
   // Return true if an overrun check is performed, otherwise false.
-  public boolean updateState(int numOfReadShort) {
+  boolean updateState(int numOfReadShort) {
     long timeNow = SystemClock.uptimeMillis();
     if (nSamplesRead == 0) {      // get overrun checker synchronized
       timeStarted = timeNow - numOfReadShort*1000/sampleRate;
@@ -96,15 +96,15 @@ public class RecorderMonitor {
     return true;  // state updated during this check
   }
   
-  public boolean getLastCheckOverrun() {
+  boolean getLastCheckOverrun() {
     return lastCheckOverrun;
   }
   
-  public long getLastOverrunTime() {
+  long getLastOverrunTime() {
     return lastOverrunTime;
   }
   
-  public double getSampleRate() {
+  double getSampleRate() {
     return sampleRateReal;
   }
 }

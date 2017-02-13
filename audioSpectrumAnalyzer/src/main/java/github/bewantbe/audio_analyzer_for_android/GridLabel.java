@@ -7,17 +7,7 @@ import android.util.Log;
  */
 
 class GridLabel {
-    final static String TAG = "GridLabel";
-
-//    private double[][] gridPoints2   = new double[2][0];
-//    private double[][] gridPoints2dB = new double[2][0];
-//    private double[][] gridPoints2T  = new double[2][0];
-//    private StringBuilder[] gridPoints2Str   = new StringBuilder[0];
-//    private StringBuilder[] gridPoints2StrDB = new StringBuilder[0];
-//    private StringBuilder[] gridPoints2StrT  = new StringBuilder[0];
-//    private char[][] gridPoints2st   = new char[0][];
-//    private char[][] gridPoints2stDB = new char[0][];
-//    private char[][] gridPoints2stT  = new char[0][];
+    final static String TAG = "GridLabel:";
 
     // Never null!
     double[] values = new double[0];  // TODO: use a better name?
@@ -42,8 +32,12 @@ class GridLabel {
     // return position of grid lines, there are roughly gridDensity lines for the bigger grid
     private static void genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue,
                                      double gridDensity, int scale_mode) {
-        if (startValue == endValue || Double.isInfinite(startValue+endValue) || Double.isNaN(startValue+endValue)) {
-            Log.e(TAG, "genLinearGridPoints(): startValue == endValue or value invalid");
+        if (Double.isInfinite(startValue+endValue) || Double.isNaN(startValue+endValue)) {
+            Log.e(TAG, "genLinearGridPoints(): value invalid");
+            return;
+        }
+        if (startValue == endValue) {
+            Log.e(TAG, "genLinearGridPoints(): startValue == endValue");
             return;
         }
         if (startValue > endValue) {
@@ -109,7 +103,7 @@ class GridLabel {
         }
 
         if (gridPointsArray == null || gridPointsArray.length != 2) {
-            Log.e(TAG, " genLinearGridPoints(): empty array!!");
+            Log.e(TAG, "genLinearGridPoints(): empty array!!");
             return;
         }
 
@@ -152,7 +146,6 @@ class GridLabel {
         genLinearGridPoints(gridPointsArray, startValue, endValue, gridDensity, scale_mode_id);
         values = gridPointsArray[0];
         ticks  = gridPointsArray[1];
-//        Log.i("GridLabel(): ", "  values.length="+values.length+"  ticks.length="+ticks.length);
         boolean needUpdate = false;
         if (values.length != strings.length) {
             strings = new StringBuilder[values.length];

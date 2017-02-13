@@ -58,7 +58,7 @@ import android.widget.TextView;
 public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
                OnItemClickListener, AnalyzerGraphic.Ready {
-  static final String TAG="AnalyzerActivity";
+  static final String TAG="AnalyzerActivity:";
 
   AnalyzerViews analyzerViews;
   SamplingLoop samplingThread;
@@ -71,7 +71,8 @@ public class AnalyzerActivity extends Activity
   double maxAmpDB;
   double maxAmpFreq;
 
-  private boolean isMeasure = true;
+  private boolean isLinearFreq = true;
+  private boolean isMeasure = false;
   volatile boolean bSaveWav = false;
 
   @Override
@@ -136,7 +137,7 @@ public class AnalyzerActivity extends Activity
     if (bCrashed) {  // If crashed last time, use default audio source.
       Log.w(TAG, "onResume(): abnormal exit detected. Changing default audio source.");
       analyzerParam.audioSourceId = analyzerParam.RECORDER_AGC_OFF;
-      editor.putInt("audioSource", analyzerParam.audioSourceId);
+      editor.putString("audioSource", Integer.toString(analyzerParam.audioSourceId));
     }
     editor.putBoolean("Crashed", true);  // will be reset in normal exit.
     editor.commit();
@@ -425,8 +426,8 @@ public class AnalyzerActivity extends Activity
 
   private void switchMeasureAndScaleMode() {
     isMeasure = !isMeasure;
-    SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
-    st.performClick();
+    //SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
+    //st.performClick();
   }
   
   @Override
@@ -584,8 +585,15 @@ public class AnalyzerActivity extends Activity
           samplingThread.setPause(pause);
         }
         return false;
-      case R.id.graph_view_mode:
-        isMeasure = !value.equals("scale");
+//      case R.id.graph_view_mode:
+//        isMeasure = !value.equals("scale");
+//        return false;
+      case R.id.freq_scaling_mode:
+        isLinearFreq = value.equals("linear");
+        Log.i(TAG, "processClick(): isLinearFreq="+isLinearFreq);
+        analyzerViews.graphView.setLinearLogRulerMode(isLinearFreq);
+        editor.putString("freq_scaling_mode", "linear");
+        editor.commit();
         return false;
       case R.id.dbA:
         analyzerParam.isAWeighting = !value.equals("dB");

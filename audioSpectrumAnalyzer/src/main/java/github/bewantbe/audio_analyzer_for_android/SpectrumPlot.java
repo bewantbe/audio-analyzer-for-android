@@ -16,7 +16,7 @@ import static java.lang.Math.floor;
  */
 
 class SpectrumPlot {
-    static final String TAG = "SpectrumPlot";
+    static final String TAG = "SpectrumPlot:";
     boolean showLines;
     private Paint linePaint, linePaintLight;
     private Paint cursorPaint;
@@ -83,6 +83,17 @@ class SpectrumPlot {
     void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
         axisX.setZoomShift(xZoom, xShift);
         axisY.setZoomShift(yZoom, yShift);
+    }
+
+    void setAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound) {
+        if (axisX.mapTypeInt != mapType.getValue()) {
+            axisX.mapTypeInt = mapType.getValue();
+            if (axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
+                axisX.setBounds(freq_lower_bound, axisX.vHigherBound);
+            } else {
+                axisX.vLowerBound = 0;
+            }
+        }
     }
 
     float getFreqMin() { return axisX.vMinInView(); }
@@ -189,7 +200,9 @@ class SpectrumPlot {
         // spectrum bar
         if (showLines == false) {
             c.save();
-            if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2) {  // bars are very close to each other
+            // If bars are very close to each other, draw bars as lines
+            // Otherwise, zoom in so that lines look like bars.
+            if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2 || axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
                 matrix.reset();
                 matrix.setTranslate(0, -axisY.shift * canvasHeight);
                 matrix.postScale(1, axisY.zoom);

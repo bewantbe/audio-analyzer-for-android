@@ -90,11 +90,11 @@ class ScreenPhysicalMapping {
 //        return (v - vLowerBound) / (vHigherBound - vLowerBound);
 //    }
 
-    float pixelFromVLog(float v, float zoom, float shift) {
+    private float pixelFromVLog(float v, float zoom, float shift) {
         return ((float)log(v/vLowerBound) / (float)log(vHigherBound/vLowerBound) - shift) * zoom * nCanvasPixel;
     }
 
-    float vLogFromPixel(float pixel, float zoom, float shift) {
+    private float vLogFromPixel(float pixel, float zoom, float shift) {
         return (float)exp((pixel / nCanvasPixel / zoom + shift) * (float)log(vHigherBound/vLowerBound)) * vLowerBound;
     }
 
@@ -106,7 +106,6 @@ class ScreenPhysicalMapping {
         return vFromPixel(nCanvasPixel, zoom, shift);
     }
 
-    // TODO: Maybe use float in this class??
     float pixelFromV(float v) {
         return pixelFromV(v, zoom, shift);
     }
