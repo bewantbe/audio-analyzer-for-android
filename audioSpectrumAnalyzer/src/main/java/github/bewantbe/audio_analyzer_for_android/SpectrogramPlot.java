@@ -107,8 +107,8 @@ class SpectrogramPlot {
                 axisTime.setBounds(b2, b1);
             }
         }
-        fqGridLabel.setDensity(canvasWidth  * gridDensity / DPRatio);
-        tmGridLabel.setDensity(canvasHeight * gridDensity / DPRatio);
+        fqGridLabel.setDensity(axisFreq.nCanvasPixel * gridDensity / DPRatio);
+        tmGridLabel.setDensity(axisTime.nCanvasPixel * gridDensity / DPRatio);
     }
 
     void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
@@ -163,8 +163,8 @@ class SpectrogramPlot {
 
     // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
     // drawOnXAxis == true : draw on X axis, otherwise Y axis
-    private void drawAxis(Canvas c, float labelBeginX, float labelBeginY, float ng, boolean drawOnXAxis,
-                          float axisMin, float axisMax, GridLabel.Type scale_mode) {
+    private void drawAxis(Canvas c, float labelBeginX, float labelBeginY, boolean drawOnXAxis,
+                          GridLabel.Type scale_mode) {
         int scale_mode_id = scale_mode.getValue();
         float canvasMin;
         float canvasMax;
@@ -180,9 +180,9 @@ class SpectrogramPlot {
             axis = axisTime;
         }
         GridLabel[] gridLabelArray = {fqGridLabel, null, tmGridLabel};
-        Log.i(TAG, "drawAxis():  axis.vMinInView()" + axis.vMinInView() + "  axis.vMaxInView() = " + axis.vMaxInView());
+//        Log.i(TAG, "drawAxis():  axis.vMinInView()" + axis.vMinInView() + "  axis.vMaxInView() = " + axis.vMaxInView());
         gridLabelArray[scale_mode_id].updateGridLabels(axis.vMinInView(), axis.vMaxInView());
-        Log.i(TAG, "   updateGridLabels()  ... done");
+//        Log.i(TAG, "   updateGridLabels()  ... done");
         String axisLabel = axisLabels[scale_mode_id];
 
         double[][] gridPoints = {gridLabelArray[scale_mode_id].values, gridLabelArray[scale_mode_id].ticks};
@@ -248,36 +248,32 @@ class SpectrogramPlot {
 
     // Draw time axis for spectrogram
     // Working in the original canvas frame
-    private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, float nt, boolean drawOnXAxis) {
+    private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, boolean drawOnXAxis) {
 //            Log.i(TAG, "drawTimeAxis(): max=" + getTimeMax() + "  min=" + getTimeMin());
 //        drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
 //                getTimeMax(), getTimeMin(), GridLabel.Type.TIME);
 
         if (showFreqAlongX) {
-            drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
-                    getTimeMax(), getTimeMin(), GridLabel.Type.TIME);
+            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.TIME);
         } else {
-            drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
-                    getTimeMin(), getTimeMax(), GridLabel.Type.TIME);
+            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.TIME);
         }
     }
 
     // Draw frequency axis for spectrogram
     // Working in the original canvas frame
     // nx: number of grid lines on average
-    private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, float nx, boolean drawOnXAxis) {
+    private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, boolean drawOnXAxis) {
         if (showFreqAlongX) {
-            drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
-                    getFreqMin(), getFreqMax(), GridLabel.Type.FREQ);
+            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.FREQ);
         } else {
-            drawAxis(c, labelBeginX, labelBeginY, nx, drawOnXAxis,
-                    getFreqMax(), getFreqMin(), GridLabel.Type.FREQ);
+            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.FREQ);
         }
     }
 
-    private float getTimeMin() {
-        return axisTime.vMinInView();
-    }
+//    private float getTimeMin() {
+//        return axisTime.vMinInView();
+//    }
 
     private float getTimeMax() {
         return axisTime.vMaxInView();
@@ -383,10 +379,15 @@ class SpectrogramPlot {
 //            yZoom = t;
 //        }
         if (showFreqAlongX != b) {
+            // Set (swap) canvas size
             float t = axisFreq.nCanvasPixel;
             axisFreq.setNCanvasPixel(axisTime.nCanvasPixel);
             axisTime.setNCanvasPixel(t);
-            axisFreq.setBounds(axisFreq.vHigherBound, axisFreq.vLowerBound);
+            // swap bounds of freq axis
+            axisFreq.reverseBounds();
+
+            fqGridLabel.setDensity(axisFreq.nCanvasPixel * gridDensity / DPRatio);
+            tmGridLabel.setDensity(axisTime.nCanvasPixel * gridDensity / DPRatio);
         }
         showFreqAlongX = b;
     }
@@ -476,6 +477,9 @@ class SpectrogramPlot {
             axisTime.setNCanvasPixel(canvasWidth-labelBeginX);
             axisFreq.setNCanvasPixel(labelBeginY);
         }
+        fqGridLabel.setDensity(axisFreq.nCanvasPixel * gridDensity / DPRatio);
+        tmGridLabel.setDensity(axisTime.nCanvasPixel * gridDensity / DPRatio);
+
         // show Spectrogram
         float halfFreqResolutionShift;  // move the color patch to match the center frequency
         matrixSpectrogram.reset();
@@ -530,17 +534,17 @@ class SpectrogramPlot {
         drawCursor(c);
         if (showFreqAlongX) {
             c.drawRect(0, labelBeginY, canvasWidth, canvasHeight, backgroundPaint);
-            drawFreqAxis(c, labelBeginX, labelBeginY, canvasWidth * gridDensity / DPRatio, showFreqAlongX);
+            drawFreqAxis(c, labelBeginX, labelBeginY, showFreqAlongX);
             if (labelBeginX > 0) {
                 c.drawRect(0, 0, labelBeginX, labelBeginY, backgroundPaint);
-                drawTimeAxis(c, labelBeginX, labelBeginY, canvasHeight * gridDensity / DPRatio, !showFreqAlongX);
+                drawTimeAxis(c, labelBeginX, labelBeginY, !showFreqAlongX);
             }
         } else {
             c.drawRect(0, 0, labelBeginX, labelBeginY, backgroundPaint);
-            drawFreqAxis(c, labelBeginX, labelBeginY, canvasHeight * gridDensity / DPRatio, showFreqAlongX);
+            drawFreqAxis(c, labelBeginX, labelBeginY, showFreqAlongX);
             if (labelBeginY != canvasHeight) {
                 c.drawRect(0, labelBeginY, canvasWidth, canvasHeight, backgroundPaint);
-                drawTimeAxis(c, labelBeginX, labelBeginY, canvasWidth * gridDensity / DPRatio, !showFreqAlongX);
+                drawTimeAxis(c, labelBeginX, labelBeginY, !showFreqAlongX);
             }
         }
     }

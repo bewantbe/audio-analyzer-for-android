@@ -591,7 +591,7 @@ public class AnalyzerActivity extends Activity
       case R.id.freq_scaling_mode:
         isLinearFreq = value.equals("linear");
         Log.i(TAG, "processClick(): isLinearFreq="+isLinearFreq);
-        analyzerViews.graphView.setAxisModeLinearLog(isLinearFreq);
+        analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
         editor.putString("freq_scaling_mode", "linear");
         editor.commit();
         return false;
