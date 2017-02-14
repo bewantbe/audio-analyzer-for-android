@@ -1,5 +1,7 @@
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.util.Log;
+
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
 
@@ -9,6 +11,7 @@ import static java.lang.Math.log;
  */
 
 class ScreenPhysicalMapping {
+    final static String TAG = "ScreenPhysicalMapping";
 
     enum Type {  // java's enum type is inconvenient
         LINEAR(0), LINEAR_ON(1), LOG(2);
@@ -47,8 +50,9 @@ class ScreenPhysicalMapping {
         shift = _shift;
     }
 
+    // set zoom and shift from physical value bounds
     void setZoomShiftFromV(float vLower, float vHigher) {
-        if (vLower >= vHigher || nCanvasPixel <= 0) {
+        if (vLower == vHigher || nCanvasPixel <= 0) {
             return;  // Or throw an exception?
         }
         float p1 = pixelNoZoomFromV(vLower);
@@ -137,4 +141,41 @@ class ScreenPhysicalMapping {
     }
 
     float diffVBounds() { return vHigherBound - vLowerBound; };
+
+    void reverseBounds() {
+//        float vL = vMinInView();
+//        float vH = vMaxInView();
+//        setBounds(vHigherBound, vLowerBound);
+//        setZoomShiftFromV(vH, vL);
+
+        shift = 1 - 1/zoom - shift;
+        setBounds(vHigherBound, vLowerBound);
+    }
+
+    void setMappingType(ScreenPhysicalMapping.Type mapType, float lower_bound_ref) {
+        if (mapType.getValue() == mapTypeInt || nCanvasPixel == 0 || vLowerBound == vHigherBound) {
+            return;
+        }
+        float vL = vMinInView();
+        float vH = vMaxInView();
+        // lower_bound_ref is for how to map zero
+        // Only support non-negative bounds
+        if (mapType == Type.LOG) {
+            if (vL < 0 || vH < 0) {
+                Log.e(TAG, "setMappingType(): negative bounds.");
+                return;
+            }
+            if (vLowerBound  == 0) vLowerBound  = lower_bound_ref;
+            if (vHigherBound == 0) vHigherBound = lower_bound_ref;
+            if (vL  < lower_bound_ref) vL = lower_bound_ref;
+            if (vH  < lower_bound_ref) vH = lower_bound_ref;
+        } else {
+            if (vLowerBound  == lower_bound_ref) vLowerBound  = 0;
+            if (vHigherBound == lower_bound_ref) vHigherBound = 0;
+            if (vL  < lower_bound_ref) vL = 0;
+            if (vH  < lower_bound_ref) vH = 0;
+        }
+        mapTypeInt = mapType.getValue();
+        setZoomShiftFromV(vL, vH);
+    }
 }

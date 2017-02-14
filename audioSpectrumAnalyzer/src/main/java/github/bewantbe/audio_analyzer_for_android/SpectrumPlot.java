@@ -90,22 +90,12 @@ class SpectrumPlot {
     }
 
     // Linear or Logarithmic frequency axis
-    void setAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound) {
-        if (axisX.mapTypeInt != mapType.getValue()) {
-            float oldFreqLow  = axisX.vMinInView();
-            float oldFreqHigh = axisX.vMaxInView();
-            axisX.mapTypeInt = mapType.getValue();
-            if (axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
-                axisX.setBounds(freq_lower_bound, axisX.vHigherBound);
-                if (oldFreqLow < freq_lower_bound) oldFreqLow = freq_lower_bound;
-                axisX.setZoomShiftFromV(oldFreqLow, oldFreqHigh);
-                fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
-            } else {
-                axisX.vLowerBound = 0;
-                if (oldFreqLow == freq_lower_bound) oldFreqLow = 0;
-                axisX.setZoomShiftFromV(oldFreqLow, oldFreqHigh);
-                fqGridLabel.setGridType(GridLabel.Type.FREQ);
-            }
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound) {
+        axisX.setMappingType(mapType, freq_lower_bound);
+        if (mapType == ScreenPhysicalMapping.Type.LOG) {
+            fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
+        } else {
+            fqGridLabel.setGridType(GridLabel.Type.FREQ);
         }
     }
 
@@ -129,6 +119,8 @@ class SpectrumPlot {
         float widthDigit = labelPaint.measureText("0");
         float xPos, yPos;
         int notShowNextLabel = 0;
+
+        // draw freq label
         yPos = textHeigh;
         for(int i = 0; i < fqGridLabel.strings.length; i++) {
             xPos = axisX.pixelFromV((float)fqGridLabel.values[i]);
@@ -167,8 +159,9 @@ class SpectrumPlot {
             c.drawText(fqGridLabel.chars[i], 0, fqGridLabel.strings[i].length(), xPos, yPos, labelPaint);
         }
         c.drawLine(0, 0, canvasWidth, 0, labelPaint);
-
         c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
+
+        // draw dB label
         xPos = 0.4f*widthHz;
         for(int i = 0; i < dbGridLabel.strings.length; i++) {
             yPos = axisY.pixelFromV((float)dbGridLabel.values[i]);

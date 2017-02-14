@@ -311,6 +311,8 @@ public class AnalyzerGraphic extends View {
         limitYZoom = spectrogramPlot.axisFreq.diffVBounds()/200f;
       }
     }
+    limitXZoom = Math.abs(limitXZoom);
+    limitYZoom = Math.abs(limitYZoom);
 //    Log.i(TAG, "setShiftScale: limit: xZ="+limitXZoom+"  yZ="+limitYZoom);
     if (canvasWidth*0.13f < xDiffOld) {  // if fingers are not very close in x direction, do scale in x direction
       xZoom  = clamp(xZoomOld * Math.abs(x1-x2)/xDiffOld, 1f, limitXZoom);
@@ -438,17 +440,33 @@ public class AnalyzerGraphic extends View {
     if (spectrogramPlot.showFreqAlongX) {
       axisBounds = new RectF(0.0f, 0.0f, sampleRate/2.0f, (float)timeDurationE * nAve);
     } else {
-      axisBounds = new RectF(0.0f, 0.0f, (float)timeDurationE * nAve, sampleRate/2.0f);
+      axisBounds = new RectF(0.0f, sampleRate/2.0f, (float)timeDurationE * nAve, 0.0f);
     }
     spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
   }
 
-  void setLinearLogRulerMode(boolean b) {
+  void setAxisModeLinearLog(boolean b) {
+    ScreenPhysicalMapping.Type mapType;
+    float freq_lower_bound_local;
+    if (b) {
+      mapType = ScreenPhysicalMapping.Type.LINEAR;
+      freq_lower_bound_local = 0;
+    } else {
+      mapType = ScreenPhysicalMapping.Type.LOG;
+      freq_lower_bound_local = freq_lower_bound;
+    }
     if (showMode == 0) {
-      if (b) {
-        spectrumPlot.setAxisMode(ScreenPhysicalMapping.Type.LINEAR, 0f);
+      spectrumPlot   .setFreqAxisMode(mapType, freq_lower_bound_local);
+      xZoom  = spectrumPlot.axisX.zoom;
+      xShift = spectrumPlot.axisX.shift;
+    } else if (showMode == 1) {
+      spectrogramPlot.setFreqAxisMode(mapType, freq_lower_bound_local);
+      if (spectrogramPlot.showFreqAlongX) {
+        xZoom  = spectrogramPlot.axisFreq.zoom;
+        xShift = spectrogramPlot.axisFreq.shift;
       } else {
-        spectrumPlot.setAxisMode(ScreenPhysicalMapping.Type.LOG, freq_lower_bound);
+        yZoom  = spectrogramPlot.axisFreq.zoom;
+        yShift = spectrogramPlot.axisFreq.shift;
       }
     }
   }
