@@ -7,9 +7,13 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.util.Log;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
 import static java.lang.Math.floor;
+import static java.lang.Math.log10;
+import static java.lang.Math.round;
 
 /**
  * The spectrum plot part of AnalyzerGraphic
@@ -101,16 +105,56 @@ class SpectrumPlot {
     float getFreqMin() { return axisX.vMinInView(); }
     float getFreqMax() { return axisX.vMaxInView(); }
 
+    boolean isAlmostInteger(float x) {
+        // return x % 1 == 0;
+        float i = round(x);
+        if (i == 0) {
+            return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
+        } else {
+            return abs(x - i) / i < 1.2e-7;
+        }
+    }
+
     // The coordinate frame of this function is identical to its view (id=plot).
     private void drawGridLabels(Canvas c) {
         float textHeigh  = labelPaint.getFontMetrics(null);
         float widthHz    = labelPaint.measureText("Hz");
         float widthDigit = labelPaint.measureText("0");
         float xPos, yPos;
+        int notShowNextLabel = 0;
         yPos = textHeigh;
         for(int i = 0; i < fqGridLabel.strings.length; i++) {
             xPos = axisX.pixelFromV((float)fqGridLabel.values[i]);
-            if (xPos + widthDigit*fqGridLabel.strings[i].length() + 1.5f*widthHz> canvasWidth) {
+            // Avoid label overlap:
+            // (1) No overlap to "Hz";
+            // (2) If no (1), no overlap to label 1, 10, 100, 1000, 10000, 1k, 10k;
+            // (3) If no (1) and (2), no overlap to previous label.
+            float thisDigitWidth = widthDigit*fqGridLabel.strings[i].length() + 0.3f*widthDigit;
+            if (xPos + thisDigitWidth + 1.3f*widthHz > canvasWidth) {
+                continue;
+            }
+            if (notShowNextLabel > 0) {
+                notShowNextLabel--;
+                continue;
+            }
+            int j = i+1;
+            while (j < fqGridLabel.strings.length &&
+                   xPos + thisDigitWidth > axisX.pixelFromV((float)fqGridLabel.values[j])) {
+                // label i shadows label j (case (3))
+                notShowNextLabel++;
+                if (isAlmostInteger((float)log10(fqGridLabel.values[j]))) {
+                    // do not show this label (case (2))
+                    if (axisX.pixelFromV((float)fqGridLabel.values[j]) +
+                            widthDigit*fqGridLabel.strings[j].length() + 0.3f*widthDigit
+                            + 1.3f*widthHz <= canvasWidth) {
+                        notShowNextLabel = -1;
+                        break;
+                    }
+                }
+                j++;
+            }
+            if (notShowNextLabel == -1) {
+                notShowNextLabel = j - i - 1;  // show the label in case (2)
                 continue;
             }
             c.drawText(fqGridLabel.chars[i], 0, fqGridLabel.strings[i].length(), xPos, yPos, labelPaint);
@@ -170,6 +214,7 @@ class SpectrumPlot {
 
         synchronized (_db) {  // TODO: need lock on savedDBSpectrum, but how?
             if (db_cache == null || db_cache.length != _db.length) {
+                Log.i(TAG, "drawSpectrumOnCanvas(): new db_cache");
                 db_cache = new double[_db.length];
             }
             System.arraycopy(_db, 0, db_cache, 0, _db.length);
@@ -191,11 +236,15 @@ class SpectrumPlot {
         if (beginFreqPt > 0) {
             beginFreqPt -= 1;
         }
+        if (beginFreqPt == 0 && axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
+            beginFreqPt++;
+        }
         if (endFreqPt < db_cache.length) {
             endFreqPt += 1;
         }
 
         if (tmpLineXY.length != 4*(db_cache.length)) {
+            Log.i(TAG, "drawSpectrumOnCanvas(): new tmpLineXY");
             tmpLineXY = new float[4*(db_cache.length)];
         }
 
@@ -303,16 +352,15 @@ class SpectrumPlot {
         cursorDB = 0;
     }
 
-    void drawCursor(Canvas c) {
+    private void drawCursor(Canvas c) {
+        if (cursorFreq == 0) {
+            return;
+        }
         float cX, cY;
         cX = axisX.pixelFromV(cursorFreq);
         cY = axisY.pixelFromV(cursorDB);
-        if (cursorFreq != 0) {
-            c.drawLine(cX, 0, cX, canvasHeight, cursorPaint);
-        }
-        if (cursorDB != 0) {
-            c.drawLine(0, cY, canvasWidth, cY, cursorPaint);
-        }
+        c.drawLine(cX, 0, cX, canvasHeight, cursorPaint);
+        c.drawLine(0, cY, canvasWidth, cY, cursorPaint);
     }
 
     // Plot spectrum with axis and ticks on the whole canvas c
