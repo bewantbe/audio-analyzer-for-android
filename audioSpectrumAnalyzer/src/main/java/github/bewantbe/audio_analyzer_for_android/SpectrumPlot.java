@@ -89,14 +89,21 @@ class SpectrumPlot {
         axisY.setZoomShift(yZoom, yShift);
     }
 
+    // Linear or Logarithmic frequency axis
     void setAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound) {
         if (axisX.mapTypeInt != mapType.getValue()) {
+            float oldFreqLow  = axisX.vMinInView();
+            float oldFreqHigh = axisX.vMaxInView();
             axisX.mapTypeInt = mapType.getValue();
             if (axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
                 axisX.setBounds(freq_lower_bound, axisX.vHigherBound);
+                if (oldFreqLow < freq_lower_bound) oldFreqLow = freq_lower_bound;
+                axisX.setZoomShiftFromV(oldFreqLow, oldFreqHigh);
                 fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
             } else {
                 axisX.vLowerBound = 0;
+                if (oldFreqLow == freq_lower_bound) oldFreqLow = 0;
+                axisX.setZoomShiftFromV(oldFreqLow, oldFreqHigh);
                 fqGridLabel.setGridType(GridLabel.Type.FREQ);
             }
         }
