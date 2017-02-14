@@ -107,8 +107,8 @@ class SpectrogramPlot {
                 axisTime.setBounds(b2, b1);
             }
         }
-        fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth  * gridDensity / DPRatio);
-        tmGridLabel = new GridLabel(GridLabel.Type.TIME, canvasHeight * gridDensity / DPRatio);
+        fqGridLabel.setDensity(canvasWidth  * gridDensity / DPRatio);
+        tmGridLabel.setDensity(canvasHeight * gridDensity / DPRatio);
     }
 
     void setZooms(float xZoom, float xShift, float yZoom, float yShift) {

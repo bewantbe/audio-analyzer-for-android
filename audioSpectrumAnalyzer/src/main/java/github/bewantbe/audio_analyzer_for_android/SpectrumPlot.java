@@ -70,8 +70,8 @@ class SpectrumPlot {
 //        Log.i("SpectrumPlot", "setCanvas: W="+_canvasWidth+"  H="+_canvasHeight);
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
-        fqGridLabel = new GridLabel(GridLabel.Type.FREQ, canvasWidth * gridDensity / DPRatio);
-        dbGridLabel = new GridLabel(GridLabel.Type.DB,   canvasHeight * gridDensity / DPRatio);
+        fqGridLabel.setDensity(canvasWidth * gridDensity / DPRatio);
+        dbGridLabel.setDensity(canvasHeight * gridDensity / DPRatio);
         axisX.setNCanvasPixel(canvasWidth);
         axisY.setNCanvasPixel(canvasHeight);
         if (axisBounds != null) {
@@ -90,8 +90,10 @@ class SpectrumPlot {
             axisX.mapTypeInt = mapType.getValue();
             if (axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
                 axisX.setBounds(freq_lower_bound, axisX.vHigherBound);
+                fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
             } else {
                 axisX.vLowerBound = 0;
+                fqGridLabel.setGridType(GridLabel.Type.FREQ);
             }
         }
     }
@@ -202,7 +204,8 @@ class SpectrumPlot {
             c.save();
             // If bars are very close to each other, draw bars as lines
             // Otherwise, zoom in so that lines look like bars.
-            if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2 || axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
+            if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2
+                    || axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
                 matrix.reset();
                 matrix.setTranslate(0, -axisY.shift * canvasHeight);
                 matrix.postScale(1, axisY.zoom);
@@ -226,6 +229,7 @@ class SpectrumPlot {
                 }
                 c.drawLines(tmpLineXY, 4*beginFreqPt, 4*(endFreqPt-beginFreqPt), linePaint);
             } else {
+                // for zoomed linear scale
                 int pixelStep = 2;  // each bar occupy this virtual pixel
                 matrix.reset();
                 float extraPixelAlignOffset = 0.0f;
@@ -242,7 +246,7 @@ class SpectrumPlot {
                 c.concat(matrix);
                 // fill interval same as canvas pixel width.
                 for (int i = beginFreqPt; i < endFreqPt; i++) {
-                    float x = i * pixelStep;       // TODO: need to rewrite here for log scale.
+                    float x = i * pixelStep;
                     float y = axisY.pixelNoZoomFromV(clampDB((float) db_cache[i]));
                     if (y != canvasHeight) {
                         tmpLineXY[4*i  ] = x;
