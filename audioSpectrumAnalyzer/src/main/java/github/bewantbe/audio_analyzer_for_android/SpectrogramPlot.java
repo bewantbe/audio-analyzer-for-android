@@ -43,6 +43,8 @@ class SpectrogramPlot {
     private float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
     private float cursorFreq;
     private int canvasHeight=0, canvasWidth=0;
+    float labelBeginX, labelBeginY;
+
     ScreenPhysicalMapping axisFreq;
     ScreenPhysicalMapping axisTime;
     double dBLowerBound = -120;
@@ -300,42 +302,25 @@ class SpectrogramPlot {
         cursorFreq = 0;
     }
 
-    float labelBeginX, labelBeginY;
-
-    void drawCursor(Canvas c) {
+    private void drawCursor(Canvas c) {
+        if (cursorFreq == 0) return;
         float cX, cY;
         // Show only the frequency cursor
         if (showFreqAlongX) {
-            // cX = (cursorFreq / axisBounds.width() - xShift) * xZoom * (canvasWidth-labelBeginX) + labelBeginX;
             cX = axisFreq.pixelFromV(cursorFreq) + labelBeginX;
-            if (cursorFreq != 0) {
-                c.drawLine(cX, 0, cX, labelBeginY, cursorPaint);
-            }
+            c.drawLine(cX, 0, cX, labelBeginY, cursorPaint);
         } else {
-            //cY = (1 - yShift - cursorFreq / axisBounds.width()) * yZoom * labelBeginY;
             cY = axisFreq.pixelFromV(cursorFreq);
-            if (cursorFreq != 0) {
-                c.drawLine(labelBeginX, cY, canvasWidth, cY, cursorPaint);
-            }
+            c.drawLine(labelBeginX, cY, canvasWidth, cY, cursorPaint);
         }
     }
 
     float getFreqMax() {
         return axisFreq.vMaxInView();
-//        if (showFreqAlongX) {
-//            return axisBounds.width() * (xShift + 1 / xZoom);
-//        } else {
-//            return axisBounds.width() * (1 - yShift);
-//        }
     }
 
     float getFreqMin() {
         return axisFreq.vMinInView();
-//        if (showFreqAlongX) {
-//            return axisBounds.width() * xShift;
-//        } else {
-//            return axisBounds.width() * (1 - yShift - 1/yZoom);
-//        }
     }
 
     void setTimeMultiplier(int nAve) {
@@ -362,22 +347,6 @@ class SpectrogramPlot {
     }
 
     void setShowFreqAlongX(boolean b) {
-//        if (showMode == 1 && showFreqAlongX != b) {
-//            // match zooming
-//            float t;
-//            if (showFreqAlongX) {
-//                t = xShift;
-//                xShift = yShift;
-//                yShift = 1 - t - 1/xZoom;
-//            } else {
-//                t = yShift;
-//                yShift = xShift;
-//                xShift = 1 - t - 1/yZoom;
-//            }
-//            t = xZoom;
-//            xZoom = yZoom;
-//            yZoom = t;
-//        }
         if (showFreqAlongX != b) {
             // Set (swap) canvas size
             float t = axisFreq.nCanvasPixel;

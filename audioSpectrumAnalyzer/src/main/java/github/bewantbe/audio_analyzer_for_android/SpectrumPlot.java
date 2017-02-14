@@ -224,12 +224,9 @@ class SpectrumPlot {
         float canvasMaxFreq = axisX.vMaxInView();
         // There are db.length frequency points, including DC component
         float freqDelta = (axisX.vHigherBound - axisX.vLowerBound) / (db_cache.length - 1);
-        //int nFreqPoints = (int)Math.floor ((canvasMaxFreq - canvasMinFreq) / freqDelta);
         int nFreqPointsTotal = db_cache.length - 1;
         int beginFreqPt = (int)ceil (canvasMinFreq / freqDelta);    // pointer to tmpLineXY
         int endFreqPt   = (int)floor(canvasMaxFreq / freqDelta) + 1;
-        //float minYCanvas = canvasY4axis(getMinY()); // canvasY4axis(minDB);
-        //float minYCanvas = canvasY4axis(minDB);
         float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
 
         // add one more boundary points
@@ -365,12 +362,8 @@ class SpectrumPlot {
 
     // Plot spectrum with axis and ticks on the whole canvas c
     void drawSpectrumPlot(Canvas c, double[] savedDBSpectrum) {
-//        Log.i(TAG, "drawSpectrumPlot(): axisX nC="+axisX.nCanvasPixel+" vL="+axisX.vLowerBound+" vH="+axisX.vHigherBound+" Z="+axisX.zoom+" S="+axisX.shift);
-//        Log.i(TAG, "drawSpectrumPlot(): axisY nC="+axisY.nCanvasPixel+" vL="+axisY.vLowerBound+" vH="+axisY.vHigherBound+" Z="+axisY.zoom+" S="+axisY.shift);
         fqGridLabel.updateGridLabels(axisX.vMinInView(), axisX.vMaxInView());
         dbGridLabel.updateGridLabels(axisY.vMinInView(), axisY.vMaxInView());
-//        Log.i(TAG, "drawSpectrumPlot(): fqGridLabel.values.length = " + fqGridLabel.values.length);
-//        Log.i(TAG, "drawSpectrumPlot(): dbGridLabel.values.length = " + dbGridLabel.values.length);
         drawGridLines(c);
         drawSpectrumOnCanvas(c, savedDBSpectrum);
         drawCursor(c);

@@ -171,12 +171,6 @@ public class AnalyzerGraphic extends View {
     }
   }
 
-  // Zoom shift for spectrum
-//  float oldYShift = 0;
-//  float oldXShift = 0;
-//  float oldYZoom = 1;
-//  float oldXZoom = 1;
-
   // Note: Assume setupPlot() was called once.
   public void switch2Spectrum() {
     Log.v(TAG, "switch2Spectrum()");
@@ -185,39 +179,20 @@ public class AnalyzerGraphic extends View {
     }
     // execute when switch from Spectrogram mode to Spectrum mode
     showMode = 0;
-//    if (spectrogramPlot.showFreqAlongX) {
-//      // Frequency range is the same
-//    } else {
-//      // get frequency range
-//      xShift = 1 - yShift - 1/yZoom;
-//      xZoom = yZoom;
-//    }
-
-//    yShift = oldYShift;
-//    yZoom = oldYZoom;
-//    spectrumPlot.axisY.setZoomShift(yZoom, yShift);
-
-    float vL = spectrogramPlot.axisFreq.vMinInView();
-    float vH = spectrogramPlot.axisFreq.vMaxInView();
-    if (vL < vH)
-      spectrumPlot.axisX.setZoomShiftFromV(vL, vH);
-    else
-      spectrumPlot.axisX.setZoomShiftFromV(vH, vL);
-    xZoom  = spectrumPlot.axisX.zoom;
-    xShift = spectrumPlot.axisX.shift;
+    xZoom  = spectrogramPlot.axisFreq.zoom;
+    xShift = spectrogramPlot.axisFreq.shift;
+    if (spectrogramPlot.showFreqAlongX == false) {
+      xShift = 1 - 1/xZoom - xShift;
+    }
+    spectrumPlot.axisX.setZoomShift(xZoom, xShift);
 
     yZoom  = spectrumPlot.axisY.zoom;
     yShift = spectrumPlot.axisY.shift;
-//    updateAxisZoomShift();
   }
 
   // Note: Assume setupPlot() was called once.
   public void switch2Spectrogram() {
     if (showMode == 0 && canvasHeight > 0) { // canvasHeight==0 means the program is just start
-//      oldXShift = xShift;
-//      oldXZoom  = xZoom;
-//      oldYShift = yShift;
-//      oldYZoom  = yZoom;
       if (spectrogramPlot.showFreqAlongX) {
         // no need to change x scaling
         yZoom  = spectrogramPlot.axisTime.zoom;
@@ -232,7 +207,6 @@ public class AnalyzerGraphic extends View {
       }
     }
     showMode = 1;
-//    updateAxisZoomShift();
   }
 
   private void updateAxisZoomShift() {
@@ -275,8 +249,6 @@ public class AnalyzerGraphic extends View {
   @Override
   protected void onDraw(Canvas c) {
     fpsCounter.inc();
-//    Log.i(TAG, " onDraw last call dt = " + (t - t_old));
-//    t_old = t;
     isBusy = true;
     c.concat(matrix0);
     c.save();
