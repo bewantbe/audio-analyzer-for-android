@@ -126,8 +126,8 @@ class SpectrogramPlot {
     }
 
     // Linear or Logarithmic frequency axis
-    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound) {
-        axisFreq.setMappingType(mapType, freq_lower_bound);
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound_for_log) {
+        axisFreq.setMappingType(mapType, freq_lower_bound_for_log);
         if (mapType == ScreenPhysicalMapping.Type.LOG) {
             fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
             logBmp.init(nFreqPoints, nTimePoints, axisFreq);
@@ -573,13 +573,12 @@ class SpectrogramPlot {
                 if (mapFreqToPixH[i] <      0) mapFreqToPixH[i] = 0;
                 if (mapFreqToPixL[i] >= nFreq) mapFreqToPixL[i] = nFreq - 1;
                 if (mapFreqToPixL[i] <      0) mapFreqToPixL[i] = 0;
-                Log.i(TAG, "init(): L = " + axis.pixelNoZoomFromV((i+0.5f)*dFreq) + "  H = " + axis.pixelNoZoomFromV((i+1.5f)*dFreq));
+//                Log.i(TAG, "init(): L = " + axis.pixelNoZoomFromV((i+0.5f)*dFreq) + "  H = " + axis.pixelNoZoomFromV((i+1.5f)*dFreq));
             }
             Log.i(TAG, "init(): d");
         }
 
         void fill(double[] db) {
-//            Log.i(TAG, "full()...");
             if (db.length-1 != nFreq) {
                 Log.e(TAG, "full(): WTF");
                 return;
@@ -588,21 +587,16 @@ class SpectrogramPlot {
             double maxDB;
             int i = 1;
             while (i <= nFreq) {
-//                Log.i(TAG, "full(): i = " + i + " a");
                 maxDB = db[i];
                 int j = i + 1;
                 while (j <= nFreq && mapFreqToPixL[i-1] == mapFreqToPixH[j-1]) {
                     if (db[j] > maxDB) maxDB = db[j];
                     j++;
                 }
-//                Log.i(TAG, "full(): i = " + i + " b");
                 int c = colorFromDB(maxDB);
-//                Log.i(TAG, "full(): i = " + i + " c");
                 for (int k = mapFreqToPixL[i-1]; k <= mapFreqToPixH[i-1]; k++) {
-//                    Log.i(TAG, "full(): i = " + i + " k = " + (bmP0 + k));
                     bm[bmP0 + k] = c;
                 }
-//                Log.i(TAG, "full(): i = " + i + " d");
                 i = j;
             }
             bmPt++;

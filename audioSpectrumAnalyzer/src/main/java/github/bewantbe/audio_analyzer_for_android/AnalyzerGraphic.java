@@ -50,7 +50,7 @@ public class AnalyzerGraphic extends View {
   private int[] myLocation = {0, 0}; // window location on screen
   private Matrix matrix0 = new Matrix();
   private volatile static boolean isBusy = false;
-  private float freq_lower_bound = 0f;
+  private float freq_lower_bound_for_log = 0f;
 
   SpectrumPlot    spectrumPlot;
   SpectrogramPlot spectrogramPlot;
@@ -103,10 +103,10 @@ public class AnalyzerGraphic extends View {
 
   // Call this when settings changed.
   void setupPlot(int sampleRate, int fftLen, double timeDurationE, int nAve) {
-    freq_lower_bound = sampleRate/fftLen;
+    freq_lower_bound_for_log = sampleRate/fftLen;
     float freq_lower_bound_local = 0;
     if (spectrumPlot.axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
-      freq_lower_bound_local = freq_lower_bound;
+      freq_lower_bound_local = freq_lower_bound_for_log;
     }
     // Spectrum
     RectF axisBounds = new RectF(freq_lower_bound_local, 0.0f, sampleRate/2.0f, spectrumPlot.axisY.vHigherBound);
@@ -117,7 +117,7 @@ public class AnalyzerGraphic extends View {
     spectrogramPlot.setupSpectrogram(sampleRate, fftLen, timeDurationE, nAve);
     freq_lower_bound_local = 0;
     if (spectrogramPlot.axisFreq.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
-      freq_lower_bound_local = freq_lower_bound;
+      freq_lower_bound_local = freq_lower_bound_for_log;
     }
     if (spectrogramPlot.showFreqAlongX) {
       axisBounds = new RectF(freq_lower_bound_local, 0.0f, sampleRate/2.0f, (float)timeDurationE * nAve);
@@ -129,16 +129,13 @@ public class AnalyzerGraphic extends View {
 
   void setAxisModeLinear(boolean b) {
     ScreenPhysicalMapping.Type mapType;
-    float freq_lower_bound_local;
     if (b) {
       mapType = ScreenPhysicalMapping.Type.LINEAR;
-      freq_lower_bound_local = 0;
     } else {
       mapType = ScreenPhysicalMapping.Type.LOG;
-      freq_lower_bound_local = freq_lower_bound;
     }
-    spectrumPlot   .setFreqAxisMode(mapType, freq_lower_bound_local);
-    spectrogramPlot.setFreqAxisMode(mapType, freq_lower_bound_local);
+    spectrumPlot   .setFreqAxisMode(mapType, freq_lower_bound_for_log);
+    spectrogramPlot.setFreqAxisMode(mapType, freq_lower_bound_for_log);
     if (showMode == 0) {
       xZoom  = spectrumPlot.axisX.zoom;
       xShift = spectrumPlot.axisX.shift;

@@ -90,13 +90,14 @@ class SpectrumPlot {
     }
 
     // Linear or Logarithmic frequency axis
-    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound) {
-        axisX.setMappingType(mapType, freq_lower_bound);
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound_for_log) {
+        axisX.setMappingType(mapType, freq_lower_bound_for_log);
         if (mapType == ScreenPhysicalMapping.Type.LOG) {
             fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
         } else {
             fqGridLabel.setGridType(GridLabel.Type.FREQ);
         }
+        Log.i(TAG, "setFreqAxisMode(): axisX.vLowerBound = " + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
     }
 
     float getFreqMin() { return axisX.vMinInView(); }
@@ -214,7 +215,7 @@ class SpectrumPlot {
 
         synchronized (_db) {  // TODO: need lock on savedDBSpectrum, but how?
             if (db_cache == null || db_cache.length != _db.length) {
-                Log.i(TAG, "drawSpectrumOnCanvas(): new db_cache");
+                Log.d(TAG, "drawSpectrumOnCanvas(): new db_cache");
                 db_cache = new double[_db.length];
             }
             System.arraycopy(_db, 0, db_cache, 0, _db.length);
@@ -223,25 +224,22 @@ class SpectrumPlot {
         float canvasMinFreq = axisX.vMinInView();
         float canvasMaxFreq = axisX.vMaxInView();
         // There are db.length frequency points, including DC component
-        float freqDelta = (axisX.vHigherBound - axisX.vLowerBound) / (db_cache.length - 1);
         int nFreqPointsTotal = db_cache.length - 1;
-        int beginFreqPt = (int)ceil (canvasMinFreq / freqDelta);    // pointer to tmpLineXY
-        int endFreqPt   = (int)floor(canvasMaxFreq / freqDelta) + 1;
-        float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
+        float freqDelta = axisX.vHigherBound / nFreqPointsTotal;
+        int beginFreqPt = (int)floor(canvasMinFreq / freqDelta);    // pointer to tmpLineXY
+        int endFreqPt   = (int)ceil (canvasMaxFreq / freqDelta)+1;
+        final float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
 
         // add one more boundary points
-        if (beginFreqPt > 0) {
-            beginFreqPt -= 1;
-        }
         if (beginFreqPt == 0 && axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
             beginFreqPt++;
         }
-        if (endFreqPt < db_cache.length) {
-            endFreqPt += 1;
+        if (endFreqPt > db_cache.length) {
+            endFreqPt = db_cache.length;  // just in case canvasMaxFreq / freqDelta > nFreqPointsTotal
         }
 
         if (tmpLineXY.length != 4*(db_cache.length)) {
-            Log.i(TAG, "drawSpectrumOnCanvas(): new tmpLineXY");
+            Log.d(TAG, "drawSpectrumOnCanvas(): new tmpLineXY");
             tmpLineXY = new float[4*(db_cache.length)];
         }
 
