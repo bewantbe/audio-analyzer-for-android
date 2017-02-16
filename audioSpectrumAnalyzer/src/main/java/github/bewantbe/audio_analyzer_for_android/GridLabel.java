@@ -192,7 +192,7 @@ class GridLabel {
                 }
                 gapChangingPoint *= 10;
             }
-            return 0;
+            return Integer.MAX_VALUE;
         } else if (endValue / startValue > 10 && false) {  // not implemented
             // Major:  1, 2, 3, ... , 9, 10, 20, 30, ...
             // Minor:  1, 1.5, 2, 2.5, ..., 9, 9.5, 10, 15, 20 25, ...
@@ -293,7 +293,14 @@ class GridLabel {
             oldGridBoundary[1] = values[values.length-1];
             for (int i = 0; i < strings.length; i++) {
                 strings[i].setLength(0);
-                if (gapPrecision >= 3) {  // use 1k 2k ...
+                if (gapPrecision == Integer.MAX_VALUE) {  // 1000, 10000 -> 1k, 10k
+                    if (values[i] >= 1000) {
+                        SBNumFormat.fillInNumFixedFrac(strings[i], values[i]/1000, 7, 0);
+                        strings[i].append('k');
+                    } else {
+                        SBNumFormat.fillInNumFixedFrac(strings[i], values[i], 7, 0);
+                    }
+                } else if (gapPrecision >= 3) {  // use 1k 2k ...
                     SBNumFormat.fillInNumFixedFrac(strings[i], values[i]/1000, 7, 0);
                     strings[i].append('k');
                 } else if (gapPrecision >= 0) {

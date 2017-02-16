@@ -105,7 +105,7 @@ public class AnalyzerGraphic extends View {
   void setupPlot(int sampleRate, int fftLen, double timeDurationE, int nAve) {
     freq_lower_bound_for_log = sampleRate/fftLen;
     float freq_lower_bound_local = 0;
-    if (spectrumPlot.axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
+    if (spectrumPlot.axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
       freq_lower_bound_local = freq_lower_bound_for_log;
     }
     // Spectrum
@@ -116,7 +116,7 @@ public class AnalyzerGraphic extends View {
     // Spectrogram
     spectrogramPlot.setupSpectrogram(sampleRate, fftLen, timeDurationE, nAve);
     freq_lower_bound_local = 0;
-    if (spectrogramPlot.axisFreq.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
+    if (spectrogramPlot.axisFreq.mapType != ScreenPhysicalMapping.Type.LINEAR) {
       freq_lower_bound_local = freq_lower_bound_for_log;
     }
     if (spectrogramPlot.showFreqAlongX) {
@@ -481,12 +481,12 @@ public class AnalyzerGraphic extends View {
 
   @Override
   protected void onSizeChanged (int w, int h, int oldw, int oldh) {
+    Log.i(TAG, "onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
     isBusy = true;
     this.canvasWidth = w;
     this.canvasHeight = h;
     spectrumPlot   .setCanvas(w, h, null);
     spectrogramPlot.setCanvas(w, h, null);
-    Log.i(TAG, "onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
     if (h > 0 && readyCallback != null) {
       readyCallback.ready();
     }

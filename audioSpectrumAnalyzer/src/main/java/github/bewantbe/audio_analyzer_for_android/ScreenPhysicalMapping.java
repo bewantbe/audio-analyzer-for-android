@@ -21,7 +21,7 @@ class ScreenPhysicalMapping {
         public int getValue() { return value; }
     }
 
-    int mapTypeInt;        // Linear or Log
+    Type mapType;        // Linear or Log
     // TODO: check nCanvasPixel==0
     float nCanvasPixel;
     // Physical limits
@@ -33,7 +33,7 @@ class ScreenPhysicalMapping {
         nCanvasPixel = _nCanvasPixel;
         vLowerBound  = _vLowerBound;
         vHigherBound = _vHigherBound;
-        mapTypeInt   = _mapType.getValue();
+        mapType      = _mapType;
     }
 
     void setNCanvasPixel(float _nCanvasPixel) {
@@ -82,7 +82,7 @@ class ScreenPhysicalMapping {
         if (vHigherBound == vLowerBound || vHigherBound != vHigherBound || vLowerBound != vLowerBound) {
             return 0;
         }
-        if (mapTypeInt == 0) {
+        if (mapType == Type.LINEAR) {
             return ((v - vLowerBound) / (vHigherBound - vLowerBound) - shift) * zoom * nCanvasPixel;
         } else {
             return pixelFromVLog(v, zoom, shift);
@@ -93,7 +93,7 @@ class ScreenPhysicalMapping {
         if (nCanvasPixel == 0 || zoom == 0) {
             return 0;
         }
-        if (mapTypeInt == 0) {
+        if (mapType == Type.LINEAR) {
             return (pixel / nCanvasPixel / zoom + shift) * (vHigherBound - vLowerBound) + vLowerBound;
         } else {
             return vLogFromPixel(pixel, zoom, shift);
@@ -152,30 +152,37 @@ class ScreenPhysicalMapping {
         setBounds(vHigherBound, vLowerBound);
     }
 
-    void setMappingType(ScreenPhysicalMapping.Type mapType, float lower_bound_ref) {
-        if (mapType.getValue() == mapTypeInt || nCanvasPixel == 0 || vLowerBound == vHigherBound) {
+    void setMappingType(ScreenPhysicalMapping.Type _mapType, float lower_bound_ref) {
+        // Set internal variables if possible
+        if (_mapType == Type.LOG) {
+            if (vLowerBound == 0) vLowerBound = lower_bound_ref;
+            if (vHigherBound == 0) vHigherBound = lower_bound_ref;
+        } else {
+            if (vLowerBound == lower_bound_ref) vLowerBound = 0;
+            if (vHigherBound == lower_bound_ref) vHigherBound = 0;
+        }
+        boolean bNeedUpdateZoomShift = mapType != _mapType;
+        mapType = _mapType;
+        if (!bNeedUpdateZoomShift || nCanvasPixel == 0 || vLowerBound == vHigherBound) {
             return;
         }
+
+        // Update zoom and shift
         float vL = vMinInView();
         float vH = vMaxInView();
         // lower_bound_ref is for how to map zero
         // Only support non-negative bounds
-        if (mapType == Type.LOG) {
+        if (_mapType == Type.LOG) {
             if (vL < 0 || vH < 0) {
                 Log.e(TAG, "setMappingType(): negative bounds.");
                 return;
             }
-            if (vLowerBound  == 0) vLowerBound  = lower_bound_ref;
-            if (vHigherBound == 0) vHigherBound = lower_bound_ref;
             if (vL  < lower_bound_ref) vL = lower_bound_ref;
             if (vH  < lower_bound_ref) vH = lower_bound_ref;
         } else {
-            if (vLowerBound  == lower_bound_ref) vLowerBound  = 0;
-            if (vHigherBound == lower_bound_ref) vHigherBound = 0;
             if (vL  < lower_bound_ref) vL = 0;
             if (vH  < lower_bound_ref) vH = 0;
         }
-        mapTypeInt = mapType.getValue();
         setZoomShiftFromV(vL, vH);
     }
 }

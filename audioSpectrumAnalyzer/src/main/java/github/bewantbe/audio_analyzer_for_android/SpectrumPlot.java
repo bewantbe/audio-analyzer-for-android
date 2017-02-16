@@ -231,7 +231,7 @@ class SpectrumPlot {
         final float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
 
         // add one more boundary points
-        if (beginFreqPt == 0 && axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
+        if (beginFreqPt == 0 && axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
             beginFreqPt++;
         }
         if (endFreqPt > db_cache.length) {
@@ -249,7 +249,7 @@ class SpectrumPlot {
             // If bars are very close to each other, draw bars as lines
             // Otherwise, zoom in so that lines look like bars.
             if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2
-                    || axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
+                    || axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
                 matrix.reset();
                 matrix.setTranslate(0, -axisY.shift * canvasHeight);
                 matrix.postScale(1, axisY.zoom);
