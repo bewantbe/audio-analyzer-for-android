@@ -80,7 +80,7 @@
             android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
-            android:text="@string/Sample_S"
+            android:text="@string/sample_s"
             android:textSize="@dimen/button_text_fontsize" />
 
         <Button
@@ -132,15 +132,15 @@
             custom:items="dB dBA" />
 
         <!--<github.bewantbe.audio_analyzer_for_android.SelectorText-->
-            <!--android:id="@+id/graph_view_mode"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_margin="4dp"-->
-            <!--android:paddingLeft="15dp"-->
-            <!--android:tag="select"-->
-            <!--android:text="scale"-->
-            <!--android:textSize="20sp"-->
-            <!--custom:items="cursor scale" />-->
+        <!--android:id="@+id/graph_view_mode"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_margin="4dp"-->
+        <!--android:paddingLeft="15dp"-->
+        <!--android:tag="select"-->
+        <!--android:text="scale"-->
+        <!--android:textSize="20sp"-->
+        <!--custom:items="cursor scale" />-->
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/freq_scaling_mode"
@@ -150,11 +150,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-<<<<<<< HEAD
-            android:text="@string/Scale"
-=======
-            android:text="linear"
->>>>>>> refs/remotes/bewantbe/master
+            android:text="@string/linear"
             android:textSize="20sp"
             custom:items="linear log" />
 

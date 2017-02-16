@@ -20,4 +20,5 @@
     <string name="three">Three</string>
     <string name="Testing">Testing...</string>
     <string name="Scale">scale</string>
+    <string name="linear">linear</string>
 </resources>
