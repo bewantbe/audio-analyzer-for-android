@@ -3,12 +3,12 @@
 
     <item
         android:id="@+id/one"
-        android:title="One"/>
+        android:title="@string/one"/>
     <item
         android:id="@+id/two"
-        android:title="Two"/>
+        android:title="@string/two"/>
     <item
         android:id="@+id/three"
-        android:title="Three"/>
+        android:title="@string/three"/>
 
 </menu>

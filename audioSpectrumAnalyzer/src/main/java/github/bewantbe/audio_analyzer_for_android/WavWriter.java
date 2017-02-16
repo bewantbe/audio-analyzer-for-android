@@ -15,6 +15,11 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.annotation.SuppressLint;
+import android.os.Environment;
+import android.os.StatFs;
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,12 +30,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import android.annotation.SuppressLint;
-import android.os.Environment;
-import android.os.StatFs;
-import android.util.Log;
-
-public class WavWriter {
+class WavWriter {
   static final String TAG = "WavWriter";
   private File outPath;
   private OutputStream out;
@@ -44,7 +44,7 @@ public class WavWriter {
   private int totalAudioLen = 0;   // bytes of audio raw data
   private int framesWrited = 0;
 
-  public WavWriter(int sampleRate) {
+  WavWriter(int sampleRate) {
     byteRate = sampleRate*RECORDER_BPP/8*channels;
     
     header[0] = 'R';  // RIFF/WAVE header
@@ -97,7 +97,7 @@ public class WavWriter {
   
   @SuppressLint("NewApi")
   @SuppressWarnings("deprecation")
-  public double secondsLeft() {
+  double secondsLeft() {
     long byteLeft;
     if (version >= 9) {
       byteLeft = outPath.getFreeSpace();  // Need API level 9
@@ -111,12 +111,12 @@ public class WavWriter {
     return (double)byteLeft / byteRate;
   }
   
-  public boolean start() {
+  boolean start() {
     if (!isExternalStorageWritable()) {
       return false;
     }
     File path = new File(Environment.getExternalStorageDirectory().getPath() + relativeDir);
-    path.mkdirs();
+    path.mkdirs(); //Is this expecting a return?
     DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss.SSS's'", Locale.US);
     String nowStr = df.format(new Date());
     outPath = new File(path, "rec" + nowStr + ".wav");
@@ -132,7 +132,7 @@ public class WavWriter {
     return true;
   }
   
-  public void stop() {
+  void stop() {
     if (out == null) {
       Log.w(TAG, "stop(): Error closing " + outPath + "  null pointer");
       return;
@@ -150,25 +150,25 @@ public class WavWriter {
       totalDataLen = header.length + totalAudioLen - 8;
       raf = new RandomAccessFile(outPath, "rw");
       raf.seek(4);
-      raf.write((byte) ((totalDataLen >>  0) & 0xff));
-      raf.write((byte) ((totalDataLen >>  8) & 0xff));
-      raf.write((byte) ((totalDataLen >> 16) & 0xff));
-      raf.write((byte) ((totalDataLen >> 24) & 0xff));
+      raf.write((byte) (totalDataLen & 0xff));
+      raf.write((byte) (totalDataLen >>  8 & 0xff));
+      raf.write((byte) (totalDataLen >> 16 & 0xff));
+      raf.write((byte) (totalDataLen >> 24 & 0xff));
       raf.seek(40);
-      raf.write((byte) ((totalAudioLen >>  0) & 0xff));
-      raf.write((byte) ((totalAudioLen >>  8) & 0xff));
-      raf.write((byte) ((totalAudioLen >> 16) & 0xff));
-      raf.write((byte) ((totalAudioLen >> 24) & 0xff));
+      raf.write((byte) (totalAudioLen & 0xff));
+      raf.write((byte) (totalAudioLen >>  8 & 0xff));
+      raf.write((byte) (totalAudioLen >> 16 & 0xff));
+      raf.write((byte) (totalAudioLen >> 24 & 0xff));
       raf.close();
     } catch (IOException e) {
       Log.w(TAG, "stop(): Error modifying " + outPath, e);
     }
   }
 
-  byte[] byteBuffer;
+  private byte[] byteBuffer;
   
   // Assume RECORDER_BPP == 16 and channels == 1
-  public void pushAudioShort(short[] ss, int numOfReadShort) {
+  void pushAudioShort(short[] ss, int numOfReadShort) {
     if (out == null) {
       Log.w(TAG, "pushAudioShort(): Error writing " + outPath + "  null pointer");
       return;
@@ -177,7 +177,7 @@ public class WavWriter {
       byteBuffer = new byte[ss.length*2];
     }
     for (int i = 0; i < numOfReadShort; i++) {
-      byteBuffer[2*i+0] = (byte)(ss[i] & 0xff);
+      byteBuffer[2 * i] = (byte)(ss[i] & 0xff); //Adding zero
       byteBuffer[2*i+1] = (byte)((ss[i]>>8) & 0xff);
     }
     framesWrited += numOfReadShort;
@@ -190,20 +190,17 @@ public class WavWriter {
     }
   }
   
-  public double secondsWritten() {
+  double secondsWritten() {
     return (double)framesWrited/(byteRate*8/RECORDER_BPP/channels);
   }
   
   /* Checks if external storage is available for read and write */
-  public boolean isExternalStorageWritable() {
+  private boolean isExternalStorageWritable() {
     String state = Environment.getExternalStorageState();  // Need API level 8
-    if (Environment.MEDIA_MOUNTED.equals(state)) {
-      return true;
-    }
-    return false;
+    return Environment.MEDIA_MOUNTED.equals(state);
   }
   
-  public String getPath() {
+  String getPath() {
     return outPath.getPath();
   }
   

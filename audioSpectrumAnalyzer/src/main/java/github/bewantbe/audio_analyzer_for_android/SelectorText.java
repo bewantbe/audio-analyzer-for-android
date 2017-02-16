@@ -28,14 +28,13 @@ import android.util.AttributeSet;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.RotateAnimation;
-import android.widget.TextView;
 
 /**
  * Text view that toggles through a set of values.
  * @author suhler@google.com (Stephen Uhler)
  */
 
-public class SelectorText extends TextView {
+public class SelectorText extends android.support.v7.widget.AppCompatTextView {
   static float DPRatio;
   private static final int ANIMATION_DELAY = 100;
   private String[] values;
@@ -148,11 +147,7 @@ public class SelectorText extends TextView {
     adjustWidth();
     invalidate();
   }
-  
-  public String[] getValues() {
-    return values;
-  }
-  
+
   public String nextValue() {
     if (values != null) {
       int i;

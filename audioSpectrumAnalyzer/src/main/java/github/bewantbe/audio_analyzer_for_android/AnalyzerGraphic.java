@@ -21,8 +21,6 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
-import java.util.Arrays;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -38,6 +36,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.util.Arrays;
+
 /**
  * Custom view to draw the FFT graph
  */
@@ -50,7 +50,6 @@ public class AnalyzerGraphic extends View {
   private float xZoom, yZoom;     // horizontal and vertical scaling
   private float xShift, yShift;   // horizontal and vertical translation, in unit 1 unit
   private float minDB = -144f;    // hard lower bound for dB
-  private float maxDB = 12f;      // hard upper bound for dB
   private RectF axisBounds;
   private double[] savedDBSpectrum = new double[0];
 
@@ -60,7 +59,6 @@ public class AnalyzerGraphic extends View {
   private Paint cursorPaint;
   private Paint gridPaint, rulerBrightPaint;
   private Paint labelPaint;
-  private Path path;
   private int[] myLocation = {0, 0}; // window location on screen
   private Matrix matrix = new Matrix();
   private Matrix matrix0 = new Matrix();
@@ -75,7 +73,6 @@ public class AnalyzerGraphic extends View {
   private StringBuilder[] gridPoints2StrT  = new StringBuilder[0];
   private char[][] gridPoints2st   = new char[0][];
   private char[][] gridPoints2stDB = new char[0][];
-  private char[][] gridPoints2stT  = new char[0][];
 
   public boolean isBusy() {
     return isBusy;
@@ -83,31 +80,31 @@ public class AnalyzerGraphic extends View {
 
   public AnalyzerGraphic(Context context, AttributeSet attrs, int defStyle) {
     super(context, attrs, defStyle);
-    setup(attrs, context);
+    setup(context);
   }
 
   public AnalyzerGraphic(Context context, AttributeSet attrs) {
     super(context, attrs);
-    setup(attrs, context);
+    setup(context);
   }
 
   public AnalyzerGraphic(Context context) {
     super(context);
-    setup(null, context);
+    setup(context);
   }
 
   public void setReady(Ready ready) {
     this.readyCallback = ready;
   }
 
-  private void setup(AttributeSet attrs, Context context) {
+  private void setup(Context context) {
     DPRatio = context.getResources().getDisplayMetrics().density;
     Log.v(TAG, "setup():");
     matrix0.reset();
     matrix0.setTranslate(0f, 0f);
     matrix0.postScale(1f, 1f);
 
-    path = new Path();
+    new Path();
 
     linePaint = new Paint();
     linePaint.setColor(Color.parseColor("#0D2C6D"));
@@ -207,7 +204,7 @@ public class AnalyzerGraphic extends View {
       double exponent = Math.pow(10, Math.floor(Math.log10(gridIntervalGuess)));
       double fraction = gridIntervalGuess / exponent;
       // grid interval is 1, 2, 5, 10, ...
-      if (fraction < Math.sqrt(1*2)) {
+      if (fraction < Math.sqrt(2)) {
         gridIntervalBig   = 1;
         gridIntervalSmall = 0.2;
       } else if (fraction < Math.sqrt(2*5)) {
@@ -232,7 +229,7 @@ public class AnalyzerGraphic extends View {
       } else if (gridIntervalGuess > Math.sqrt(6*3)) {
         gridIntervalBig   = 6;
         gridIntervalSmall = 1;
-      } else if (gridIntervalGuess > Math.sqrt(3*1)) {
+      } else if (gridIntervalGuess > Math.sqrt(3)) {
         gridIntervalBig   = 3;
         gridIntervalSmall = 1;
       } else {
@@ -276,11 +273,11 @@ public class AnalyzerGraphic extends View {
   private StringBuilder[][] gridPointsStrArray = new StringBuilder[3][0];
   private char[][][] gridPointsStArray = new char[3][0][];
 
-  public enum GridScaleType {  // java's enum type is inconvenient
+  private enum GridScaleType {  // java's enum type is inconvenient
     FREQ(0), DB(1), TIME(2);
 
     private final int value;
-    private GridScaleType(int value) { this.value = value; }
+    GridScaleType(int value) { this.value = value; }
     public int getValue() { return value; }
   }
 
@@ -318,7 +315,6 @@ public class AnalyzerGraphic extends View {
         break;
       case 2:
         gridPoints2StrT = gridPointsStr;
-        gridPoints2stT = gridPointsSt;
         break;
       }
       needUpdate = true;
@@ -342,6 +338,7 @@ public class AnalyzerGraphic extends View {
   }
 
   // Map a coordinate in frame of axis to frame of canvas c (in pixel unit)
+  // canvasX4axis is currently not used
   float canvasX4axis(float x) {
     return (x - axisBounds.left) / axisBounds.width() * canvasWidth;
   }
@@ -405,9 +402,9 @@ public class AnalyzerGraphic extends View {
     if (showFreqAlongX) {
       if (bShowTimeAxis) {
         int j = 3;
-        for (int i = 0; i < gridPoints2StrT.length; i++) {
-          if (j < gridPoints2StrT[i].length()) {
-            j = gridPoints2StrT[i].length();
+        for (StringBuilder aGridPoints2StrT : gridPoints2StrT) {
+          if (j < aGridPoints2StrT.length()) {
+            j = aGridPoints2StrT.length();
           }
         }
         return 0.6f*labelLaegeLen + j*0.5f*textHeigh;
@@ -611,7 +608,7 @@ public class AnalyzerGraphic extends View {
     }
 
     // spectrum bar
-    if (showLines == false) {
+    if (!showLines) {
       c.save();
       if (endFreqPt - beginFreqPt >= getCanvasWidth() / 2) {
         matrix.reset();
@@ -845,6 +842,7 @@ public class AnalyzerGraphic extends View {
   private float clampYShift(float offset) {
     if (showMode == 0) {
       // limit to minDB ~ maxDB
+      float maxDB = 12f;
       return clamp(offset, (maxDB - axisBounds.top) / axisBounds.height(),
                            (minDB - axisBounds.top) / axisBounds.height() - 1 / yZoom);
     } else {
@@ -916,12 +914,6 @@ public class AnalyzerGraphic extends View {
       yZoom  = clamp(yZoomOld * Math.abs(y1-y2)/yDiffOld, 1f, limitYZoom);
     }
     yShift = clampYShift(yShiftOld + (yMidOld/yZoomOld - (y1+y2)/2f/yZoom) / canvasHeight);
-  }
-
-  private void computeMatrix() {
-    matrix.reset();
-    matrix.setTranslate(-xShift*canvasWidth, -yShift*canvasHeight);
-    matrix.postScale(xZoom, yZoom);
   }
 
   @Override
@@ -1072,6 +1064,7 @@ public class AnalyzerGraphic extends View {
       "\n  timeDurationE = " + timeDurationE);
   }
 
+  // colorFromDB is not used
   public int colorFromDB(double d) {
     if (d >= 0) {
       return cma[0];
@@ -1270,11 +1263,11 @@ public class AnalyzerGraphic extends View {
     }
   }
 
-  public static interface Ready {
-    public void ready();
+  interface Ready {
+    void ready();
   }
 
-  public static class State extends BaseSavedState {
+  private static class State extends BaseSavedState {
     float cx, cy;
     float xZ, yZ, OyZ;
     float xS, yS, OyS;

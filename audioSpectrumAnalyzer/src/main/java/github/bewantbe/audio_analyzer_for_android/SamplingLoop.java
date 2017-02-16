@@ -123,10 +123,10 @@ class SamplingLoop extends Thread {
             return;
         }
 
-        /**
-         * Develop -> Reference -> AudioRecord
-         *    Data should be read from the audio hardware in chunks of sizes
-         *    inferior to the total recording buffer size.
+        /*
+          Develop -> Reference -> AudioRecord
+             Data should be read from the audio hardware in chunks of sizes
+             inferior to the total recording buffer size.
          */
         // Determine size of buffers for AudioRecord and AudioRecord::read()
         int readChunkSize    = analyzerParam.fftLen/2;  // /2 due to overlapped analyze window

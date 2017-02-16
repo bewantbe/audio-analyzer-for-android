@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    buildToolsVersion '25.0.0'
 
     defaultConfig {
         applicationId "github.bewantbe.audio_analyzer_for_android"
@@ -11,9 +11,11 @@ android {
     }
 
     buildTypes {
-        release {
+        /*release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'*/
+        debug {
+            debuggable true
         }
     }
 }

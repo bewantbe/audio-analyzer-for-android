@@ -15,14 +15,14 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
-import java.util.Arrays;
-
 import android.util.Log;
 
 import com.google.corp.productivity.specialprojects.android.fft.RealDoubleFFT;
 
+import java.util.Arrays;
+
 // Short Time Fourier Transform
-public class STFT {
+class STFT {
   // data for frequency Analysis
   private double[] spectrumAmpOutCum;
   private double[] spectrumAmpOutTmp;
@@ -60,48 +60,60 @@ public class STFT {
   
   private void initWindowFunction(int fftlen, String wndName) {
     wnd = new double[fftlen];
-    if (wndName.equals("Bartlett")) {
-      for (int i=0; i<wnd.length; i++) {  // Bartlett
-        wnd[i] = Math.asin(Math.sin(Math.PI*i/wnd.length))/Math.PI*2;
+    switch (wndName) {
+      case "Bartlett":
+        for (int i = 0; i < wnd.length; i++) {  // Bartlett
+          wnd[i] = Math.asin(Math.sin(Math.PI * i / wnd.length)) / Math.PI * 2;
+        }
+        break;
+      case "Hanning":
+        for (int i = 0; i < wnd.length; i++) {  // Hanning, hw=1
+          wnd[i] = 0.5 * (1 - Math.cos(2 * Math.PI * i / (wnd.length - 1.))) * 2;
+        }
+        break;
+      case "Blackman":
+        for (int i = 0; i < wnd.length; i++) {  // Blackman, hw=2
+          wnd[i] = 0.42 - 0.5 * Math.cos(2 * Math.PI * i / (wnd.length - 1)) + 0.08 * Math.cos(4 * Math.PI * i / (wnd.length - 1));
+        }
+        break;
+      case "Blackman Harris":
+        for (int i = 0; i < wnd.length; i++) {  // Blackman_Harris, hw=3
+          wnd[i] = (0.35875 - 0.48829 * Math.cos(2 * Math.PI * i / (wnd.length - 1)) + 0.14128 * Math.cos(4 * Math.PI * i / (wnd.length - 1)) - 0.01168 * Math.cos(6 * Math.PI * i / (wnd.length - 1))) * 2;
+        }
+        break;
+      case "Kaiser, a=2.0": {
+        double a = 2.0;
+        double dn = besselCal.i0(Math.PI * a);
+        for (int i = 0; i < wnd.length; i++) {  // Kaiser, a=2.0
+          wnd[i] = besselCal.i0(Math.PI * a * Math.sqrt(1 - (2.0 * i / (wnd.length - 1) - 1.0) * (2.0 * i / (wnd.length - 1) - 1.0))) / dn;
+        }
+        break;
       }
-    } else if (wndName.equals("Hanning")) {
-      for (int i=0; i<wnd.length; i++) {  // Hanning, hw=1
-        wnd[i] = 0.5*(1-Math.cos(2*Math.PI*i/(wnd.length-1.))) *2;
+      case "Kaiser, a=3.0": {
+        double a = 3.0;
+        double dn = besselCal.i0(Math.PI * a);
+        for (int i = 0; i < wnd.length; i++) {  // Kaiser, a=3.0
+          wnd[i] = besselCal.i0(Math.PI * a * Math.sqrt(1 - (2.0 * i / (wnd.length - 1) - 1.0) * (2.0 * i / (wnd.length - 1) - 1.0))) / dn;
+        }
+        break;
       }
-    } else if (wndName.equals("Blackman")) {
-      for (int i=0; i<wnd.length; i++) {  // Blackman, hw=2
-        wnd[i] = 0.42-0.5*Math.cos(2*Math.PI*i/(wnd.length-1))+0.08*Math.cos(4*Math.PI*i/(wnd.length-1));
+      case "Kaiser, a=4.0": {
+        double a = 4.0;
+        double dn = besselCal.i0(Math.PI * a);
+        for (int i = 0; i < wnd.length; i++) {  // Kaiser, a=4.0
+          wnd[i] = besselCal.i0(Math.PI * a * Math.sqrt(1 - (2.0 * i / (wnd.length - 1) - 1.0) * (2.0 * i / (wnd.length - 1) - 1.0))) / dn;
+        }
+        break;
       }
-    } else if (wndName.equals("Blackman Harris")) {
-      for (int i=0; i<wnd.length; i++) {  // Blackman_Harris, hw=3
-        wnd[i] = (0.35875-0.48829*Math.cos(2*Math.PI*i/(wnd.length-1))+0.14128*Math.cos(4*Math.PI*i/(wnd.length-1))-0.01168*Math.cos(6*Math.PI*i/(wnd.length-1))) *2;
-      }
-    } else if (wndName.equals("Kaiser, a=2.0")) {
-      double a = 2.0;
-      double dn = besselCal.i0(Math.PI * a);
-      for (int i=0; i<wnd.length; i++) {  // Kaiser, a=2.0
-        wnd[i] = besselCal.i0(Math.PI*a*Math.sqrt(1-(2.0*i/(wnd.length-1)-1.0)*(2.0*i/(wnd.length-1)-1.0))) / dn;
-      }
-    } else if (wndName.equals("Kaiser, a=3.0")) {
-      double a = 3.0;
-      double dn = besselCal.i0(Math.PI * a);
-      for (int i=0; i<wnd.length; i++) {  // Kaiser, a=3.0
-        wnd[i] = besselCal.i0(Math.PI*a*Math.sqrt(1-(2.0*i/(wnd.length-1)-1.0)*(2.0*i/(wnd.length-1)-1.0))) / dn;
-      }
-    } else if (wndName.equals("Kaiser, a=4.0")) {
-      double a = 4.0;
-      double dn = besselCal.i0(Math.PI * a);
-      for (int i=0; i<wnd.length; i++) {  // Kaiser, a=4.0
-        wnd[i] = besselCal.i0(Math.PI*a*Math.sqrt(1-(2.0*i/(wnd.length-1)-1.0)*(2.0*i/(wnd.length-1)-1.0))) / dn;
-      }
-    } else {
-      for (int i=0; i<wnd.length; i++) {
-        wnd[i] = 1;
-      }
+      default:
+        for (int i = 0; i < wnd.length; i++) {
+          wnd[i] = 1;
+        }
+        break;
     }
     double normalizeFactor = 0;
-    for (int i=0; i<wnd.length; i++) {
-      normalizeFactor += wnd[i];
+    for (double aWnd : wnd) {
+      normalizeFactor += aWnd;
     }
     normalizeFactor = wnd.length / normalizeFactor;
     wndEnergyFactor = 0;
@@ -112,13 +124,13 @@ public class STFT {
     wndEnergyFactor = wnd.length / wndEnergyFactor;
   }
   
-  public void setAWeighting(boolean e_isAWeighting) {
+  void setAWeighting(boolean e_isAWeighting) {
     boolAWeighting = e_isAWeighting;
   }
   
   public boolean getAWeighting() {
     return boolAWeighting;
-  }
+  } //Method not used...
   
   private void init(int fftlen, int sampleRate, int minFeedSize, String wndName) {
     if (minFeedSize <= 0) {
@@ -146,19 +158,15 @@ public class STFT {
     initDBAFactor(fftlen, sampleRate);
     boolAWeighting = false;
   }
-  
-  public STFT(int fftlen, int sampleRate, int minFeedSize, String wndName) {
-    init(fftlen, sampleRate, minFeedSize, wndName);
-  }
 
-  public STFT(int fftlen, int sampleRate, String wndName) {
+  STFT(int fftlen, int sampleRate, String wndName) {
     init(fftlen, sampleRate, 1, wndName);
   }
 
-  public void feedData(short[] ds) {
+  public void feedData(short[] ds) { //Method never used...
     feedData(ds, ds.length);
   }
-  public void feedData(short[] ds, int dsLen) {
+  void feedData(short[] ds, int dsLen) {
     if (dsLen > ds.length) {
       Log.e("STFT", "dsLen > ds.length !");
       dsLen = ds.length;
@@ -205,7 +213,7 @@ public class STFT {
     dataOut[j] = data[data.length-1]*data[data.length-1] * scaler / 4.0;
   }
   
-  final public double[] getSpectrumAmp() {
+  private double[] getSpectrumAmp() {
     if (nAnalysed != 0) {    // no new result
       int outLen = spectrumAmpOut.length;
       double[] sAOC = spectrumAmpOutCum;
@@ -227,12 +235,12 @@ public class STFT {
     return spectrumAmpOut;
   }
   
-  final public double[] getSpectrumAmpDB() {
+  final double[] getSpectrumAmpDB() {
     getSpectrumAmp();
     return spectrumAmpOutDB;
   }
 
-  public double getRMS() {
+  double getRMS() {
     if (cntRMS > 8000/30) {
       outRMS = Math.sqrt(cumRMS / cntRMS * 2.0);  // "* 2.0" normalize to sine wave.
       cumRMS = 0;
@@ -241,7 +249,7 @@ public class STFT {
     return outRMS;
   }
   
-  public double getRMSFromFT() {
+  double getRMSFromFT() {
     getSpectrumAmpDB();
     double s = 0;
     for (int i = 1; i < spectrumAmpOut.length; i++) {
@@ -250,13 +258,13 @@ public class STFT {
     return Math.sqrt(s * wndEnergyFactor);
   }
   
-  public int nElemSpectrumAmp() {
+  int nElemSpectrumAmp() {
     return nAnalysed;
   }
   
-  public double maxAmpFreq = Double.NaN, maxAmpDB = Double.NaN;
+  double maxAmpFreq = Double.NaN, maxAmpDB = Double.NaN;
   
-  public void calculatePeak() {
+  void calculatePeak() {
     getSpectrumAmpDB();
     // Find and show peak amplitude
     maxAmpDB  = 20 * Math.log10(0.125/32768);
@@ -280,27 +288,26 @@ public class STFT {
       double x1 = spectrumAmpOutDB[id-1];
       double x2 = spectrumAmpOutDB[id];
       double x3 = spectrumAmpOutDB[id+1];
-      double c = x2;
       double a = (x3+x1)/2 - x2;
       double b = (x3-x1)/2;
       if (a < 0) {
         double xPeak = -b/(2*a);
         if (Math.abs(xPeak) < 1) {
           maxAmpFreq += xPeak * sampleRate / fftLen;
-          maxAmpDB = (4*a*c - b*b)/(4*a);
+          maxAmpDB = (4*a* x2 - b*b)/(4*a);
         }
       }
     }
   }
 
-  public void clear() {
+  public void clear() { //Method never used
     spectrumAmpPt = 0;
     Arrays.fill(spectrumAmpOut, 0.0);
     Arrays.fill(spectrumAmpOutDB, Math.log10(0));
     Arrays.fill(spectrumAmpOutCum, 0.0);
-    for (int i = 0; i < spectrumAmpOutArray.length; i++) {
-      Arrays.fill(spectrumAmpOutArray[i], 0.0);
-    }
+      for (double[] aSpectrumAmpOutArray : spectrumAmpOutArray) {
+          Arrays.fill(aSpectrumAmpOutArray, 0.0);
+      }
   }
 
 }

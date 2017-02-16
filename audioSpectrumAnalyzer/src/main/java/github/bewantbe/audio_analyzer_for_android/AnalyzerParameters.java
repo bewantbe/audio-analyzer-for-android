@@ -37,7 +37,7 @@ class AnalyzerParameters {
 
     // Get audio source name from its ID
     // Tell me if there is better way to do it.
-    String getAudioSourceNameFromId(int id) {
+    private String getAudioSourceNameFromId(int id) {
         for (int i = 0; i < audioSourceNames.length; i++) {
             if (audioSourceIDs[i] == id) {
                 return audioSourceNames[i];

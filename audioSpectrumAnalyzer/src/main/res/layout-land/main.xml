@@ -23,6 +23,7 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
             android:lines="2"
             android:text="@string/textview_RMS_text"
             android:typeface="monospace" />
@@ -33,6 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/textview_RMS"
+            android:layout_toEndOf="@id/textview_RMS"
             android:text="@string/textview_cur_text"
             android:typeface="monospace" />
 
@@ -42,6 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/textview_cur"
             android:layout_toRightOf="@id/textview_RMS"
+            android:layout_toEndOf="@id/textview_RMS"
             android:text="@string/textview_peak_text"
             android:typeface="monospace" />
 
@@ -52,8 +55,9 @@
             android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_toRightOf="@+id/textview_cur"
+            android:layout_toEndOf="@+id/textview_cur"
             android:onClick="showPopupMenu"
-            android:text="Sample/S"
+            android:text="@string/Sample_S"
             android:textSize="18sp" />
 
         <Button
@@ -63,8 +67,9 @@
             android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_toRightOf="@+id/button_sample_rate"
+            android:layout_toEndOf="@+id/button_sample_rate"
             android:onClick="showPopupMenu"
-            android:text="fftlen"
+            android:text="@string/fftlen"
             android:textSize="18sp" />
     </RelativeLayout>
     
@@ -86,8 +91,9 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
 		        android:paddingLeft="15dp"
+                android:paddingStart="15dp"
             android:tag="select"
-            android:text="Mon"
+            android:text="@string/mon"
             android:textSize="20sp"
             custom:items="Mon Rec" />
 
@@ -97,8 +103,9 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
 		        android:paddingLeft="15dp"
+                android:paddingStart="15dp"
             android:tag="select"
-            android:text="spum"
+            android:text="@string/spum"
             android:textSize="20sp"
             custom:items="spum spam" />
 
@@ -108,8 +115,9 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
 		        android:paddingLeft="15dp"
+                android:paddingStart="15dp"
             android:tag="select"
-            android:text="dB"
+            android:text="@string/db"
             android:textSize="20sp"
             custom:items="dB dBA" />
 
@@ -119,8 +127,9 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
 		        android:paddingLeft="15dp"
+                android:paddingStart="15dp"
             android:tag="select"
-            android:text="cursor"
+            android:text="@string/cursor"
             android:textSize="20sp"
             custom:items="cursor scale" />
 
@@ -130,8 +139,9 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
 		        android:paddingLeft="15dp"
+                android:paddingStart="15dp"
             android:tag="select"
-            android:text="run"
+            android:text="@string/run"
             android:textSize="20sp"
             custom:items="run stop" />
 
@@ -141,7 +151,7 @@
             android:layout_height="40sp"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
-            android:text="ave"
+            android:text="@string/ave"
             android:textSize="18sp" />
     </LinearLayout>
 

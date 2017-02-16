@@ -75,7 +75,7 @@ class SineGenerator {
    * @param count		# of samples (must be even)
    */
 
-  void getSamples(double[] samples, int start, int count) {
+  private void getSamples(double[] samples, int start, int count) {
     for(int cnt = start; cnt < count; cnt += 2) {
       samples[cnt] = n0 = (k * n1) - n0;
       samples[cnt + 1] = n1 = (k * n0) - n1;
@@ -96,7 +96,7 @@ class SineGenerator {
    * @param start		Start sample
    * @param count		# of samples (must be even)
    */
-  void addSamples(double[] samples, int start, int count) {
+  private void addSamples(double[] samples, int start, int count) {
     for(int cnt=start; cnt<count; cnt+=2) {
       samples[cnt] += n0 = (k * n1) - n0;
       samples[cnt + 1] += n1 = (k * n0) - n1;

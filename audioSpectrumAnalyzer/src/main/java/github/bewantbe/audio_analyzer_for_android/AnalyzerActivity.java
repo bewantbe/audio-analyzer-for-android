@@ -328,7 +328,7 @@ public class AnalyzerActivity extends Activity
    * How to attach these events to the graphView?
    * @author xyy
    */
-  class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
+  private class AnalyzerGestureListener extends GestureDetector.SimpleOnGestureListener {
     @Override
     public boolean onDown(MotionEvent event) {  // enter here when down action happen
       flyingMoveHandler.removeCallbacks(flyingMoveRunnable);
@@ -510,7 +510,7 @@ public class AnalyzerActivity extends Activity
   
   @Override
   public boolean onLongClick(View view) {
-    vibrate(300);
+    vibrate();
     Log.i(TAG, "long click: " + view.toString());
     return true;
   }
@@ -589,7 +589,7 @@ public class AnalyzerActivity extends Activity
     }
   }
 
-  private void vibrate(int ms) {
+  private void vibrate() {
     //((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(ms);
   }
 
