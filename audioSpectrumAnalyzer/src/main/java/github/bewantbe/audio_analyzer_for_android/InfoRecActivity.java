@@ -118,6 +118,21 @@ public class InfoRecActivity extends Activity {
 //				MediaRecorder.AudioSource.VOICE_COMMUNICATION, // Microphone audio source tuned for voice communications such as VoIP. It will for instance take advantage of echo cancellation or automatic gain control if available. It otherwise behaves like DEFAULT if no voice processing is applied. (apilv11)
 //				MediaRecorder.AudioSource.REMOTE_SUBMIX,       // Audio source for a submix of audio streams to be presented remotely. (apilv19)
 		};
+		if (Build.VERSION.SDK_INT >= 19) {
+			// https://developer.android.com/reference/android/Manifest.permission.html#CAPTURE_AUDIO_OUTPUT
+			// VOICE_UPLINK and VOICE_DOWNLINK not available for third-party applications.
+			audioSourceString = new String[] { "DEFAULT", "MIC",
+					"VOICE_CALL", "CAMCORDER", "VOICE_RECOGNITION", "VOICE_COMMUNICATION", "REMOTE_SUBMIX"};
+			audioSourceId = new int[] {
+					MediaRecorder.AudioSource.DEFAULT,
+					MediaRecorder.AudioSource.MIC,
+					MediaRecorder.AudioSource.VOICE_CALL,
+					MediaRecorder.AudioSource.CAMCORDER,
+					MediaRecorder.AudioSource.VOICE_RECOGNITION,
+					MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+					MediaRecorder.AudioSource.REMOTE_SUBMIX,
+			};
+		}
 		tv.append("\n-- Audio Source Test --");
 		for (String s : requested) {
 			int sampleRate = Integer.parseInt(s);

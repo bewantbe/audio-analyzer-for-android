@@ -109,24 +109,15 @@ class AnalyzerViews {
 
     void setupView(AnalyzerParameters analyzerParam) {
         // Maybe move these out of this class
-        RectF bounds = graphView.getBounds();
-        bounds.right = analyzerParam.sampleRate / 2;
-        graphView.setBounds(bounds);
-        graphView.setupSpectrogram(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref);
-        graphView.setTimeMultiplier(analyzerParam.nFFTAverage);
+        graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
     }
 
+    // Will be called by SamplingLoop (in another thread)
     void update(final double[] spectrumDBcopy) {
-        if (graphView.getShowMode() == 1) {
-            // data is synchronized here
-            graphView.saveRowSpectrumAsColor(spectrumDBcopy);
-        }
+        graphView.saveSpectrum(spectrumDBcopy);
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if (graphView.getShowMode() == 0) {
-                    graphView.saveSpectrum(spectrumDBcopy);
-                }
                 // data will get out of synchronize here
                 invalidateGraphView();
             }

@@ -121,17 +121,34 @@
             android:textSize="20sp"
             custom:items="dB dBA" />
 
+        <!--<github.bewantbe.audio_analyzer_for_android.SelectorText-->
+            <!--android:id="@+id/graph_view_mode"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_margin="4dp"-->
+		        <!--android:paddingLeft="15dp"-->
+            <!--android:tag="select"-->
+            <!--android:text="cursor"-->
+            <!--android:textSize="20sp"-->
+            <!--custom:items="cursor scale" />-->
+
         <github.bewantbe.audio_analyzer_for_android.SelectorText
-            android:id="@+id/graph_view_mode"
+            android:id="@+id/freq_scaling_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
+<<<<<<< HEAD
 		        android:paddingLeft="15dp"
                 android:paddingStart="15dp"
             android:tag="select"
             android:text="@string/cursor"
+=======
+            android:paddingLeft="15dp"
+            android:tag="select"
+            android:text="linear"
+>>>>>>> refs/remotes/bewantbe/master
             android:textSize="20sp"
-            custom:items="cursor scale" />
+            custom:items="linear log" />
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/run"

@@ -51,10 +51,14 @@ import android.widget.TextView;
  * @author suhler@google.com (Stephen Uhler)
  */
 
+// TODO: Require the permission for android >=6.
+// https://developer.android.com/training/permissions/requesting.html
+// https://developer.android.com/guide/topics/permissions/requesting.html
+
 public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
                OnItemClickListener, AnalyzerGraphic.Ready {
-  static final String TAG="AnalyzerActivity";
+  static final String TAG="AnalyzerActivity:";
 
   AnalyzerViews analyzerViews;
   SamplingLoop samplingThread;
@@ -67,7 +71,8 @@ public class AnalyzerActivity extends Activity
   double maxAmpDB;
   double maxAmpFreq;
 
-  private boolean isMeasure = true;
+  private boolean isLinearFreq = true;
+  private boolean isMeasure = false;
   volatile boolean bSaveWav = false;
 
   @Override
@@ -126,13 +131,24 @@ public class AnalyzerActivity extends Activity
     analyzerParam.timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
             Double.toString(6.0)));
 
+    // Crash detection and recovery.
+    SharedPreferences.Editor editor = sharedPref.edit();
+    boolean bCrashed = sharedPref.getBoolean("Crashed", false);
+    if (bCrashed) {  // If crashed last time, use default audio source.
+      Log.w(TAG, "onResume(): abnormal exit detected. Changing default audio source.");
+      analyzerParam.audioSourceId = analyzerParam.RECORDER_AGC_OFF;
+      editor.putString("audioSource", Integer.toString(analyzerParam.audioSourceId));
+    }
+    editor.putBoolean("Crashed", true);  // will be reset in normal exit.
+    editor.commit();
+
     // Settings of graph view
     // spectrum
     analyzerViews.graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
     // set spectrum show range
-    float b = analyzerViews.graphView.getBounds().bottom;
-    b = Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(b)));
-    analyzerViews.graphView.setBoundsBottom(b);
+    analyzerViews.graphView.setSpectrumDBLowerBound(
+            Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(AnalyzerGraphic.minDB)))
+    );
 
     // spectrogram
     analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
@@ -140,9 +156,10 @@ public class AnalyzerActivity extends Activity
     analyzerViews.graphView.setShowFreqAlongX         (sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
     analyzerViews.graphView.setSmoothRender           (sharedPref.getBoolean("spectrogramSmoothRender", false));
     // set spectrogram show range
-    double d = analyzerViews.graphView.getLowerBound();
-    d = Double.parseDouble(sharedPref.getString("spectrogramRange", Double.toString(d)));
-    analyzerViews.graphView.setLowerBound(d);
+    analyzerViews.graphView.setSpectrogramDBLowerBound(
+            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))
+    );
+
     analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
 
     // Travel the views with android:tag="select" to get default setting values
@@ -165,6 +182,10 @@ public class AnalyzerActivity extends Activity
     super.onPause();
     samplingThread.finish();
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+    SharedPreferences.Editor editor = sharedPref.edit();
+    editor.putBoolean("Crashed", false);  // will be reset in normal exit.
+    editor.commit();
   }
 
   @Override
@@ -303,9 +324,9 @@ public class AnalyzerActivity extends Activity
       ((SelectorText) findViewById(R.id.spectrum_spectrogram_mode)).nextValue();
     }
     
-    Log.i(TAG, "  loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
-    Log.i(TAG, "  loadPreferenceForView(): fftLen      = " + analyzerParam.fftLen);
-    Log.i(TAG, "  loadPreferenceForView(): nFFTAverage = " + analyzerParam.nFFTAverage);
+    Log.i(TAG, "loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
+    Log.i(TAG, "loadPreferenceForView(): fftLen      = " + analyzerParam.fftLen);
+    Log.i(TAG, "loadPreferenceForView(): nFFTAverage = " + analyzerParam.nFFTAverage);
     ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(analyzerParam.sampleRate));
     ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(analyzerParam.fftLen));
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
@@ -405,8 +426,8 @@ public class AnalyzerActivity extends Activity
 
   private void switchMeasureAndScaleMode() {
     isMeasure = !isMeasure;
-    SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
-    st.performClick();
+    //SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
+    //st.performClick();
   }
   
   @Override
@@ -503,7 +524,7 @@ public class AnalyzerActivity extends Activity
         isPinching = false;
         break;
       default:
-        Log.v(TAG, "Invalid touch count");
+        Log.i(TAG, "Invalid touch count");
         break;
     }
   }
@@ -564,8 +585,15 @@ public class AnalyzerActivity extends Activity
           samplingThread.setPause(pause);
         }
         return false;
-      case R.id.graph_view_mode:
-        isMeasure = !value.equals("scale");
+//      case R.id.graph_view_mode:
+//        isMeasure = !value.equals("scale");
+//        return false;
+      case R.id.freq_scaling_mode:
+        isLinearFreq = value.equals("linear");
+        Log.i(TAG, "processClick(): isLinearFreq="+isLinearFreq);
+        analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
+        editor.putString("freq_scaling_mode", "linear");
+        editor.commit();
         return false;
       case R.id.dbA:
         analyzerParam.isAWeighting = !value.equals("dB");
@@ -579,7 +607,7 @@ public class AnalyzerActivity extends Activity
         if (value.equals("spum")) {
           analyzerViews.graphView.switch2Spectrum();
         } else {
-          analyzerViews.graphView.switch2Spectrogram(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref);
+          analyzerViews.graphView.switch2Spectrogram();
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
         editor.commit();

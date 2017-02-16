@@ -19,11 +19,20 @@ import android.os.SystemClock;
 import android.util.Log;
 
 class RecorderMonitor {
+<<<<<<< HEAD
   String TAG;
   private long timeUpdateOld, timeUpdateInterval, timeStarted;  // in ms
   private long lastOverrunTime;
   private long nSamplesRead;
   int sampleRate;
+=======
+  static final String TAG0 = "RecorderMonitor:";
+  private String TAG;
+  private long timeUpdateOld, timeUpdateInterval, timeStarted;  // in ms
+  private long lastOverrunTime;
+  private long nSamplesRead;
+  private int sampleRate;
+>>>>>>> refs/remotes/bewantbe/master
   private int bufferSampleSize;
   private double sampleRateReal;
   private boolean lastCheckOverrun = false;
@@ -99,8 +108,17 @@ class RecorderMonitor {
   boolean getLastCheckOverrun() {
     return lastCheckOverrun;
   }
+<<<<<<< HEAD
 
   public double getSampleRate() {
+=======
+  
+  long getLastOverrunTime() {
+    return lastOverrunTime;
+  }
+  
+  double getSampleRate() {
+>>>>>>> refs/remotes/bewantbe/master
     return sampleRateReal;
   }
 }
