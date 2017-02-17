@@ -162,7 +162,7 @@ public class AnalyzerActivity extends Activity
 
     analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
 
-    // Travel the views with android:tag="select" to get default setting values
+    // Travel the views with android:tag="select" to apply setting values.
     visit((ViewGroup) analyzerViews.graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -311,10 +311,12 @@ public class AnalyzerActivity extends Activity
   // When this function is called, the SamplingLoop must not running in the meanwhile.
   void loadPreferenceForView() {
     // load preferences for buttons
+    // list-buttons
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     analyzerParam.sampleRate   = sharedPref.getInt("button_sample_rate", 8000);
     analyzerParam.fftLen       = sharedPref.getInt("button_fftlen",      1024);
     analyzerParam.nFFTAverage  = sharedPref.getInt("button_average",        1);
+    // toggle-buttons
     analyzerParam.isAWeighting = sharedPref.getBoolean("dbA", false);
     if (analyzerParam.isAWeighting) {
       ((SelectorText) findViewById(R.id.dbA)).nextValue();
@@ -322,6 +324,11 @@ public class AnalyzerActivity extends Activity
     boolean isSpam = sharedPref.getBoolean("spectrum_spectrogram_mode", true);
     if (!isSpam) {
       ((SelectorText) findViewById(R.id.spectrum_spectrogram_mode)).nextValue();
+    }
+    String axisMode = sharedPref.getString("freq_scaling_mode", "linear");
+    SelectorText st = (SelectorText) findViewById(R.id.freq_scaling_mode);
+    if (! axisMode.equals(st.getText())) {
+      st.nextValue();
     }
     
     Log.i(TAG, "loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
@@ -590,9 +597,9 @@ public class AnalyzerActivity extends Activity
 //        return false;
       case R.id.freq_scaling_mode:
         isLinearFreq = value.equals("linear");
-        Log.i(TAG, "processClick(): isLinearFreq="+isLinearFreq);
+        Log.d(TAG, "processClick(): isLinearFreq="+isLinearFreq);
         analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
-        editor.putString("freq_scaling_mode", "linear");
+        editor.putString("freq_scaling_mode", value);
         editor.commit();
         return false;
       case R.id.dbA:

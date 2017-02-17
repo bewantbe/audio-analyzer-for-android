@@ -797,8 +797,8 @@ class SpectrogramPlot {
             if (bmPt >= nTime) bmPt = 0;
         }
 
-        String st1old;
-        String st2old;
+        String st1old;  // for debug
+        String st2old;  // for debug
 
         void draw(Canvas c) {
             if (bm.length == 0 || axisFreq.nCanvasPixel == 0) {
