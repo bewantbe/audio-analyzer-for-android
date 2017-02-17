@@ -103,7 +103,7 @@ public class AnalyzerGraphic extends View {
 
   // Call this when settings changed.
   void setupPlot(int sampleRate, int fftLen, double timeDurationE, int nAve) {
-    freq_lower_bound_for_log = sampleRate/fftLen;
+    freq_lower_bound_for_log = (float)sampleRate/fftLen;
     float freq_lower_bound_local = 0;
     if (spectrumPlot.axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
       freq_lower_bound_local = freq_lower_bound_for_log;
