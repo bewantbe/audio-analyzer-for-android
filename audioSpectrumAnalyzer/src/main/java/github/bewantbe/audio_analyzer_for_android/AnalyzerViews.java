@@ -107,8 +107,9 @@ class AnalyzerViews {
         ((TextView) activity.findViewById(R.id.textview_peak)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fs);
     }
 
+    // Prepare the spectrum and spectrogram plot (from scratch or full reset)
+    // Currently called by SamplingLoop::run(), maybe move to main thread?
     void setupView(AnalyzerParameters analyzerParam) {
-        // Maybe move these out of this class
         graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
     }
 

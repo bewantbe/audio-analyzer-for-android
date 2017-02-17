@@ -104,8 +104,9 @@ public class AnalyzerGraphic extends View {
   // Call this when settings changed.
   void setupPlot(int sampleRate, int fftLen, double timeDurationE, int nAve) {
     freq_lower_bound_for_log = (float)sampleRate/fftLen;
+
     float freq_lower_bound_local = 0;
-    if (spectrumPlot.axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
+    if (spectrumPlot.axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
       freq_lower_bound_local = freq_lower_bound_for_log;
     }
     // Spectrum
@@ -114,9 +115,8 @@ public class AnalyzerGraphic extends View {
     spectrumPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
 
     // Spectrogram
-    spectrogramPlot.setupSpectrogram(sampleRate, fftLen, timeDurationE, nAve);
     freq_lower_bound_local = 0;
-    if (spectrogramPlot.axisFreq.mapType != ScreenPhysicalMapping.Type.LINEAR) {
+    if (spectrogramPlot.axisFreq.mapType == ScreenPhysicalMapping.Type.LOG) {
       freq_lower_bound_local = freq_lower_bound_for_log;
     }
     if (spectrogramPlot.showFreqAlongX) {
@@ -125,6 +125,7 @@ public class AnalyzerGraphic extends View {
       axisBounds = new RectF(0.0f, sampleRate/2.0f, (float)timeDurationE * nAve, freq_lower_bound_local);
     }
     spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
+    spectrogramPlot.setupSpectrogram(sampleRate, fftLen, timeDurationE, nAve);
   }
 
   void setAxisModeLinear(boolean b) {
@@ -240,7 +241,7 @@ public class AnalyzerGraphic extends View {
 
   static void setIsBusy(boolean b) { isBusy = b; }
 
-  FPSCounter fpsCounter = new FPSCounter("View");
+  FPSCounter fpsCounter = new FPSCounter("AnalyzerGraphic");
 //  long t_old;
 
   @Override

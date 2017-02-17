@@ -120,8 +120,12 @@ class SpectrogramPlot {
         fqGridLabel.setDensity(axisFreq.nCanvasPixel * gridDensity / DPRatio);
         tmGridLabel.setDensity(axisTime.nCanvasPixel * gridDensity / DPRatio);
 
-        logBmp.init(nFreqPoints, nTimePoints, axisFreq);
-        logSegBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        synchronized (this) {
+            logBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        }
+        synchronized (this) {
+            logSegBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        }
     }
 
     void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
@@ -144,8 +148,12 @@ class SpectrogramPlot {
         } else {
             fqGridLabel.setGridType(GridLabel.Type.FREQ);
         }
-        logBmp.init(nFreqPoints, nTimePoints, axisFreq);
-        logSegBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        synchronized (this) {
+            logBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        }
+        synchronized (this) {
+            logSegBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        }
     }
 
     void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE, int nAve) {
@@ -161,8 +169,9 @@ class SpectrogramPlot {
                 spectrogramColorsShifting = new int[nFreqPoints * nTimePoints];
                 bNeedClean = true;
             }
-            if (spectrogramColorsPt >= nTimePoints) {
+            if (!bNeedClean && spectrogramColorsPt >= nTimePoints) {
                 Log.w(TAG, "setupSpectrogram(): Should not happen!!");
+                Log.i(TAG, "setupSpectrogram(): spectrogramColorsPt="+spectrogramColorsPt+ "  nFreqPoints="+nFreqPoints+"  nTimePoints="+nTimePoints);
                 bNeedClean = true;
             }
             if (bNeedClean) {
@@ -170,12 +179,16 @@ class SpectrogramPlot {
                 Arrays.fill(spectrogramColors, 0);
             }
         }
-        logBmp.init(nFreqPoints, nTimePoints, axisFreq);
-        logSegBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        synchronized (this) {
+            logBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        }
+        synchronized (this) {
+            logSegBmp.init(nFreqPoints, nTimePoints, axisFreq);
+        }
         Log.i(TAG, "setupSpectrogram() done" +
                 "\n  sampleRate    = " + sampleRate +
                 "\n  fftLen        = " + fftLen +
-                "\n  timeDurationE = " + timeDurationE);
+                "\n  timeDurationE = " + timeDurationE + " * " + nAve);
     }
 
     // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
@@ -517,7 +530,9 @@ class SpectrogramPlot {
 //            c.restore();
 
             c.scale((float)nFreqPoints / logSegBmp.bmpWidth, 1.0f);
-            logSegBmp.draw(c);
+            synchronized (this) {
+                logSegBmp.draw(c);
+            }
             if (showModeSpectrogram == 1) {
                 c.drawLine(0, logSegBmp.bmPt, logSegBmp.bmpWidth, logSegBmp.bmPt, cursorTimePaint);
             }
@@ -599,7 +614,7 @@ class SpectrogramPlot {
                 Log.e(TAG, "init(): damn: axis == null");
             }
             float dFreq = Math.max(axis.vLowerBound, axis.vHigherBound) / nFreq;
-            Log.i(TAG, "init(): axis.vLowerBound=" + axis.vLowerBound + "  axis.vHigherBound" + axis.vHigherBound + "  axis.nC" + axis.nCanvasPixel);
+            Log.i(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vH=" + axis.vHigherBound + "  axis.nC=" + axis.nCanvasPixel);
             for (int i = 0; i <= nFreq; i++) {  // freq = i * dFreq
                 // do not show DC component (xxx - 1).
                 mapFreqToPixL[i] = (int) Math.floor(axis.pixelNoZoomFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
@@ -782,35 +797,45 @@ class SpectrogramPlot {
             if (bmPt >= nTime) bmPt = 0;
         }
 
+        String st1old;
+        String st2old;
+
         void draw(Canvas c) {
             if (bm.length == 0 || axisFreq.nCanvasPixel == 0) {
                 Log.d(TAG, "draw(): what.....");
                 return;
             }
-            synchronized (this) {
-                int[] bmTmp = bm;
-                if (showModeSpectrogram == 0) {
-                    System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * bmpWidth, bmPt * bmpWidth);
-                    System.arraycopy(bm, bmPt * bmpWidth, bmShiftCache, 0, (nTime - bmPt) * bmpWidth);
-                    bmTmp = bmShiftCache;
+            int i1 = pixelAbscissa.length - 1;
+            String st1 = "draw():  pixelAbscissa["+(i1-1)+"]="+pixelAbscissa[i1-1]+"  pixelAbscissa["+i1+"]="+pixelAbscissa[i1]+"  bmpWidth="+bmpWidth;
+            String st2 = "draw():  axis.vL="+axisFreq.vLowerBound+"  axis.vH="+axisFreq.vHigherBound+"  axisFreq.nC="+axisFreq.nCanvasPixel+"  nTime="+nTime;
+            if (!st1.equals(st1old)) {
+                Log.v(TAG, st1);
+                Log.v(TAG, st2);
+                st1old = st1;
+                st2old = st2;
+            }
+            int[] bmTmp = bm;
+            if (showModeSpectrogram == 0) {
+                System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * bmpWidth, bmPt * bmpWidth);
+                System.arraycopy(bm, bmPt * bmpWidth, bmShiftCache, 0, (nTime - bmPt) * bmpWidth);
+                bmTmp = bmShiftCache;
+            }
+            for (int i = 1; i < pixelAbscissa.length; i++) {  // draw each segmentation
+                c.save();
+                float f1 = (float) freqAbscissa[i - 1];
+                float f2 = (float) freqAbscissa[i];
+                float p1 = axisFreq.pixelNoZoomFromV(f1);
+                float p2 = axisFreq.pixelNoZoomFromV(f2);
+                if (axisFreq.vLowerBound > axisFreq.vHigherBound) {
+                    p1 = axisFreq.nCanvasPixel - p1;
+                    p2 = axisFreq.nCanvasPixel - p2;
                 }
-                for (int i = 1; i < pixelAbscissa.length; i++) {  // draw each segmentation
-                    c.save();
-                    float f1 = (float) freqAbscissa[i - 1];
-                    float f2 = (float) freqAbscissa[i];
-                    float p1 = axisFreq.pixelNoZoomFromV(f1);
-                    float p2 = axisFreq.pixelNoZoomFromV(f2);
-                    if (axisFreq.vLowerBound > axisFreq.vHigherBound) {
-                        p1 = axisFreq.nCanvasPixel - p1;
-                        p2 = axisFreq.nCanvasPixel - p2;
-                    }
-                    double widthFactor = (p2 - p1) / (pixelAbscissa[i] - pixelAbscissa[i - 1]) * (bmpWidth / axisFreq.nCanvasPixel);
-                    // Log.v(TAG, "draw():  f1=" + f1 + "  f2=" + f2 + "  p1=" + p1 + "  p2=" + p2 + "  widthFactor=" + widthFactor + "  modeInt=" + axisFreq.mapType);
-                    c.scale((float) widthFactor, 1);
-                    c.drawBitmap(bmTmp, (int) pixelAbscissa[i - 1], bmpWidth, p1 / axisFreq.nCanvasPixel * bmpWidth / (float) widthFactor, 0.0f,
-                            (int) (pixelAbscissa[i] - pixelAbscissa[i - 1]), nTime, false, smoothBmpPaint);
-                    c.restore();
-                }
+                double widthFactor = (p2 - p1) / (pixelAbscissa[i] - pixelAbscissa[i - 1]) * (bmpWidth / axisFreq.nCanvasPixel);
+                // Log.v(TAG, "draw():  f1=" + f1 + "  f2=" + f2 + "  p1=" + p1 + "  p2=" + p2 + "  widthFactor=" + widthFactor + "  modeInt=" + axisFreq.mapType);
+                c.scale((float) widthFactor, 1);
+                c.drawBitmap(bmTmp, (int) pixelAbscissa[i - 1], bmpWidth, p1 / axisFreq.nCanvasPixel * bmpWidth / (float) widthFactor, 0.0f,
+                        (int) (pixelAbscissa[i] - pixelAbscissa[i - 1]), nTime, false, smoothBmpPaint);
+                c.restore();
             }
         }
     }
