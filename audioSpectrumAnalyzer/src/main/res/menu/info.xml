@@ -8,6 +8,7 @@
         android:menuCategory="container"
         android:title="User Manual"
         android:titleCondensed="info"/>
+
     <item
         android:id="@+id/settings"
         android:enabled="true"
@@ -25,11 +26,11 @@
         android:titleCondensed="info rec"/>
 
     <item
-        android:id="@+id/freq_range_setting"
+        android:id="@+id/view_range_setting"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="Frequency Show Range"
-        android:titleCondensed="Freq Range"/>
+        android:title="View Range Setting"
+        android:titleCondensed="View Range"/>
 
 </menu>

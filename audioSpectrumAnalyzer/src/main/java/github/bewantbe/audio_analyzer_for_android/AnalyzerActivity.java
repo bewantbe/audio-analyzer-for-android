@@ -247,7 +247,7 @@ public class AnalyzerActivity extends Activity
           Intent int_info_rec = new Intent(this, InfoRecActivity.class);
           startActivity(int_info_rec);
           return true;
-        case R.id.freq_range_setting:
+        case R.id.view_range_setting:
           rangeViewDialogC.ShowRangeViewDialog();
           return true;
       default:

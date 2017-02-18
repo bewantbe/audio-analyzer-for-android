@@ -385,22 +385,6 @@ public class AnalyzerGraphic extends View {
     spectrogramPlot.hideCursor();
   }
 
-//  public float getFreqMax() {
-//    if (showMode == PlotMode.SPECTRUM) {
-//      return spectrumPlot.getFreqMax();
-//    } else {
-//      return spectrogramPlot.getFreqMax();
-//    }
-//  }
-//
-//  public float getFreqMin() {
-//    if (showMode == PlotMode.SPECTRUM) {
-//      return spectrumPlot.getFreqMin();
-//    } else {
-//      return spectrogramPlot.getFreqMin();
-//    }
-//  }
-
   public float getXZoom() {
     return xZoom;
   }
