@@ -24,4 +24,12 @@
         android:title="Test&amp;Show hardware's ability"
         android:titleCondensed="info rec"/>
 
+    <item
+        android:id="@+id/freq_range_setting"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:menuCategory="container"
+        android:title="Frequency Show Range"
+        android:titleCondensed="Freq Range"/>
+
 </menu>

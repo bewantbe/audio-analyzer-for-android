@@ -397,7 +397,7 @@ class AnalyzerViews {
         }
         isInvalidating = true;
         long frameTime;                      // time delay for next frame
-        if (graphView.getShowMode() != 0) {
+        if (graphView.getShowMode() != AnalyzerGraphic.PlotMode.SPECTRUM) {
             frameTime = 1000/8;  // use a much lower frame rate for spectrogram
         } else {
             frameTime = 1000/60;

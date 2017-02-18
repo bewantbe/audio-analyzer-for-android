@@ -57,11 +57,13 @@ import android.widget.TextView;
 
 public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
-               OnItemClickListener, AnalyzerGraphic.Ready {
+               OnItemClickListener, AnalyzerGraphic.Ready
+{
   static final String TAG="AnalyzerActivity:";
 
   AnalyzerViews analyzerViews;
   SamplingLoop samplingThread;
+  private RangeViewDialogC rangeViewDialogC;
   private GestureDetectorCompat mDetector;
 
   AnalyzerParameters analyzerParam = null;
@@ -103,6 +105,8 @@ public class AnalyzerActivity extends Activity
         ((TextView) view).setFreezesText(true);
       }
     }, "select");
+
+    rangeViewDialogC = new RangeViewDialogC(this, analyzerViews.graphView);
 
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
   }
@@ -230,19 +234,22 @@ public class AnalyzerActivity extends Activity
   public boolean onOptionsItemSelected(MenuItem item) {
       Log.i(TAG, item.toString());
       switch (item.getItemId()) {
-      case R.id.info:
-        analyzerViews.showInstructions();
-        return true;
-      case R.id.settings:
-        Intent settings = new Intent(getBaseContext(), MyPreferences.class);
-        settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, analyzerParam.audioSourceIDs);
-        settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
-        startActivity(settings);
-        return true;
-      case R.id.info_recoder:
-        Intent int_info_rec = new Intent(this, InfoRecActivity.class);
-        startActivity(int_info_rec);
-      return true;
+        case R.id.info:
+          analyzerViews.showInstructions();
+          return true;
+        case R.id.settings:
+          Intent settings = new Intent(getBaseContext(), MyPreferences.class);
+          settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, analyzerParam.audioSourceIDs);
+          settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
+          startActivity(settings);
+          return true;
+        case R.id.info_recoder:
+          Intent int_info_rec = new Intent(this, InfoRecActivity.class);
+          startActivity(int_info_rec);
+          return true;
+        case R.id.freq_range_setting:
+          rangeViewDialogC.ShowRangeViewDialog();
+          return true;
       default:
           return super.onOptionsItemSelected(item);
       }

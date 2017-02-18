@@ -52,6 +52,7 @@ class SpectrogramPlot {
     ScreenPhysicalMapping axisFreq;
     ScreenPhysicalMapping axisTime;
     double dBLowerBound = -120;
+    double dBUpperBound = 0.0;
 
     SpectrogramPlot(Context _context) {
         DPRatio = _context.getResources().getDisplayMetrics().density;
@@ -113,7 +114,7 @@ class SpectrogramPlot {
             }
             if (showModeSpectrogram == 0) {
                 float b1 = axisTime.vLowerBound;
-                float b2 = axisTime.vHigherBound;
+                float b2 = axisTime.vUpperBound;
                 axisTime.setBounds(b2, b1);
             }
         }
@@ -353,7 +354,7 @@ class SpectrogramPlot {
 
     void setTimeMultiplier(int nAve) {
         timeMultiplier = nAve;
-        axisTime.vHigherBound = (float)(timeWatch * timeMultiplier);
+        axisTime.vUpperBound = (float)(timeWatch * timeMultiplier);
     }
 
     void setShowTimeAxis(boolean bSTA) {
@@ -364,7 +365,7 @@ class SpectrogramPlot {
         if ((showModeSpectrogram==0) != b) {
             // mode change, swap time bounds.
             float b1 = axisTime.vLowerBound;
-            float b2 = axisTime.vHigherBound;
+            float b2 = axisTime.vUpperBound;
             axisTime.setBounds(b2, b1);
         }
         if (b) {
@@ -398,13 +399,13 @@ class SpectrogramPlot {
     }
 
     private int colorFromDB(double d) {
-        if (d >= 0) {
+        if (d >= dBUpperBound) {
             return cma[0];
         }
         if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
             return cma[cma.length-1];
         }
-        return cma[(int)(cma.length * d / dBLowerBound)];
+        return cma[(int)(cma.length * (dBUpperBound - d) / (dBUpperBound - dBLowerBound))];
     }
 
     // Will be called in another thread (SamplingLoop)
@@ -416,15 +417,7 @@ class SpectrogramPlot {
             double d;
             pRef = spectrogramColorsPt*nFreqPoints - 1;
             for (int i = 1; i < db.length; i++) {  // no direct current term
-                d = db[i];
-                if (d >= 0) {
-                    c = cma[0];
-                } else if (d <= dBLowerBound || Double.isInfinite(d) || Double.isNaN(d)) {
-                    c = cma[cma.length-1];
-                } else {
-                    c = cma[(int)(cma.length * d / dBLowerBound)];
-                }
-                spectrogramColors[pRef + i] = c;
+                spectrogramColors[pRef + i] = colorFromDB(db[i]);
             }
             spectrogramColorsPt++;
             if (spectrogramColorsPt >= nTimePoints) {
@@ -613,8 +606,8 @@ class SpectrogramPlot {
             if (axis == null) {
                 Log.e(TAG, "init(): damn: axis == null");
             }
-            float dFreq = Math.max(axis.vLowerBound, axis.vHigherBound) / nFreq;
-            Log.i(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vH=" + axis.vHigherBound + "  axis.nC=" + axis.nCanvasPixel);
+            float dFreq = Math.max(axis.vLowerBound, axis.vUpperBound) / nFreq;
+            Log.i(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vU=" + axis.vUpperBound + "  axis.nC=" + axis.nCanvasPixel);
             for (int i = 0; i <= nFreq; i++) {  // freq = i * dFreq
                 // do not show DC component (xxx - 1).
                 mapFreqToPixL[i] = (int) Math.floor(axis.pixelNoZoomFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
@@ -625,7 +618,7 @@ class SpectrogramPlot {
                 if (mapFreqToPixL[i] < 0) mapFreqToPixL[i] = 0;
 //                Log.i(TAG, "init(): [" + i + "]  L = " + axis.pixelNoZoomFromV((i-0.5f)*dFreq) + "  H = " + axis.pixelNoZoomFromV((i+0.5f)*dFreq));
             }
-            if (axis.vLowerBound > axis.vHigherBound) {
+            if (axis.vLowerBound > axis.vUpperBound) {
                 // swap mapFreqToPixL and mapFreqToPixH
                 int[] tmpV = mapFreqToPixL;
                 mapFreqToPixL = mapFreqToPixH;
@@ -689,7 +682,7 @@ class SpectrogramPlot {
         final double incFactor = 2;
 
         void init(int _nFreq, int _nTime, ScreenPhysicalMapping _axis) {
-            if (_nFreq == 0 || _nTime == 0 || Math.max(_axis.vLowerBound, _axis.vHigherBound) == 0) {
+            if (_nFreq == 0 || _nTime == 0 || Math.max(_axis.vLowerBound, _axis.vUpperBound) == 0) {
                 return;
             }
             // Note that there is limit for bmpWidth, i.e. Canvas.getMaximumBitmapHeight
@@ -708,7 +701,7 @@ class SpectrogramPlot {
             nFreq = _nFreq;
             nTime = _nTime;
 
-            double maxFreq = Math.max(_axis.vLowerBound, _axis.vHigherBound);
+            double maxFreq = Math.max(_axis.vLowerBound, _axis.vUpperBound);
             double minFreq = maxFreq / nFreq;
             double dFreq   = maxFreq / nFreq;
 
@@ -743,7 +736,7 @@ class SpectrogramPlot {
             for (int i = 1; i <= nSegment; i++) {
                 axisSeg.setNCanvasPixel((float)Math.round(pixelAbscissa[i] - pixelAbscissa[i-1]));  // should work without round()
                 axisSeg.setBounds((float)freqAbscissa[i-1], (float)freqAbscissa[i]);
-                Log.v(TAG, "axisSeg[" + i + "] .nC = " + axisSeg.nCanvasPixel + "  .vL = " + axisSeg.vLowerBound + "  .vH = " + axisSeg.vHigherBound);
+                Log.v(TAG, "axisSeg[" + i + "] .nC = " + axisSeg.nCanvasPixel + "  .vL = " + axisSeg.vLowerBound + "  .vU = " + axisSeg.vUpperBound);
                 while ((iF + 0.5) * dFreq <= freqAbscissa[i] + eps) {
                     // upper bound of the pixel position of frequency point iF
                     iFreqToPix[iF] = axisSeg.pixelFromV((float)((iF + 0.5) * dFreq)) + pixelAbscissa[i-1];
@@ -807,7 +800,7 @@ class SpectrogramPlot {
             }
             int i1 = pixelAbscissa.length - 1;
             String st1 = "draw():  pixelAbscissa["+(i1-1)+"]="+pixelAbscissa[i1-1]+"  pixelAbscissa["+i1+"]="+pixelAbscissa[i1]+"  bmpWidth="+bmpWidth;
-            String st2 = "draw():  axis.vL="+axisFreq.vLowerBound+"  axis.vH="+axisFreq.vHigherBound+"  axisFreq.nC="+axisFreq.nCanvasPixel+"  nTime="+nTime;
+            String st2 = "draw():  axis.vL="+axisFreq.vLowerBound+"  axis.vU="+axisFreq.vUpperBound +"  axisFreq.nC="+axisFreq.nCanvasPixel+"  nTime="+nTime;
             if (!st1.equals(st1old)) {
                 Log.v(TAG, st1);
                 Log.v(TAG, st2);
@@ -826,7 +819,7 @@ class SpectrogramPlot {
                 float f2 = (float) freqAbscissa[i];
                 float p1 = axisFreq.pixelNoZoomFromV(f1);
                 float p2 = axisFreq.pixelNoZoomFromV(f2);
-                if (axisFreq.vLowerBound > axisFreq.vHigherBound) {
+                if (axisFreq.vLowerBound > axisFreq.vUpperBound) {
                     p1 = axisFreq.nCanvasPixel - p1;
                     p2 = axisFreq.nCanvasPixel - p2;
                 }

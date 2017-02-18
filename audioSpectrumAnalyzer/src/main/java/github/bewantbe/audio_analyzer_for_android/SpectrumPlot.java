@@ -97,11 +97,11 @@ class SpectrumPlot {
         } else {
             fqGridLabel.setGridType(GridLabel.Type.FREQ);
         }
-        Log.i(TAG, "setFreqAxisMode(): axisX.vLowerBound = " + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
+        Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType + " axisX.vL=" + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
     }
 
-    float getFreqMin() { return axisX.vMinInView(); }
-    float getFreqMax() { return axisX.vMaxInView(); }
+//    float getFreqMin() { return axisX.vMinInView(); }
+//    float getFreqMax() { return axisX.vMaxInView(); }
 
     boolean isAlmostInteger(float x) {
         // return x % 1 == 0;
@@ -225,7 +225,7 @@ class SpectrumPlot {
         float canvasMaxFreq = axisX.vMaxInView();
         // There are db.length frequency points, including DC component
         int nFreqPointsTotal = db_cache.length - 1;
-        float freqDelta = axisX.vHigherBound / nFreqPointsTotal;
+        float freqDelta = axisX.vUpperBound / nFreqPointsTotal;
         int beginFreqPt = (int)floor(canvasMinFreq / freqDelta);    // pointer to tmpLineXY
         int endFreqPt   = (int)ceil (canvasMaxFreq / freqDelta)+1;
         final float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);

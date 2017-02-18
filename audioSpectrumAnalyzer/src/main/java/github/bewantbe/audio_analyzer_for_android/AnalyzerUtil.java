@@ -87,4 +87,12 @@ class AnalyzerUtil {
         }
         return validated.toArray(new String[0]);
     }
+
+    static double parseDouble(String st) {
+        try {
+            return Double.parseDouble(st);
+        } catch (NumberFormatException e) {
+            return 0.0/0.0;  // nan
+        }
+    }
 }

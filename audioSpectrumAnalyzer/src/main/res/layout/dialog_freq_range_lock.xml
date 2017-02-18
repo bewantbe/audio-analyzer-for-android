@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/show_range_tv_fL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:text="@string/show_range_tv_fL" />
+
+    <EditText
+        android:id="@+id/et_freq_setting_lower_bound"
+        android:layout_below="@id/show_range_tv_fL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="@string/et_freq_setting_lower_bound" />
+
+    <TextView
+        android:id="@+id/show_range_tv_fH"
+        android:layout_below="@id/et_freq_setting_lower_bound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:text="@string/show_range_tv_fH" />
+
+    <EditText
+        android:id="@+id/et_freq_setting_upper_bound"
+        android:layout_below="@+id/show_range_tv_fH"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="@string/et_freq_setting_upper_bound" />
+
+    <TextView
+        android:id="@+id/show_range_tv_dBL"
+        android:layout_below="@+id/et_freq_setting_upper_bound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:text="@string/show_range_tv_dBL"/>
+
+    <EditText
+        android:id="@+id/et_db_setting_lower_bound"
+        android:layout_below="@+id/show_range_tv_dBL"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal|numberSigned"
+        android:hint="@string/et_db_setting_lower_bound" />
+
+    <TextView
+        android:id="@+id/show_range_tv_dBH"
+        android:layout_below="@+id/et_db_setting_lower_bound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:text="@string/show_range_tv_dBH"/>
+
+    <EditText
+        android:id="@+id/et_db_setting_upper_bound"
+        android:layout_below="@+id/show_range_tv_dBH"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal|numberSigned"
+        android:hint="dB upper bound" />
+
+</RelativeLayout>

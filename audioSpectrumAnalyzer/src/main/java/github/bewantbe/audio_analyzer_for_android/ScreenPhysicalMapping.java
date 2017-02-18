@@ -25,14 +25,14 @@ class ScreenPhysicalMapping {
     // TODO: check nCanvasPixel==0
     float nCanvasPixel;
     // Physical limits
-    float vLowerBound, vHigherBound;
+    float vLowerBound, vUpperBound;
     //double zoom, shift;  // zoom==1 means no zooming, shift=0 means no shift
     float zoom = 1, shift = 0;
 
     ScreenPhysicalMapping(float _nCanvasPixel, float _vLowerBound, float _vHigherBound, ScreenPhysicalMapping.Type _mapType) {
         nCanvasPixel = _nCanvasPixel;
         vLowerBound  = _vLowerBound;
-        vHigherBound = _vHigherBound;
+        vUpperBound = _vHigherBound;
         mapType      = _mapType;
     }
 
@@ -42,7 +42,7 @@ class ScreenPhysicalMapping {
 
     void setBounds(float _vLowerBound, float _vHigherBound) {
         vLowerBound  = _vLowerBound;
-        vHigherBound = _vHigherBound;
+        vUpperBound = _vHigherBound;
     }
 
     void setZoomShift(float _zoom, float _shift) {
@@ -66,7 +66,7 @@ class ScreenPhysicalMapping {
 
     // In LINEAR mode (default):
     //    |lower value  ...    higher value|  physical unit
-    //    | shift       ... shift + 1/zoom |  "unit 1", 0=vLowerBound, 1=vHigherBound
+    //    | shift       ... shift + 1/zoom |  "unit 1", 0=vLowerBound, 1=vUpperBound
     //    | 0 | 1 |     ...          | n-1 |  pixel
 
     // In LINEAR_ON mode (not implemented):
@@ -77,13 +77,13 @@ class ScreenPhysicalMapping {
     // this class do not verify if the input data are legal
     float pixelFromV(float v, float zoom, float shift) {
         // old: canvasX4axis
-        // return (v - vLowerBound) / (vHigherBound - vLowerBound) * nCanvasPixel;
+        // return (v - vLowerBound) / (vUpperBound - vLowerBound) * nCanvasPixel;
         // old: canvasViewX4axis
-        if (vHigherBound == vLowerBound || vHigherBound != vHigherBound || vLowerBound != vLowerBound) {
+        if (vUpperBound == vLowerBound || vUpperBound != vUpperBound || vLowerBound != vLowerBound) {
             return 0;
         }
         if (mapType == Type.LINEAR) {
-            return ((v - vLowerBound) / (vHigherBound - vLowerBound) - shift) * zoom * nCanvasPixel;
+            return ((v - vLowerBound) / (vUpperBound - vLowerBound) - shift) * zoom * nCanvasPixel;
         } else {
             return pixelFromVLog(v, zoom, shift);
         }
@@ -94,22 +94,22 @@ class ScreenPhysicalMapping {
             return 0;
         }
         if (mapType == Type.LINEAR) {
-            return (pixel / nCanvasPixel / zoom + shift) * (vHigherBound - vLowerBound) + vLowerBound;
+            return (pixel / nCanvasPixel / zoom + shift) * (vUpperBound - vLowerBound) + vLowerBound;
         } else {
             return vLogFromPixel(pixel, zoom, shift);
         }
     }
 
 //    float unit1FromV(float v) {
-//        return (v - vLowerBound) / (vHigherBound - vLowerBound);
+//        return (v - vLowerBound) / (vUpperBound - vLowerBound);
 //    }
 
     private float pixelFromVLog(float v, float zoom, float shift) {
-        return ((float)log(v/vLowerBound) / (float)log(vHigherBound/vLowerBound) - shift) * zoom * nCanvasPixel;
+        return ((float)log(v/vLowerBound) / (float)log(vUpperBound /vLowerBound) - shift) * zoom * nCanvasPixel;
     }
 
     private float vLogFromPixel(float pixel, float zoom, float shift) {
-        return (float)exp((pixel / nCanvasPixel / zoom + shift) * (float)log(vHigherBound/vLowerBound)) * vLowerBound;
+        return (float)exp((pixel / nCanvasPixel / zoom + shift) * (float)log(vUpperBound /vLowerBound)) * vLowerBound;
     }
 
     float vMinInView(float zoom, float shift) {
@@ -140,36 +140,36 @@ class ScreenPhysicalMapping {
         return pixelFromV(v, 1, 0);
     }
 
-    float diffVBounds() { return vHigherBound - vLowerBound; };
+    float diffVBounds() { return vUpperBound - vLowerBound; };
 
     void reverseBounds() {
 //        float vL = vMinInView();
 //        float vH = vMaxInView();
-//        setBounds(vHigherBound, vLowerBound);
+//        setBounds(vUpperBound, vLowerBound);
 //        setZoomShiftFromV(vH, vL);
 
         shift = 1 - 1/zoom - shift;
-        setBounds(vHigherBound, vLowerBound);
+        setBounds(vUpperBound, vLowerBound);
     }
 
     void setMappingType(ScreenPhysicalMapping.Type _mapType, float lower_bound_ref) {
         // Set internal variables if possible
+        float vL = vMinInView();
+        float vH = vMaxInView();
         if (_mapType == Type.LOG) {
             if (vLowerBound == 0) vLowerBound = lower_bound_ref;
-            if (vHigherBound == 0) vHigherBound = lower_bound_ref;
+            if (vUpperBound == 0) vUpperBound = lower_bound_ref;
         } else {
             if (vLowerBound == lower_bound_ref) vLowerBound = 0;
-            if (vHigherBound == lower_bound_ref) vHigherBound = 0;
+            if (vUpperBound == lower_bound_ref) vUpperBound = 0;
         }
         boolean bNeedUpdateZoomShift = mapType != _mapType;
         mapType = _mapType;
-        if (!bNeedUpdateZoomShift || nCanvasPixel == 0 || vLowerBound == vHigherBound) {
+        if (!bNeedUpdateZoomShift || nCanvasPixel == 0 || vLowerBound == vUpperBound) {
             return;
         }
 
         // Update zoom and shift
-        float vL = vMinInView();
-        float vH = vMaxInView();
         // lower_bound_ref is for how to map zero
         // Only support non-negative bounds
         if (_mapType == Type.LOG) {
