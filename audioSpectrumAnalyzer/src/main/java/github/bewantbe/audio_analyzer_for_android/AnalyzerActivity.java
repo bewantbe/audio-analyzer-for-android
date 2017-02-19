@@ -598,6 +598,7 @@ public class AnalyzerActivity extends Activity
         if (samplingThread != null && samplingThread.getPause() != pause) {
           samplingThread.setPause(pause);
         }
+        analyzerViews.graphView.spectrogramPlot.setPause(pause);
         return false;
 //      case R.id.graph_view_mode:
 //        isMeasure = !value.equals("scale");

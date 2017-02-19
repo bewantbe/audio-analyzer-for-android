@@ -24,7 +24,6 @@ package github.bewantbe.audio_analyzer_for_android;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -56,7 +55,6 @@ public class AnalyzerGraphic extends View {
 
   private int canvasWidth, canvasHeight;   // size of my canvas
   private int[] myLocation = {0, 0}; // window location on screen
-  private Matrix matrix0 = new Matrix();
   private volatile static boolean isBusy = false;
   private float freq_lower_bound_for_log = 0f;
 
@@ -83,9 +81,6 @@ public class AnalyzerGraphic extends View {
   private void setup(AttributeSet attrs, Context _context) {
     context = _context;
     Log.v(TAG, "setup():");
-    matrix0.reset();
-    matrix0.setTranslate(0f, 0f);
-    matrix0.postScale(1f, 1f);
 
     xZoom  = 1f;
     xShift = 0f;
@@ -210,6 +205,7 @@ public class AnalyzerGraphic extends View {
         spectrogramPlot.axisFreq.setZoomShift(yZoom, yShift);
       }
     }
+    spectrogramPlot.prepare();
     showMode = PlotMode.SPECTROGRAM;
   }
 
@@ -304,8 +300,6 @@ public class AnalyzerGraphic extends View {
   protected void onDraw(Canvas c) {
     fpsCounter.inc();
     isBusy = true;
-    c.concat(matrix0);
-    c.save();
     if (showMode == PlotMode.SPECTRUM) {
       spectrumPlot.drawSpectrumPlot(c, savedDBSpectrum);
     } else {

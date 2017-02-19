@@ -39,15 +39,28 @@ class SpectrogramPlot {
     boolean showFreqAlongX = false;
 
     private static final int[] cma = ColorMapArray.hot;
+
     int[] spectrogramColors = new int[0];  // int:ARGB, nFreqPoints columns, nTimePoints rows
     int[] spectrogramColorsShifting;       // temporarily of spectrogramColors for shifting mode
-    private int showModeSpectrogram = 1;           // 0: moving (shifting) spectrogram, 1: overwriting in loop
+    int spectrogramColorsPt;          // pointer to the row to be filled (row major)
+
+    enum TimeAxisMode {  // java's enum type is inconvenient
+        SHIFT(0), OVERWRITE(1);       // 0: moving (shifting) spectrogram, 1: overwriting in loop
+
+        private final int value;
+        TimeAxisMode(int value) { this.value = value; }
+        public int getValue() { return value; }
+    }
+
+    private TimeAxisMode showModeSpectrogram = TimeAxisMode.OVERWRITE;
+    private boolean bShowTimeAxis = true;
+
     private double timeWatch = 4.0;
     private volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzerActivity
-    private boolean bShowTimeAxis = true;
     int nFreqPoints;
     int nTimePoints;
-    int spectrogramColorsPt;          // pointer to the row to be filled (row major)
+    double timeInc;
+
     private Matrix matrixSpectrogram = new Matrix();
     private Paint smoothBmpPaint;
     private Paint backgroundPaint;
@@ -56,6 +69,8 @@ class SpectrogramPlot {
     private Paint labelPaint;
     private Paint cursorTimePaint;
 
+    ScreenPhysicalMapping axisFreq;
+    ScreenPhysicalMapping axisTime;
     private GridLabel fqGridLabel;
     private GridLabel tmGridLabel;
     private float DPRatio;
@@ -64,8 +79,6 @@ class SpectrogramPlot {
     private int canvasHeight=0, canvasWidth=0;
     float labelBeginX, labelBeginY;
 
-    ScreenPhysicalMapping axisFreq;
-    ScreenPhysicalMapping axisTime;
     double dBLowerBound = -120;
     double dBUpperBound = 0.0;
 
@@ -127,7 +140,7 @@ class SpectrogramPlot {
                 axisTime.setBounds(axisBounds.left, axisBounds.right);
                 axisFreq.setBounds(axisBounds.top,  axisBounds.bottom);
             }
-            if (showModeSpectrogram == 0) {
+            if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                 float b1 = axisTime.vLowerBound;
                 float b2 = axisTime.vUpperBound;
                 axisTime.setBounds(b2, b1);
@@ -175,7 +188,7 @@ class SpectrogramPlot {
     void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE, int nAve) {
         timeWatch = timeDurationE;
         timeMultiplier = nAve;
-        double timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
+        timeInc = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
         synchronized (this) {
             boolean bNeedClean = nFreqPoints != fftLen / 2;
             nFreqPoints = fftLen / 2;                    // no direct current term
@@ -204,7 +217,7 @@ class SpectrogramPlot {
         Log.i(TAG, "setupSpectrogram() done" +
                 "\n  sampleRate    = " + sampleRate +
                 "\n  fftLen        = " + fftLen +
-                "\n  timeDurationE = " + timeDurationE + " * " + nAve);
+                "\n  timeDurationE = " + timeDurationE + " * " + nAve + "  (" + nTimePoints + " points)");
     }
 
     // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
@@ -359,13 +372,13 @@ class SpectrogramPlot {
         }
     }
 
-    float getFreqMax() {
-        return axisFreq.vMaxInView();
-    }
-
-    float getFreqMin() {
-        return axisFreq.vMinInView();
-    }
+//    float getFreqMax() {
+//        return axisFreq.vMaxInView();
+//    }
+//
+//    float getFreqMin() {
+//        return axisFreq.vMinInView();
+//    }
 
     void setTimeMultiplier(int nAve) {
         timeMultiplier = nAve;
@@ -377,17 +390,23 @@ class SpectrogramPlot {
     }
 
     void setSpectrogramModeShifting(boolean b) {
-        if ((showModeSpectrogram==0) != b) {
+        if ((showModeSpectrogram == TimeAxisMode.SHIFT) != b) {
             // mode change, swap time bounds.
             float b1 = axisTime.vLowerBound;
             float b2 = axisTime.vUpperBound;
             axisTime.setBounds(b2, b1);
         }
         if (b) {
-            showModeSpectrogram = 0;
+            showModeSpectrogram = TimeAxisMode.SHIFT;
+            setPause(isPaused);  // update time estimation
         } else {
-            showModeSpectrogram = 1;
+            showModeSpectrogram = TimeAxisMode.OVERWRITE;
         }
+    }
+
+    void prepare() {
+        if (showModeSpectrogram == TimeAxisMode.SHIFT)
+            setPause(isPaused);
     }
 
     void setShowFreqAlongX(boolean b) {
@@ -423,14 +442,30 @@ class SpectrogramPlot {
         return cma[(int)(cma.length * (dBUpperBound - d) / (dBUpperBound - dBLowerBound))];
     }
 
+    private double timeLastSample = 0;
+    private boolean updateTimeDiff = false;
+
+    void setPause(boolean p) {
+        if (p == false) {
+            timeLastSample = System.currentTimeMillis()/1000.0;
+        }
+        isPaused = p;
+    }
+
     // Will be called in another thread (SamplingLoop)
     void saveRowSpectrumAsColor(final double[] db) {
+        double tNow = System.currentTimeMillis()/1000.0;
+        updateTimeDiff = true;
+        if (Math.abs(timeLastSample - tNow) > 0.5) {
+            timeLastSample = tNow;
+        } else {
+            timeLastSample += timeInc * timeMultiplier;
+            timeLastSample += (tNow - timeLastSample) * 1e-2;  // track current time
+        }
+
         // db.length == 2^n + 1
         synchronized (this) {  // essentially a lock on spectrogramColors
-            int c;
-            int pRef;
-            double d;
-            pRef = spectrogramColorsPt*nFreqPoints - 1;
+            int pRef = spectrogramColorsPt*nFreqPoints - 1;
             for (int i = 1; i < db.length; i++) {  // no direct current term
                 spectrogramColors[pRef + i] = colorFromDB(db[i]);
             }
@@ -474,6 +509,9 @@ class SpectrogramPlot {
         }
     }
 
+    private float pixelTimeCompensate = 0;
+    volatile boolean isPaused = false;
+
     // Plot spectrogram with axis and ticks on the whole canvas c
     void drawSpectrogramPlot(Canvas c) {
         labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
@@ -509,7 +547,20 @@ class SpectrogramPlot {
             matrixSpectrogram.postTranslate((labelBeginX - axisTime.shift * axisTime.zoom * axisTime.nCanvasPixel),
                     (1-axisFreq.shift) * axisFreq.zoom * axisFreq.nCanvasPixel - halfFreqResolutionShift);
         }
+        c.save();
         c.concat(matrixSpectrogram);
+
+        // Time compensate to make it smoother shifting
+        // But if use pressed pause, stop compensate.
+        if (!isPaused && updateTimeDiff) {
+            double timeCurrent = System.currentTimeMillis() / 1000.0;
+            pixelTimeCompensate = (float) ((timeLastSample - timeCurrent) / (timeInc * timeMultiplier * nTimePoints) * nTimePoints);
+            updateTimeDiff = false;
+//            Log.i(TAG, " time diff = " + (timeLastSample - timeCurrent));
+        }
+        if (showModeSpectrogram == TimeAxisMode.SHIFT) {
+            c.translate(0.0f, pixelTimeCompensate);
+        }
 
         // public void drawBitmap (int[] colors, int offset, int stride, float x, float y,
         //                         int width, int height, boolean hasAlpha, Paint paint)
@@ -523,7 +574,7 @@ class SpectrogramPlot {
 //            c.save();
 //            c.scale(1, 0.5f);
 //            logBmp.draw(c);
-//            if (showModeSpectrogram == 1) {
+//            if (showModeSpectrogram == TimeAxisMode.OVERWRITE) {
 //                c.drawLine(0, logBmp.bmPt, logBmp.nFreq, logBmp.bmPt, cursorTimePaint);
 //            }
 //            c.restore();
@@ -532,7 +583,7 @@ class SpectrogramPlot {
 //            c.translate(0, nTimePoints/2);
 //            c.scale((float)nFreqPoints / logSegBmp.bmpWidth, 0.5f);
 //            logSegBmp.draw(c);
-//            if (showModeSpectrogram == 1) {
+//            if (showModeSpectrogram == TimeAxisMode.OVERWRITE) {
 //                c.drawLine(0, logSegBmp.bmPt, logSegBmp.bmpWidth, logSegBmp.bmPt, cursorTimePaint);
 //            }
 //            c.restore();
@@ -541,12 +592,12 @@ class SpectrogramPlot {
             synchronized (this) {
                 logSegBmp.draw(c);
             }
-            if (showModeSpectrogram == 1) {
+            if (showModeSpectrogram == TimeAxisMode.OVERWRITE) {
                 c.drawLine(0, logSegBmp.bmPt, logSegBmp.bmpWidth, logSegBmp.bmPt, cursorTimePaint);
             }
         } else {
             synchronized (this) {
-                if (showModeSpectrogram == 0) {
+                if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                     System.arraycopy(spectrogramColors, 0, spectrogramColorsShifting,
                             (nTimePoints - spectrogramColorsPt) * nFreqPoints, spectrogramColorsPt * nFreqPoints);
                     System.arraycopy(spectrogramColors, spectrogramColorsPt * nFreqPoints, spectrogramColorsShifting,
@@ -559,7 +610,7 @@ class SpectrogramPlot {
                 }
             }
             // new data line
-            if (showModeSpectrogram == 1) {
+            if (showModeSpectrogram == TimeAxisMode.OVERWRITE) {
                 c.drawLine(0, spectrogramColorsPt, nFreqPoints, spectrogramColorsPt, cursorTimePaint);
             }
         }
@@ -669,7 +720,7 @@ class SpectrogramPlot {
 
         void draw(Canvas c) {
             if (bm.length == 0) return;
-            if (showModeSpectrogram == 0) {
+            if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                 System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * nFreq, bmPt * nFreq);
                 System.arraycopy(bm, bmPt * nFreq, bmShiftCache, 0, (nTime - bmPt) * nFreq);
                 c.drawBitmap(bmShiftCache, 0, nFreq, 0.0f, 0.0f,
@@ -823,7 +874,7 @@ class SpectrogramPlot {
                 st2old = st2;
             }
             int[] bmTmp = bm;
-            if (showModeSpectrogram == 0) {
+            if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                 System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * bmpWidth, bmPt * bmpWidth);
                 System.arraycopy(bm, bmPt * bmpWidth, bmShiftCache, 0, (nTime - bmPt) * bmpWidth);
                 bmTmp = bmShiftCache;
