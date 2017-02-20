@@ -20,11 +20,11 @@ import android.util.Log;
 
 // Frames Per Second Counter
 
-public class FPSCounter {
-  long frameCount;
-  long timeOld, timeUpdateInterval;  // in ms
-  double fps;
-  String TAG_OUTSIDE;
+class FPSCounter {
+  private long frameCount;
+  private long timeOld, timeUpdateInterval;  // in ms
+  private double fps;
+  private String TAG_OUTSIDE;
   
   FPSCounter(String TAG) {
     timeUpdateInterval = 2000;
@@ -34,7 +34,7 @@ public class FPSCounter {
   }
   
   // call this when number of frames plus one
-  public void inc() {
+  void inc() {
     frameCount++;
     long timeNow = SystemClock.uptimeMillis();
     if (timeOld + timeUpdateInterval <= timeNow) {
@@ -45,7 +45,7 @@ public class FPSCounter {
       frameCount = 0;
     }
   }
-  
+
   public double getFPS() {
     return fps;
   }

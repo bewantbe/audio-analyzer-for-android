@@ -15,20 +15,20 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
-import java.util.ArrayList;
-
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Bundle;
-import android.app.Activity;
+import android.support.v4.app.NavUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import android.support.v4.app.NavUtils;
-import android.text.method.ScrollingMovementMethod;
-import android.annotation.TargetApi;
-import android.os.Build;
+
+import java.util.ArrayList;
 
 public class InfoRecActivity extends Activity {
 
@@ -81,14 +81,14 @@ public class InfoRecActivity extends Activity {
 		TextView tv = (TextView) findViewById(R.id.textview_info_rec);
 		tv.setMovementMethod(new ScrollingMovementMethod());
 
-		tv.setText("Testing...");  // TODO: No use...
+		tv.setText(R.string.Testing);  // TODO: No use...
 		tv.invalidate();
 
 		// Show supported sample rate and corresponding minimum buffer size.
 		String[] requested = new String[] { "8000", "11025", "16000", "22050",
 				"32000", "44100", "48000", "96000"};
 		String st = "sampleRate minBufSize\n";
-		ArrayList<String> validated = new ArrayList<String>();
+		ArrayList<String> validated = new ArrayList<>();
 		for (String s : requested) {
 			int rate = Integer.parseInt(s);
 			int minBufSize = AudioRecord
@@ -172,7 +172,6 @@ public class InfoRecActivity extends Activity {
 					st += audioSourceString[iass] + " failed\n";
 				}
 				record.release();
-				record = null;
 				tv.append(st);
 				tv.invalidate();
 			}

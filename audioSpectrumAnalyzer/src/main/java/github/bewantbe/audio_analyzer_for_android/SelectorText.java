@@ -152,7 +152,7 @@ public class SelectorText extends TextView {
   public String[] getValues() {
     return values;
   }
-  
+
   public String nextValue() {
     if (values != null) {
       int i;

@@ -5,6 +5,8 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
+    <!-- TODO Consider remove this file -->
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="0dp"
@@ -15,7 +17,6 @@
             android:id="@+id/plot"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="0.32"
             class="github.bewantbe.audio_analyzer_for_android.AnalyzerGraphic" />
 
         <LinearLayout
@@ -29,6 +30,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="4dp"
                 android:paddingLeft="15dp"
+                android:paddingStart="15dp"
                 android:tag="select"
                 android:text="spum"
                 android:textSize="20sp"
@@ -39,6 +41,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="dB"
             android:textSize="20sp"
@@ -50,6 +53,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="cursor"
             android:textSize="20sp"
@@ -61,6 +65,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="run"
             android:textSize="20sp"
@@ -72,6 +77,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="Mon"
             android:textSize="20sp"
@@ -83,7 +89,7 @@
             android:layout_height="40sp"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
-            android:text="ave"
+            android:text="@string/ave"
             android:textSize="18sp" />
         </LinearLayout>
     </LinearLayout>
@@ -97,6 +103,7 @@
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
             android:lines="2"
             android:text="@string/textview_RMS_text"
             android:typeface="monospace" />
@@ -107,6 +114,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/textview_RMS"
+            android:layout_toEndOf="@id/textview_RMS"
             android:text="@string/textview_cur_text"
             android:typeface="monospace" />
 
@@ -116,6 +124,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/textview_cur"
             android:layout_toRightOf="@id/textview_RMS"
+            android:layout_toEndOf="@id/textview_RMS"
             android:text="@string/textview_peak_text"
             android:typeface="monospace" />
 
@@ -126,8 +135,9 @@
             android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_toLeftOf="@+id/button_fftlen"
+            android:layout_toStartOf="@+id/button_fftlen"
             android:onClick="showPopupMenu"
-            android:text="Sample/S"
+            android:text="@string/sample_s"
             android:textSize="18sp" />
 
         <Button
@@ -137,8 +147,9 @@
             android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
             android:onClick="showPopupMenu"
-            android:text="fftlen"
+            android:text="@string/fftlen"
             android:textSize="18sp" />
     </RelativeLayout>
 

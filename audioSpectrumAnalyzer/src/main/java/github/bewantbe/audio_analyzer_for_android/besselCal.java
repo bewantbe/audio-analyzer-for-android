@@ -1,6 +1,6 @@
 package github.bewantbe.audio_analyzer_for_android;
 
-public class besselCal {
+class besselCal {
 /*
 Copyright © 1999 CERN - European Organization for Nuclear Research.
 Permission to use, copy, modify, distribute and sell this software and its documentation for any purpose
@@ -47,7 +47,7 @@ It is provided "as is" without expressed or implied warranty.
    * @param coef the coefficients of the polynomial.
    * @param N the number of coefficients.
    */
-  public static double chbevl( double x, double coef[], int N ) throws ArithmeticException {
+  static double chbevl(double x, double coef[], int N) throws ArithmeticException {
     double b0, b1, b2;
 
     int p = 0;
@@ -69,7 +69,7 @@ It is provided "as is" without expressed or implied warranty.
 // https://github.com/carlsonp/Colt/blob/master/src/cern/jet/math/Bessel.java
 // package cern.jet.math;
 
-  protected static final double[] A_i0 = {
+  private static final double[] A_i0 = {
           -4.41534164647933937950E-18,
           3.33079451882223809783E-17,
           -2.43127984654795469359E-16,
@@ -108,7 +108,7 @@ It is provided "as is" without expressed or implied warranty.
    *
    * lim(x->inf){ exp(-x) sqrt(x) I0(x) } = 1/sqrt(2pi).
    */
-  protected static final double[] B_i0 = {
+  private static final double[] B_i0 = {
           -7.23318048787475395456E-18,
           -4.83050448594418207126E-18,
           4.46562142029675999901E-17,
@@ -148,7 +148,7 @@ It is provided "as is" without expressed or implied warranty.
    *
    * @param x the value to compute the bessel function of.
    */
-  static public double i0(double x) throws ArithmeticException {
+  static double i0(double x) throws ArithmeticException {
     double y;
     if( x < 0 ) x = -x;
     if( x <= 8.0 ) {

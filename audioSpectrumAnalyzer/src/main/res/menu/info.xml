@@ -6,7 +6,7 @@
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_info_details"
         android:menuCategory="container"
-        android:title="User Manual"
+        android:title="@string/user_manual"
         android:titleCondensed="info"/>
 
     <item
@@ -14,7 +14,7 @@
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="Application Preferences"
+        android:title="@string/application_preferences"
         android:titleCondensed="settings"/>
 
     <item
@@ -22,7 +22,7 @@
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="Test&amp;Show hardware's ability"
+        android:title="@string/test_amp_show_hardware_s_ability"
         android:titleCondensed="info rec"/>
 
     <item
@@ -30,7 +30,7 @@
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="View Range Setting"
+        android:title="@string/view_range_setting"
         android:titleCondensed="View Range"/>
 
 </menu>

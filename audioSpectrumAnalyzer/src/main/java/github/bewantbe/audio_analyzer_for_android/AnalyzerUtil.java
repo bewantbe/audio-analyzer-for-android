@@ -71,9 +71,7 @@ class AnalyzerUtil {
             if (same) {
                 Log.i(TAG, "sameTest(): same data row!!");
             }
-            for (int i=0; i<data.length; i++) {
-                cmpDB[i] = data[i];
-            }
+            System.arraycopy(data, 0, cmpDB, 0, data.length);
         }
     }
 
