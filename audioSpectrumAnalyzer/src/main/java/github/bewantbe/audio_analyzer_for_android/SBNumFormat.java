@@ -17,11 +17,11 @@ package github.bewantbe.audio_analyzer_for_android;
 
 import android.util.Log;
 
-public class SBNumFormat {
-  static final char charDigits[] = {'0','1','2','3','4','5','6','7','8','9'};
+class SBNumFormat {
+  private static final char charDigits[] = {'0','1','2','3','4','5','6','7','8','9'};
 
   // Invent wheel... so we can eliminate GC
-  static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac, char padChar) {
+  static void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac, char padChar) {
     if (d<0) {
       for (int i = 0; i < nInt+nFrac+(nFrac>0?1:0); i++) {
         sb.append(padChar);
@@ -61,11 +61,11 @@ public class SBNumFormat {
     }
   }
   
-  static public void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac) {
+  static void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac) {
     fillInNumFixedWidthPositive(sb, d, nInt, nFrac, ' ');
   }
   
-  static public void fillInNumFixedFrac(StringBuilder sb, double d, int nInt, int nFrac) {
+  static void fillInNumFixedFrac(StringBuilder sb, double d, int nInt, int nFrac) {
     if (d < 0) {
       sb.append('-');
       d = -d;
@@ -73,7 +73,7 @@ public class SBNumFormat {
     fillInNumFixedWidthPositive(sb, d, nInt, nFrac, '\0');
   }
   
-  static public void fillInNumFixedWidth(StringBuilder sb, double d, int nInt, int nFrac) {
+  static void fillInNumFixedWidth(StringBuilder sb, double d, int nInt, int nFrac) {
     int it = sb.length();
     sb.append(' ');
     if (d < 0) {
@@ -104,7 +104,7 @@ public class SBNumFormat {
     }
   }
 
-  static public void fillInNumFixedWidthSignedFirst(StringBuilder sb, double d, int nInt, int nFrac) {
+  static void fillInNumFixedWidthSignedFirst(StringBuilder sb, double d, int nInt, int nFrac) {
     if (d < 0) {
       sb.append('-');
     } else {
@@ -113,7 +113,7 @@ public class SBNumFormat {
     fillInNumFixedWidthPositive(sb, Math.abs(d), nInt, nFrac);
   }
   
-  static public void fillInInt(StringBuilder sb, int in) {
+  static void fillInInt(StringBuilder sb, int in) {
     if (in == 0) {
       sb.append('0');
       return;
@@ -129,7 +129,7 @@ public class SBNumFormat {
     }
   }
   
-  static public void fillTime(StringBuilder sb, double t, int nFrac) {
+  static void fillTime(StringBuilder sb, double t, int nFrac) {
     // in format x0:00:00.x
     if (t<0) {
       t = -t;

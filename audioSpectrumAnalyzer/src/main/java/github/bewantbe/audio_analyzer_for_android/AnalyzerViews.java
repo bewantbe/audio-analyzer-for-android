@@ -20,7 +20,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -219,20 +218,20 @@ class AnalyzerViews {
         view.getLocationInWindow(wl);
         int x_left = wl[0];
         int y_bottom = activity.getWindowManager().getDefaultDisplay().getHeight() - wl[1];
-        int gravity = android.view.Gravity.LEFT | android.view.Gravity.BOTTOM;
+        int gravity = android.view.Gravity.START | android.view.Gravity.BOTTOM;
 
         switch (view.getId()) {
             case R.id.button_sample_rate:
                 popupMenuSampleRate.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuSampleRate.showAsDropDown(view, 0, 0);
+//                popupMenuSampleRate.showAsDropDown(view, 0, 0);
                 break;
             case R.id.button_fftlen:
                 popupMenuFFTLen.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuFFTLen.showAsDropDown(view, 0, 0);
+//                popupMenuFFTLen.showAsDropDown(view, 0, 0);
                 break;
             case R.id.button_average:
                 popupMenuAverage.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuAverage.showAsDropDown(view, 0, 0);
+//                popupMenuAverage.showAsDropDown(view, 0, 0);
                 break;
         }
     }
@@ -260,8 +259,8 @@ class AnalyzerViews {
         mTestPaint.setTextSize(listItemTextSize);
         float w = 0;
         float wi;      // max text width in pixel
-        for (int i = 0; i < popUpContents.length; i++) {
-            String sts[] = popUpContents[i].split("::");
+        for (String popUpContent : popUpContents) {
+            String sts[] = popUpContent.split("::");
             String st = sts[0];
             if (sts.length == 2 && sts[1].equals("0")) {
                 mTestPaint.setTextSize(listItemTitleTextSize);
@@ -300,40 +299,38 @@ class AnalyzerViews {
      * adapter where the list values will be set
      */
     private ArrayAdapter<String> popupMenuAdapter(String itemTagArray[]) {
-        ArrayAdapter<String> adapter =
-                new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, itemTagArray) {
-                    @NonNull
-                    @Override
-                    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-                        // setting the ID and text for every items in the list
-                        String item = getItem(position);
-                        String[] itemArr = item.split("::");
-                        String text = itemArr[0];
-                        String id = itemArr[1];
+        return new ArrayAdapter<String>(activity, android.R.layout.simple_list_item_1, itemTagArray) {
+            @NonNull
+            @Override
+            public View getView(int position, View convertView, @NonNull ViewGroup parent) {
+                // setting the ID and text for every items in the list
+                String item = getItem(position);
+                String[] itemArr = item.split("::");
+                String text = itemArr[0];
+                String id = itemArr[1];
 
-                        // visual settings for the list item
-                        TextView listItem = new TextView(activity);
+                // visual settings for the list item
+                TextView listItem = new TextView(activity);
 
-                        if (id.equals("0")) {
-                            listItem.setText(text);
-                            listItem.setTag(id);
-                            listItem.setTextSize(listItemTitleTextSize / DPRatio);
-                            listItem.setPadding(5, 5, 5, 5);
-                            listItem.setTextColor(Color.GREEN);
-                            listItem.setGravity(android.view.Gravity.CENTER);
-                        } else {
-                            listItem.setText(text);
-                            listItem.setTag(id);
-                            listItem.setTextSize(listItemTextSize / DPRatio);
-                            listItem.setPadding(5, 5, 5, 5);
-                            listItem.setTextColor(Color.WHITE);
-                            listItem.setGravity(android.view.Gravity.CENTER);
-                        }
+                if (id.equals("0")) {
+                    listItem.setText(text);
+                    listItem.setTag(id);
+                    listItem.setTextSize(listItemTitleTextSize / DPRatio);
+                    listItem.setPadding(5, 5, 5, 5);
+                    listItem.setTextColor(Color.GREEN);
+                    listItem.setGravity(android.view.Gravity.CENTER);
+                } else {
+                    listItem.setText(text);
+                    listItem.setTag(id);
+                    listItem.setTextSize(listItemTextSize / DPRatio);
+                    listItem.setPadding(5, 5, 5, 5);
+                    listItem.setTextColor(Color.WHITE);
+                    listItem.setGravity(android.view.Gravity.CENTER);
+                }
 
-                        return listItem;
-                    }
-                };
-        return adapter;
+                return listItem;
+            }
+        };
     }
 
     private void refreshCursorLabel() {
@@ -440,7 +437,7 @@ class AnalyzerViews {
             if ((viewMask & VIEW_MASK_RecTimeLable) != 0)
                 refreshRecTimeLable(activity.samplingThread.wavSec, activity.samplingThread.wavSecRemain);
         } else {
-            if (idPaddingInvalidate == false) {
+            if (! idPaddingInvalidate) {
                 idPaddingInvalidate = true;
                 paddingViewMask = viewMask;
                 paddingInvalidateHandler.postDelayed(paddingInvalidateRunnable, timeToUpdate - t + 1);

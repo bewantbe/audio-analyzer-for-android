@@ -44,7 +44,7 @@ class SpectrogramPlot {
     int[] spectrogramColorsShifting;       // temporarily of spectrogramColors for shifting mode
     int spectrogramColorsPt;          // pointer to the row to be filled (row major)
 
-    enum TimeAxisMode {  // java's enum type is inconvenient
+    private enum TimeAxisMode {  // java's enum type is inconvenient
         SHIFT(0), OVERWRITE(1);       // 0: moving (shifting) spectrogram, 1: overwriting in loop
 
         private final int value;
@@ -334,9 +334,9 @@ class SpectrogramPlot {
 //        return axisTime.vMinInView();
 //    }
 
-    private float getTimeMax() {
-        return axisTime.vMaxInView();
-    }
+//    private float getTimeMax() {
+//        return axisTime.vMaxInView();
+//    }
 
     float getCursorFreq() {
         return canvasWidth == 0 ? 0 : cursorFreq;
@@ -446,7 +446,7 @@ class SpectrogramPlot {
     private boolean updateTimeDiff = false;
 
     void setPause(boolean p) {
-        if (p == false) {
+        if (! p) {
             timeLastSample = System.currentTimeMillis()/1000.0;
         }
         isPaused = p;
@@ -510,7 +510,7 @@ class SpectrogramPlot {
     }
 
     private float pixelTimeCompensate = 0;
-    volatile boolean isPaused = false;
+    private volatile boolean isPaused = false;
 
     // Plot spectrogram with axis and ticks on the whole canvas c
     void drawSpectrogramPlot(Canvas c) {

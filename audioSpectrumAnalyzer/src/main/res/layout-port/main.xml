@@ -23,6 +23,7 @@
             android:layout_width="@dimen/textview_RMS_layout_width"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
             android:lines="2"
             android:text="@string/textview_RMS_text"
             android:typeface="monospace" />
@@ -33,6 +34,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@id/textview_RMS"
+            android:layout_toEndOf="@id/textview_RMS"
             android:text="@string/textview_cur_text"
             android:typeface="monospace" />
 
@@ -42,6 +44,7 @@
             android:layout_height="wrap_content"
             android:layout_below="@id/textview_cur"
             android:layout_toRightOf="@id/textview_RMS"
+            android:layout_toEndOf="@id/textview_RMS"
             android:text="@string/textview_peak_text"
             android:typeface="monospace" />
     </RelativeLayout>
@@ -65,6 +68,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="Mon"
             android:textSize="20sp"
@@ -76,7 +80,7 @@
             android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
-            android:text="Sample/S"
+            android:text="@string/sample_s"
             android:textSize="@dimen/button_text_fontsize" />
 
         <Button
@@ -85,7 +89,7 @@
             android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
-            android:text="fftlen"
+            android:text="@string/fftlen"
             android:textSize="@dimen/button_text_fontsize" />
 
         <Button
@@ -94,7 +98,7 @@
             android:layout_height="@dimen/button_button_height"
             android:layout_gravity="center"
             android:onClick="showPopupMenu"
-            android:text="ave"
+            android:text="@string/ave"
             android:textSize="@dimen/button_text_fontsize" />
     </LinearLayout>
 
@@ -109,6 +113,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="spum"
             android:textSize="20sp"
@@ -120,21 +125,22 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="dB"
             android:textSize="20sp"
             custom:items="dB dBA" />
 
         <!--<github.bewantbe.audio_analyzer_for_android.SelectorText-->
-            <!--android:id="@+id/graph_view_mode"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:layout_margin="4dp"-->
-            <!--android:paddingLeft="15dp"-->
-            <!--android:tag="select"-->
-            <!--android:text="scale"-->
-            <!--android:textSize="20sp"-->
-            <!--custom:items="cursor scale" />-->
+        <!--android:id="@+id/graph_view_mode"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_margin="4dp"-->
+        <!--android:paddingLeft="15dp"-->
+        <!--android:tag="select"-->
+        <!--android:text="scale"-->
+        <!--android:textSize="20sp"-->
+        <!--custom:items="cursor scale" />-->
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/freq_scaling_mode"
@@ -142,6 +148,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="linear"
             android:textSize="20sp"
@@ -153,6 +160,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
             android:paddingLeft="15dp"
+            android:paddingStart="15dp"
             android:tag="select"
             android:text="run"
             android:textSize="20sp"

@@ -157,6 +157,7 @@ class GridLabel {
         return (int)floor(log10(gridIntervalBig));
     }
 
+    // TODO: might be merge to genLinearGridPoints.
     private static int genLogarithmicGridPoints(double[][] gridPointsArray, double startValue, double endValue,
                                                  double gridDensity, int scale_mode) {
         if (Double.isInfinite(startValue + endValue) || Double.isNaN(startValue + endValue)) {
