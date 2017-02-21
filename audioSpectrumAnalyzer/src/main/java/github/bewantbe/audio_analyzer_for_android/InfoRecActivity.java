@@ -24,13 +24,23 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Locale;
 
 public class InfoRecActivity extends Activity {
+
+	int[]    stdSourceId;  // how to make it final?
+	int[]    stdSourceApi;
+	String[] stdSourceName;
+	String[] stdAudioSourcePermission;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +48,11 @@ public class InfoRecActivity extends Activity {
 		setContentView(R.layout.activity_info_rec);
 		// Show the Up button in the action bar.
 		setupActionBar();
+
+		stdSourceId   = getResources().getIntArray(R.array.StdAudioSourceId);
+		stdSourceApi  = getResources().getIntArray(R.array.StdAudioSourceApiLevel);
+		stdSourceName            = getResources().getStringArray(R.array.StdAudioSourceName);
+		stdAudioSourcePermission = getResources().getStringArray(R.array.StdAudioSourcePermission);
 	}
 
 	/**
@@ -46,7 +61,8 @@ public class InfoRecActivity extends Activity {
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	private void setupActionBar() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			getActionBar().setDisplayHomeAsUpEnabled(true);
+			if (getActionBar() != null)
+				getActionBar().setDisplayHomeAsUpEnabled(true);
 		}
 	}
 
@@ -74,73 +90,84 @@ public class InfoRecActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-
 	@Override
 	protected void onResume() {
 		super.onResume();
-		TextView tv = (TextView) findViewById(R.id.textview_info_rec);
+		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
 		tv.setMovementMethod(new ScrollingMovementMethod());
 
-		tv.setText(R.string.Testing);  // TODO: No use...
-		tv.invalidate();
+		tv.setText("(Only MONO, 16BIT format is tested)\n");
 
-		// Show supported sample rate and corresponding minimum buffer size.
-		String[] requested = new String[] { "8000", "11025", "16000", "22050",
+		Thread testerThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				TestAudioRecorder(tv);
+			}
+		});
+
+		testerThread.start();
+	}
+
+	private void appendTextData(final TextView tv, final String st) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				tv.append(st);
+				tv.invalidate();
+			}
+		});
+	}
+
+	// Show supported sample rate and corresponding minimum buffer size.
+	private void TestAudioRecorder(final TextView tv) {
+		Locale LC = Locale.getDefault();
+
+		// All possible sample rate
+		String[] sampleRates = new String[] { "8000", "11025", "16000", "22050",
 				"32000", "44100", "48000", "96000"};
-		String st = "sampleRate minBufSize\n";
-		ArrayList<String> validated = new ArrayList<>();
-		for (String s : requested) {
-			int rate = Integer.parseInt(s);
+		String st = "SampleRate MinBuf   (Time)\n";
+
+		ArrayList<String> resultMinBuffer = new ArrayList<>();
+		for (String sr : sampleRates) {
+			int rate = Integer.parseInt(sr.trim());
 			int minBufSize = AudioRecord
 					.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
 							AudioFormat.ENCODING_PCM_16BIT);
 			if (minBufSize != AudioRecord.ERROR_BAD_VALUE) {
-				validated.add(s);
-				st += s + "  \t" + Integer.toString(minBufSize) + "\n";
+				resultMinBuffer.add(sr);
+				// /2.0 due to ENCODING_PCM_16BIT, CHANNEL_IN_MONO
+				st += String.format(LC, "%5d Hz  %4d Byte (%4.1f ms)\n", rate, minBufSize, 1000.0*minBufSize/2.0/rate);
+			} else {
+				st += sr + "  ERROR\n";
 			}
 		}
-		requested = validated.toArray(new String[0]);
+		sampleRates = resultMinBuffer.toArray(new String[0]);
 
-		tv.setText(st);
-		tv.invalidate();
+		appendTextData(tv, st);
 
-		// Test audio source
-		String[] audioSourceString = new String[] { "DEFAULT", "MIC", "VOICE_UPLINK", "VOICE_DOWNLINK",
-				"VOICE_CALL", "CAMCORDER", "VOICE_RECOGNITION" };
-		int[] audioSourceId = new int[] {
-				MediaRecorder.AudioSource.DEFAULT,           // Default audio source
-				MediaRecorder.AudioSource.MIC,               // Microphone audio source
-				MediaRecorder.AudioSource.VOICE_UPLINK,      // Voice call uplink (Tx) audio source
-				MediaRecorder.AudioSource.VOICE_DOWNLINK,    // Voice call downlink (Rx) audio source
-				MediaRecorder.AudioSource.VOICE_CALL,        // Voice call uplink + downlink audio source
-				MediaRecorder.AudioSource.CAMCORDER,         // Microphone audio source with same orientation as camera if available, the main device microphone otherwise (apilv7)
-				MediaRecorder.AudioSource.VOICE_RECOGNITION, // Microphone audio source tuned for voice recognition if available, behaves like DEFAULT otherwise. (apilv7)
-//				MediaRecorder.AudioSource.VOICE_COMMUNICATION, // Microphone audio source tuned for voice communications such as VoIP. It will for instance take advantage of echo cancellation or automatic gain control if available. It otherwise behaves like DEFAULT if no voice processing is applied. (apilv11)
-//				MediaRecorder.AudioSource.REMOTE_SUBMIX,       // Audio source for a submix of audio streams to be presented remotely. (apilv19)
-		};
-		if (Build.VERSION.SDK_INT >= 19) {
-			// https://developer.android.com/reference/android/Manifest.permission.html#CAPTURE_AUDIO_OUTPUT
-			// VOICE_UPLINK and VOICE_DOWNLINK not available for third-party applications.
-			audioSourceString = new String[] { "DEFAULT", "MIC",
-					"VOICE_CALL", "CAMCORDER", "VOICE_RECOGNITION", "VOICE_COMMUNICATION", "REMOTE_SUBMIX"};
-			audioSourceId = new int[] {
-					MediaRecorder.AudioSource.DEFAULT,
-					MediaRecorder.AudioSource.MIC,
-					MediaRecorder.AudioSource.VOICE_CALL,
-					MediaRecorder.AudioSource.CAMCORDER,
-					MediaRecorder.AudioSource.VOICE_RECOGNITION,
-					MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-					MediaRecorder.AudioSource.REMOTE_SUBMIX,
-			};
+		// Get audio source list
+		int[] audioSourceId = GetAllAudioSource(7);
+		ArrayList<String> audioSourceStringList = new ArrayList<>();
+		for (int id : audioSourceId) {
+			int k = arrayContainInt(stdSourceId, id);
+			if (k >= 0) {
+				audioSourceStringList.add(stdSourceName[k]);
+			} else {
+				audioSourceStringList.add("(unknown)");
+			}
 		}
-		tv.append("\n-- Audio Source Test --");
-		for (String s : requested) {
-			int sampleRate = Integer.parseInt(s);
-			int recBufferSize = AudioRecord.getMinBufferSize(sampleRate,
-	            AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-			tv.append("\n("+Integer.toString(sampleRate)+"Hz, MONO, 16BIT)\n");
-			for (int iass = 0; iass<audioSourceId.length; iass++) {
-				st = "";
+		String[] audioSourceString = audioSourceStringList.toArray(new String[0]);
+
+		appendTextData(tv, "\n-- Audio Source Test --\n");
+		for (int ias = 0; ias < audioSourceId.length; ias++) {
+			st = "\nSource: " + audioSourceString[ias] + "\n";
+			appendTextData(tv, st);
+			for (String sr : sampleRates) {
+				int sampleRate = Integer.parseInt(sr.trim());
+				int recBufferSize = AudioRecord.getMinBufferSize(sampleRate,
+						AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+				st = String.format(LC, "%5d Hz  ", sampleRate);
+
 				// wait for AudioRecord fully released...
 				try {
 					Thread.sleep(100);
@@ -148,35 +175,100 @@ public class InfoRecActivity extends Activity {
 					e.printStackTrace();
 				}
 				AudioRecord record;
-				record =  new AudioRecord(audioSourceId[iass], sampleRate,
-				          AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,  recBufferSize);
-				if (record.getState() == AudioRecord.STATE_INITIALIZED) {
-					st += audioSourceString[iass] + " successed";
-					int as = record.getAudioSource();
-					if (as != audioSourceId[iass]) {
-						int i = 0;
-						while (i<audioSourceId.length) {
-							if (as == audioSourceId[iass]) {
-								break;
-							}
-							i++;
-						}
-						if (i >= audioSourceId.length) {
-							st += "(auto set to \"unknown source\")";
-						} else {
-							st += "(auto set to " + audioSourceString[i] + ")";
-						}
-					}
-					st += "\n";
-				} else {
-					st += audioSourceString[iass] + " failed\n";
+				try {
+					record = new AudioRecord(audioSourceId[ias], sampleRate,
+							AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recBufferSize);
+				} catch (IllegalArgumentException e) {
+					st += "Illegal Argument.\n";
+					record = null;
 				}
-				record.release();
-				tv.append(st);
-				tv.invalidate();
+				if (record != null) {
+					if (record.getState() == AudioRecord.STATE_INITIALIZED) {
+						st += "succeed";
+						int as = record.getAudioSource();
+						if (as != audioSourceId[ias]) {  // audio source altered
+							int i = 0;
+							while (i < audioSourceId.length) {
+								if (as == audioSourceId[ias]) {
+									break;
+								}
+								i++;
+							}
+							if (i >= audioSourceId.length) {
+								st += "(auto set to \"unknown source\")";
+							} else {
+								st += "(auto set to " + audioSourceString[i] + ")";
+							}
+						}
+						st += ".\n";
+					} else {
+						st += "fail.\n";
+					}
+					record.release();
+				}
+				appendTextData(tv, st);
+			}
+		}
+	}
+
+	// filterLevel = 0: no filter
+	//             & 1: leave only standard source
+	//             & 2: leave only permitted source (&1)
+	//             & 4: leave only source coincide the API level (&1)
+	int[] GetAllAudioSource(int filterLevel) {
+		// Use reflection to get all possible audio source (in compilation environment)
+		ArrayList<Integer> iList = new ArrayList<>();
+		Class<MediaRecorder.AudioSource> clazz = MediaRecorder.AudioSource.class;
+		Field[] arr = clazz.getFields();
+		for (Field f : arr) {
+			if (f.getType().equals(int.class)) {
+				try {
+					int id = (int)f.get(null);
+					iList.add(id);
+					Log.w("Sources:", "" + id);
+				} catch (IllegalAccessException e) {}
 			}
 		}
 
+		// Filter unnecessary audio source
+		Iterator<Integer> iterator;
+		ArrayList<Integer> iListRet = iList;
+		if (filterLevel > 0) {
+			iListRet = new ArrayList<>();
+			iterator = iList.iterator();
+			for (int i = 0; i < iList.size(); i++) {
+				int id = iterator.next();
+				int k = arrayContainInt(stdSourceId, id); // get the index to standard source if possible
+				if (k < 0) continue;
+				if ((filterLevel & 2) > 0 && !stdAudioSourcePermission[k].equals("")) continue;
+				if ((filterLevel & 4) > 0 && stdSourceApi[k] > Build.VERSION.SDK_INT) continue;
+				iListRet.add(id);
+			}
+		}
+
+		// Return an int array
+		int[] ids = new int[iListRet.size()];
+		iterator = iListRet.iterator();
+		for (int i = 0; i < ids.length; i++) {
+			ids[i] = iterator.next();
+		}
+		return ids;
 	}
 
+	// Java s**ks
+	int arrayContainInt(int[] arr, int v) {
+		if (arr == null) return -1;
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i] == v) return i;
+		}
+		return -1;
+	}
+
+	int arrayContainString(String[] arr, String v) {
+		if (arr == null) return -1;
+		for (int i = 0; i < arr.length; i++) {
+			if (arr[i].equals(v)) return i;
+		}
+		return -1;
+	}
 }
