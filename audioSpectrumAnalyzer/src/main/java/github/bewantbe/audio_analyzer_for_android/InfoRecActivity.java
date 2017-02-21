@@ -19,19 +19,15 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Locale;
 
 // Test all (including unknown) recorder sources by open it and read data.
@@ -97,7 +93,7 @@ public class InfoRecActivity extends Activity {
 		}
 
 		tv.setMovementMethod(new ScrollingMovementMethod());
-		tv.setText("(Only MONO, 16BIT format is tested)\n");
+		tv.setText(R.string.activity_test_hint1);
 
 		Thread testerThread = new Thread(new Runnable() {
 			@Override
@@ -121,11 +117,9 @@ public class InfoRecActivity extends Activity {
 
 	// Show supported sample rate and corresponding minimum buffer size.
 	private void TestAudioRecorder(final TextView tv) {
-		Locale LC = Locale.getDefault();
-
 		// All possible sample rate
 		String[] sampleRates = getResources().getStringArray(R.array.std_sampling_rates);
-		String st = "SampleRate MinBuf    (Time)\n";
+		String st = getString(R.string.activity_test_col1);
 
 		ArrayList<String> resultMinBuffer = new ArrayList<>();
 		for (String sr : sampleRates) {
@@ -136,9 +130,9 @@ public class InfoRecActivity extends Activity {
 			if (minBufSize != AudioRecord.ERROR_BAD_VALUE) {
 				resultMinBuffer.add(sr);
 				// /2.0 due to ENCODING_PCM_16BIT, CHANNEL_IN_MONO
-				st += String.format(LC, "%5d Hz  %4d Byte  (%4.1f ms)\n", rate, minBufSize, 1000.0*minBufSize/2.0/rate);
+				st += getString(R.string.activity_test_col2, rate, minBufSize, 1000.0*minBufSize/2.0/rate);
 			} else {
-				st += sr + "  ERROR\n";
+				st += sr + getString(R.string.activity_test_error1);
 			}
 		}
 		sampleRates = resultMinBuffer.toArray(new String[0]);
@@ -153,15 +147,15 @@ public class InfoRecActivity extends Activity {
 		}
 		String[] audioSourceString = audioSourceStringList.toArray(new String[0]);
 
-		appendTextData(tv, "\n-- Audio Source Test --\n");
+		appendTextData(tv, getString(R.string.activity_test_hint2));
 		for (int ias = 0; ias < audioSourceId.length; ias++) {
-			st = "\nSource: " + audioSourceString[ias] + "\n";
+			st = getString(R.string.activity_test_col3, audioSourceString[ias]);
 			appendTextData(tv, st);
 			for (String sr : sampleRates) {
 				int sampleRate = Integer.parseInt(sr.trim());
 				int recBufferSize = AudioRecord.getMinBufferSize(sampleRate,
 						AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-				st = String.format(LC, "%5d Hz  ", sampleRate);
+				st = getString(R.string.activity_test_col3_row1, sampleRate);
 
 				// wait for AudioRecord fully released...
 				try {
@@ -174,13 +168,13 @@ public class InfoRecActivity extends Activity {
 					record = new AudioRecord(audioSourceId[ias], sampleRate,
 							AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recBufferSize);
 				} catch (IllegalArgumentException e) {
-					st += "Illegal Argument.\n";
+					st += getString(R.string.activity_test_col3_error1);
 					record = null;
 				}
 				if (record != null) {
 					if (record.getState() == AudioRecord.STATE_INITIALIZED) {
 						int numOfReadShort = 0;
-						try {
+						try {  // try read some samples.
 							record.startRecording();
 							short[] audioSamples = new short[recBufferSize];
 							numOfReadShort = record.read(audioSamples, 0, recBufferSize);
@@ -188,34 +182,24 @@ public class InfoRecActivity extends Activity {
 							numOfReadShort = -1;
 						}
 						if (numOfReadShort > 0) {
-							st += "succeed";
+							st += getString(R.string.activity_test_col3_succeed);
 						} else if (numOfReadShort == 0) {
-							st += "read 0 byte";
+							st += getString(R.string.activity_test_col3_error2);
 						} else {
-							st += "fail to record.";
+							st += getString(R.string.activity_test_col3_error3);
 						}
 						int as = record.getAudioSource();
 						if (as != audioSourceId[ias]) {  // audio source altered
-							int i = 0;
-							while (i < audioSourceId.length) {
-								if (as == audioSourceId[ias]) {
-									break;
-								}
-								i++;
-							}
-							if (i >= audioSourceId.length) {
-								st += "(auto set to \"unknown source\")";
-							} else {
-								st += "(auto set to " + audioSourceString[i] + ")";
-							}
+							st += getString(R.string.activity_test_col3_hint1,
+									analyzerUtil.getAudioSourceName(as));
 						}
-						st += ".\n";
 						record.stop();
 					} else {
-						st += "fail to initialize.\n";
+						st += getString(R.string.activity_test_col3_error4);
 					}
 					record.release();
 				}
+				st += getString(R.string.activity_test_col3_end);
 				appendTextData(tv, st);
 			}
 		}

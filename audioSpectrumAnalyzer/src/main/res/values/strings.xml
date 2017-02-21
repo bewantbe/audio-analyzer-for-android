@@ -51,4 +51,20 @@
     <string name="permission_explanation_recorder">This app analyze the sound heard by *this* device. A permission of using microphone is required.</string>
     <string name="permission_explanation_write">To record the sound, A permission of using read/write is required.</string>
 
+    <!--InfoRecActivity (Test & Show hardware's Ability)-->
+    <string name="activity_test_hint1">"(Only test MONO, 16BIT format)\n"</string>
+    <string name="activity_test_col1">"\nSampleRate MinBuf    (Time)\n"</string>
+    <string name="activity_test_col2">"%1$5d Hz  %2$4d Byte  (%3$4.1f ms)\n"</string>
+    <string name="activity_test_error1">"  ERROR\n"</string>
+    <string name="activity_test_hint2">"\n--- Audio Source Test ---\n"</string>
+    <string name="activity_test_col3">"\nSource: %1$s\n"</string>
+    <string name="activity_test_col3_row1">"%1$5d Hz  "</string>
+    <string name="activity_test_col3_succeed">"succeed"</string>
+    <string name="activity_test_col3_error1">"Illegal Argument"</string>
+    <string name="activity_test_col3_error2">"read 0 byte"</string>
+    <string name="activity_test_col3_error3">"fail to read sample"</string>
+    <string name="activity_test_col3_error4">"fail to initialize"</string>
+    <string name="activity_test_col3_hint1">"(source alter: %1$s)"></string>
+    <string name="activity_test_col3_end">".\n"</string>
+
 </resources>
