@@ -1,10 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
-        android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never"
-        />
+        android:id="@+id/rec_tester_std"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:menuCategory="container"
+        android:title="@string/rec_tester_std"
+        android:titleCondensed="info"/>
+
+    <item
+        android:id="@+id/rec_tester_support"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:menuCategory="container"
+        android:title="@string/rec_tester_support"
+        android:titleCondensed="info"/>
+
+    <item
+        android:id="@+id/rec_tester_all"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:menuCategory="container"
+        android:title="@string/rec_tester_all"
+        android:titleCondensed="info"/>
 
 </menu>

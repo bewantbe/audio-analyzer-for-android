@@ -28,13 +28,14 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Locale;
 
 // Test all (including unknown) recorder sources by open it and read data.
 
 public class InfoRecActivity extends Activity {
 	AnalyzerUtil analyzerUtil;
 	CharSequence testResultSt = null;
+
+	volatile boolean bShouldStop = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +46,9 @@ public class InfoRecActivity extends Activity {
 
 		analyzerUtil = new AnalyzerUtil(this);
 		testResultSt = null;
+
+		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
+		tv.setMovementMethod(new ScrollingMovementMethod());
 	}
 
 	/**
@@ -67,17 +71,30 @@ public class InfoRecActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
 		switch (item.getItemId()) {
-		case android.R.id.home:
-			// This ID represents the Home or Up button. In the case of this
-			// activity, the Up button is shown. Use NavUtils to allow users
-			// to navigate up one level in the application structure. For
-			// more details, see the Navigation pattern on Android Design:
-			//
-			// http://developer.android.com/design/patterns/navigation.html#up-vs-back
-			//
-			NavUtils.navigateUpFromSameTask(this);
-			return true;
+			case android.R.id.home:
+				// This ID represents the Home or Up button. In the case of this
+				// activity, the Up button is shown. Use NavUtils to allow users
+				// to navigate up one level in the application structure. For
+				// more details, see the Navigation pattern on Android Design:
+				//
+				// http://developer.android.com/design/patterns/navigation.html#up-vs-back
+				//
+				NavUtils.navigateUpFromSameTask(this);
+				return true;
+			case R.id.rec_tester_std:
+				bShouldStop = true;
+				runTest(tv, 1);
+				break;
+			case R.id.rec_tester_support:
+				bShouldStop = true;
+				runTest(tv, 7);
+				break;
+			case R.id.rec_tester_all:
+				bShouldStop = true;
+				runTest(tv, 0);
+				break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -92,17 +109,43 @@ public class InfoRecActivity extends Activity {
 			return;
 		}
 
-		tv.setMovementMethod(new ScrollingMovementMethod());
-		tv.setText(R.string.activity_test_hint1);
+		runTest(tv, 7);
+	}
 
-		Thread testerThread = new Thread(new Runnable() {
+	Thread testerThread;
+
+	void runTest(final TextView tv, final int testLevel) {
+		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				TestAudioRecorder(tv);
+				if (testerThread != null) {
+					try {
+						testerThread.join();
+					} catch (InterruptedException e) {
+						// ???
+					}
+				}
+				testResultSt = null;
+				setTextData(tv, getString(R.string.activity_test_hint1));
+				bShouldStop = false;
+				testerThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						TestAudioRecorder(tv, testLevel);
+					}
+				});
+				testerThread.start();
+			}
+		}).start();
+	}
+
+	private void setTextData(final TextView tv, final String st) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				tv.setText(st);
 			}
 		});
-
-		testerThread.start();
 	}
 
 	private void appendTextData(final TextView tv, final String st) {
@@ -110,13 +153,12 @@ public class InfoRecActivity extends Activity {
 			@Override
 			public void run() {
 				tv.append(st);
-				tv.invalidate();
 			}
 		});
 	}
 
 	// Show supported sample rate and corresponding minimum buffer size.
-	private void TestAudioRecorder(final TextView tv) {
+	private void TestAudioRecorder(final TextView tv, int testLevel) {
 		// All possible sample rate
 		String[] sampleRates = getResources().getStringArray(R.array.std_sampling_rates);
 		String st = getString(R.string.activity_test_col1);
@@ -140,7 +182,7 @@ public class InfoRecActivity extends Activity {
 		appendTextData(tv, st);
 
 		// Get audio source list
-		int[] audioSourceId = analyzerUtil.GetAllAudioSource(0);
+		int[] audioSourceId = analyzerUtil.GetAllAudioSource(testLevel);
 		ArrayList<String> audioSourceStringList = new ArrayList<>();
 		for (int id : audioSourceId) {
 			audioSourceStringList.add(analyzerUtil.getAudioSourceName(id));
@@ -149,9 +191,11 @@ public class InfoRecActivity extends Activity {
 
 		appendTextData(tv, getString(R.string.activity_test_hint2));
 		for (int ias = 0; ias < audioSourceId.length; ias++) {
+			if (bShouldStop) return;
 			st = getString(R.string.activity_test_col3, audioSourceString[ias]);
 			appendTextData(tv, st);
 			for (String sr : sampleRates) {
+				if (bShouldStop) return;
 				int sampleRate = Integer.parseInt(sr.trim());
 				int recBufferSize = AudioRecord.getMinBufferSize(sampleRate,
 						AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
@@ -173,7 +217,7 @@ public class InfoRecActivity extends Activity {
 				}
 				if (record != null) {
 					if (record.getState() == AudioRecord.STATE_INITIALIZED) {
-						int numOfReadShort = 0;
+						int numOfReadShort;
 						try {  // try read some samples.
 							record.startRecording();
 							short[] audioSamples = new short[recBufferSize];

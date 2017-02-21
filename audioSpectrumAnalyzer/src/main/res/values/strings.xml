@@ -12,20 +12,10 @@
     <string name="fftlen">fftlen</string>
     <string name="ave">ave</string>
 
-    <string name="instructions_title">      Instructions</string>
-    <string name="dismiss">      Dismiss</string>
-    <string name="title_activity_info_rec">Info of Input Audio</string>
-    <string name="action_settings">Settings</string>
-    <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
-
-    <!-- internal defaults -->
-    <string name="max_DB_range">-150</string>
-    <string name="test_signal_1_freq1">440.0</string>
-    <string name="test_signal_1_db1">-6.0</string>
-    <string name="test_signal_2_freq1">625.0</string>
-    <string name="test_signal_2_db1">-6.0</string>
-    <string name="test_signal_2_freq2">1875.0</string>
-    <string name="test_signal_2_db2">-12.0</string>
+    <!-- permission dialog -->
+    <string name="permission_explanation_title">Permission denied</string>
+    <string name="permission_explanation_recorder">This app analyze the sound heard by *this* device. A permission of using microphone is required.</string>
+    <string name="permission_explanation_write">To record the sound, A permission of using read/write is required.</string>
 
     <!-- Show range dialog -->
     <string name="ok">OK</string>
@@ -45,13 +35,12 @@
     <string name="test_amp_show_hardware_s_ability"><![CDATA[Test & Show hardware\'s Ability]]></string>
     <string name="view_range_setting">View Range Setting</string>
 
-    <string name="Testing">Testing&#8230;</string>
-
-    <string name="permission_explanation_title">Permission denied</string>
-    <string name="permission_explanation_recorder">This app analyze the sound heard by *this* device. A permission of using microphone is required.</string>
-    <string name="permission_explanation_write">To record the sound, A permission of using read/write is required.</string>
-
     <!--InfoRecActivity (Test & Show hardware's Ability)-->
+    <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
+    <string name="title_activity_info_rec">Info of Input Audio</string>
+    <string name="rec_tester_std">Standard Sources</string>
+    <string name="rec_tester_support">Supported Sources</string>
+    <string name="rec_tester_all">All Sources</string>
     <string name="activity_test_hint1">"(Only test MONO, 16BIT format)\n"</string>
     <string name="activity_test_col1">"\nSampleRate MinBuf    (Time)\n"</string>
     <string name="activity_test_col2">"%1$5d Hz  %2$4d Byte  (%3$4.1f ms)\n"</string>
