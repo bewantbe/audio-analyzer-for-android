@@ -36,13 +36,10 @@ class ScreenPhysicalMapping {
         public int getValue() { return value; }
     }
 
-    Type mapType;        // Linear or Log
-    // TODO: check nCanvasPixel==0
+    Type mapType;                     // Linear or Log
     float nCanvasPixel;
-    // Physical limits
-    float vLowerBound, vUpperBound;
-    //double zoom, shift;  // zoom==1 means no zooming, shift=0 means no shift
-    float zoom = 1, shift = 0;
+    float vLowerBound, vUpperBound;   // Physical limits
+    float zoom = 1, shift = 0;        // zoom==1 means no zooming, shift=0 means no shift
 
     ScreenPhysicalMapping(float _nCanvasPixel, float _vLowerBound, float _vHigherBound, ScreenPhysicalMapping.Type _mapType) {
         nCanvasPixel = _nCanvasPixel;

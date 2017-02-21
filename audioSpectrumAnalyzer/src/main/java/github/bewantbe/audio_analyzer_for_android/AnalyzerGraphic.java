@@ -316,9 +316,9 @@ public class AnalyzerGraphic extends View {
             if (savedDBSpectrum == null || savedDBSpectrum.length != db.length) {
                 savedDBSpectrum = new double[db.length];
             }
-            System.arraycopy(db, 0, savedDBSpectrum, 0, db.length);  // TODO: sync?
+            System.arraycopy(db, 0, savedDBSpectrum, 0, db.length);
         }
-        // TODO: Should run on another thread? Or lock on data Or CompletionService?
+        // TODO: Run on another thread? Lock on data ? Or use CompletionService?
         if (showMode == PlotMode.SPECTROGRAM) {
             spectrogramPlot.saveRowSpectrumAsColor(savedDBSpectrum);
         }

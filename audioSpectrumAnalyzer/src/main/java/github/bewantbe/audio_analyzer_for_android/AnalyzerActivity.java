@@ -58,10 +58,6 @@ import android.widget.Toast;
  * @author suhler@google.com (Stephen Uhler)
  */
 
-// TODO: Require the permission for android >=6.
-// https://developer.android.com/training/permissions/requesting.html
-// https://developer.android.com/guide/topics/permissions/requesting.html
-
 public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
                OnItemClickListener, AnalyzerGraphic.Ready
@@ -616,6 +612,9 @@ public class AnalyzerActivity extends Activity
 
   // Test and try to gain permissions.
   // Return true if it is OK to proceed.
+  // Ref.
+  //   https://developer.android.com/training/permissions/requesting.html
+  //   https://developer.android.com/guide/topics/permissions/requesting.html
   private boolean checkAndRequestPermissions() {
     if (ContextCompat.checkSelfPermission(AnalyzerActivity.this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED) {

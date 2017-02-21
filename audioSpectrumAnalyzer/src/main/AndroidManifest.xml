@@ -5,9 +5,9 @@
     android:versionName="1.4"
     android:installLocation="auto" >
 
-    <uses-sdk
-        android:minSdkVersion="8"
-        android:targetSdkVersion="23" />
+    <!--<uses-sdk-->
+        <!--android:minSdkVersion="9"-->
+        <!--android:targetSdkVersion="25" />-->
     
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -26,6 +26,16 @@
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+
+                <!-- Deeplink support -->
+                <!-- https://developer.android.com/training/app-indexing/deep-linking.html -->
+                <!-- Can start app by -->
+                <!-- adb shell am start -W -a android.intent.action.VIEW -d "bewantbe://asa" -->
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="bewantbe" android:host="asa" />
+
             </intent-filter>
         </activity>
         <activity
