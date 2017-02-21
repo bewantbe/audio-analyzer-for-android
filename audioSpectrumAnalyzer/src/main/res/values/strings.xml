@@ -47,4 +47,8 @@
 
     <string name="Testing">Testing&#8230;</string>
 
+    <string name="permission_explanation_title">Permission denied</string>
+    <string name="permission_explanation_recorder">This app analyze the sound heard by *this* device. A permission of using microphone is required.</string>
+    <string name="permission_explanation_write">To record the sound, A permission of using read/write is required.</string>
+
 </resources>

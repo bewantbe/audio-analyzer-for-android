@@ -33,7 +33,7 @@ class SamplingLoop extends Thread {
     private volatile boolean isRunning = true;
     private volatile boolean isPaused1 = false;
     private STFT stft;   // use with care
-    private AnalyzerParameters analyzerParam = null;
+    private final AnalyzerParameters analyzerParam;
 
     private SineGenerator sineGen1;
     private SineGenerator sineGen2;
@@ -127,9 +127,16 @@ class SamplingLoop extends Thread {
     public void run() {
         AudioRecord record;
 
-        activity.analyzerViews.setupView(analyzerParam);
-        // Wait until previous instance of AudioRecord fully released.
-        SleepWithoutInterrupt(500);
+        long tStart = SystemClock.uptimeMillis();
+        try {
+            activity.graphInit.join();
+        } catch (InterruptedException e) { }
+        long tEnd = SystemClock.uptimeMillis();
+        if (tEnd - tStart < 500) {
+            Log.i(TAG, "wait more.." + (500 - (tEnd - tStart)) + " ms");
+            // Wait until previous instance of AudioRecord fully released.
+            SleepWithoutInterrupt(500 - (tEnd - tStart));
+        }
 
         int minBytes = AudioRecord.getMinBufferSize(analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);

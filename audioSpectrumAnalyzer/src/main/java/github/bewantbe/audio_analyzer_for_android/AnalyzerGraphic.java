@@ -636,7 +636,7 @@ public class AnalyzerGraphic extends View {
             out.writeInt(nsc);
             out.writeInt(nFP);
             out.writeInt(nSCP);
-            out.writeIntArray(tmpSC);  // TODO: consider use compress
+//            out.writeIntArray(tmpSC);  // TODO: consider use compress
             // https://developer.android.com/reference/java/util/zip/Deflater.html
         }
 
@@ -672,7 +672,7 @@ public class AnalyzerGraphic extends View {
             nFP = in.readInt();
             nSCP = in.readInt();
             tmpSC = new int[nsc];
-            in.readIntArray(tmpSC);
+//            in.readIntArray(tmpSC);
         }
     }
 

@@ -122,7 +122,7 @@ class AnalyzerViews {
     }
 
     // Prepare the spectrum and spectrogram plot (from scratch or full reset)
-    // Currently called by SamplingLoop::run(), maybe move to main thread?
+    // Should be called before samplingThread starts.
     void setupView(AnalyzerParameters analyzerParam) {
         graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
     }
@@ -195,6 +195,17 @@ class AnalyzerViews {
         tv.setText(Html.fromHtml(activity.getString(R.string.instructions_text)));
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.instructions_title)
+                .setView(tv)
+                .setNegativeButton(R.string.dismiss, null)
+                .create().show();
+    }
+
+    void showPermissionExplanation(int resId) {
+        TextView tv = new TextView(activity);
+        tv.setMovementMethod(new ScrollingMovementMethod());
+        tv.setText(Html.fromHtml(activity.getString(resId)));
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.permission_explanation_title)
                 .setView(tv)
                 .setNegativeButton(R.string.dismiss, null)
                 .create().show();
@@ -434,7 +445,7 @@ class AnalyzerViews {
                 refreshPeakLabel(activity.maxAmpFreq, activity.maxAmpDB);
             if ((viewMask & VIEW_MASK_CursorLabel) != 0)
                 refreshCursorLabel();
-            if ((viewMask & VIEW_MASK_RecTimeLable) != 0)
+            if ((viewMask & VIEW_MASK_RecTimeLable) != 0 && activity.samplingThread != null)
                 refreshRecTimeLable(activity.samplingThread.wavSec, activity.samplingThread.wavSecRemain);
         } else {
             if (! idPaddingInvalidate) {
