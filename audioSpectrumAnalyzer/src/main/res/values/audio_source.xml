@@ -16,7 +16,7 @@
     <!--REMOTE_SUBMIX		8	19	CAPTURE_AUDIO_OUTPUT-->
     <!--UNPROCESSED			9	24-->
 
-    <integer-array name="StdAudioSourceId">
+    <integer-array name="std_audio_source_id">
         <item>0</item>
         <item>1</item>
         <item>2</item>
@@ -29,7 +29,7 @@
         <item>9</item>
     </integer-array>
 
-    <string-array name="StdAudioSourceName">
+    <string-array name="std_audio_source_name">
         <item>DEFAULT</item>
         <item>MIC</item>
         <item>VOICE_UPLINK</item>
@@ -43,7 +43,7 @@
     </string-array>
 
     <!--API level that this source is available-->
-    <integer-array name="StdAudioSourceApiLevel">
+    <integer-array name="std_audio_source_api_level">
         <item>1</item>
         <item>1</item>
         <item>4</item>
@@ -57,7 +57,7 @@
     </integer-array>
 
     <!--Some sources not available for third-party applications.-->
-    <string-array name="StdAudioSourcePermission">
+    <string-array name="std_audio_source_permission">
         <item>""</item>
         <item>""</item>
         <item>"CAPTURE_AUDIO_OUTPUT"</item>
@@ -70,7 +70,14 @@
         <item>""</item>
     </string-array>
 
-    <string-array name="samplingRate">
-
+    <string-array name="std_sampling_rates">
+        <item>8000</item>
+        <item>11025</item>
+        <item>16000</item>
+        <item>22050</item>
+        <item>32000</item>
+        <item>44100</item>
+        <item>48000</item>
+        <item>96000</item>
     </string-array>
 </resources>

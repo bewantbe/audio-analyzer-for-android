@@ -27,7 +27,6 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.lang.reflect.Field;
@@ -35,12 +34,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Locale;
 
-public class InfoRecActivity extends Activity {
+// Test all (including unknown) recorder sources by open it and read data.
 
-	int[]    stdSourceId;  // how to make it final?
-	int[]    stdSourceApi;
-	String[] stdSourceName;
-	String[] stdAudioSourcePermission;
+public class InfoRecActivity extends Activity {
+	AnalyzerUtil analyzerUtil;
+	CharSequence testResultSt = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,10 +47,8 @@ public class InfoRecActivity extends Activity {
 		// Show the Up button in the action bar.
 		setupActionBar();
 
-		stdSourceId   = getResources().getIntArray(R.array.StdAudioSourceId);
-		stdSourceApi  = getResources().getIntArray(R.array.StdAudioSourceApiLevel);
-		stdSourceName            = getResources().getStringArray(R.array.StdAudioSourceName);
-		stdAudioSourcePermission = getResources().getStringArray(R.array.StdAudioSourcePermission);
+		analyzerUtil = new AnalyzerUtil(this);
+		testResultSt = null;
 	}
 
 	/**
@@ -94,8 +90,13 @@ public class InfoRecActivity extends Activity {
 	protected void onResume() {
 		super.onResume();
 		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
-		tv.setMovementMethod(new ScrollingMovementMethod());
 
+		if (testResultSt != null) {
+			tv.setText(testResultSt);
+			return;
+		}
+
+		tv.setMovementMethod(new ScrollingMovementMethod());
 		tv.setText("(Only MONO, 16BIT format is tested)\n");
 
 		Thread testerThread = new Thread(new Runnable() {
@@ -123,9 +124,8 @@ public class InfoRecActivity extends Activity {
 		Locale LC = Locale.getDefault();
 
 		// All possible sample rate
-		String[] sampleRates = new String[] { "8000", "11025", "16000", "22050",
-				"32000", "44100", "48000", "96000"};
-		String st = "SampleRate MinBuf   (Time)\n";
+		String[] sampleRates = getResources().getStringArray(R.array.std_sampling_rates);
+		String st = "SampleRate MinBuf    (Time)\n";
 
 		ArrayList<String> resultMinBuffer = new ArrayList<>();
 		for (String sr : sampleRates) {
@@ -136,7 +136,7 @@ public class InfoRecActivity extends Activity {
 			if (minBufSize != AudioRecord.ERROR_BAD_VALUE) {
 				resultMinBuffer.add(sr);
 				// /2.0 due to ENCODING_PCM_16BIT, CHANNEL_IN_MONO
-				st += String.format(LC, "%5d Hz  %4d Byte (%4.1f ms)\n", rate, minBufSize, 1000.0*minBufSize/2.0/rate);
+				st += String.format(LC, "%5d Hz  %4d Byte  (%4.1f ms)\n", rate, minBufSize, 1000.0*minBufSize/2.0/rate);
 			} else {
 				st += sr + "  ERROR\n";
 			}
@@ -146,15 +146,10 @@ public class InfoRecActivity extends Activity {
 		appendTextData(tv, st);
 
 		// Get audio source list
-		int[] audioSourceId = GetAllAudioSource(7);
+		int[] audioSourceId = analyzerUtil.GetAllAudioSource(0);
 		ArrayList<String> audioSourceStringList = new ArrayList<>();
 		for (int id : audioSourceId) {
-			int k = arrayContainInt(stdSourceId, id);
-			if (k >= 0) {
-				audioSourceStringList.add(stdSourceName[k]);
-			} else {
-				audioSourceStringList.add("(unknown)");
-			}
+			audioSourceStringList.add(analyzerUtil.getAudioSourceName(id));
 		}
 		String[] audioSourceString = audioSourceStringList.toArray(new String[0]);
 
@@ -184,7 +179,21 @@ public class InfoRecActivity extends Activity {
 				}
 				if (record != null) {
 					if (record.getState() == AudioRecord.STATE_INITIALIZED) {
-						st += "succeed";
+						int numOfReadShort = 0;
+						try {
+							record.startRecording();
+							short[] audioSamples = new short[recBufferSize];
+							numOfReadShort = record.read(audioSamples, 0, recBufferSize);
+						} catch (IllegalStateException e) {
+							numOfReadShort = -1;
+						}
+						if (numOfReadShort > 0) {
+							st += "succeed";
+						} else if (numOfReadShort == 0) {
+							st += "read 0 byte";
+						} else {
+							st += "fail to record.";
+						}
 						int as = record.getAudioSource();
 						if (as != audioSourceId[ias]) {  // audio source altered
 							int i = 0;
@@ -201,74 +210,16 @@ public class InfoRecActivity extends Activity {
 							}
 						}
 						st += ".\n";
+						record.stop();
 					} else {
-						st += "fail.\n";
+						st += "fail to initialize.\n";
 					}
 					record.release();
 				}
 				appendTextData(tv, st);
 			}
 		}
-	}
 
-	// filterLevel = 0: no filter
-	//             & 1: leave only standard source
-	//             & 2: leave only permitted source (&1)
-	//             & 4: leave only source coincide the API level (&1)
-	int[] GetAllAudioSource(int filterLevel) {
-		// Use reflection to get all possible audio source (in compilation environment)
-		ArrayList<Integer> iList = new ArrayList<>();
-		Class<MediaRecorder.AudioSource> clazz = MediaRecorder.AudioSource.class;
-		Field[] arr = clazz.getFields();
-		for (Field f : arr) {
-			if (f.getType().equals(int.class)) {
-				try {
-					int id = (int)f.get(null);
-					iList.add(id);
-					Log.w("Sources:", "" + id);
-				} catch (IllegalAccessException e) {}
-			}
-		}
-
-		// Filter unnecessary audio source
-		Iterator<Integer> iterator;
-		ArrayList<Integer> iListRet = iList;
-		if (filterLevel > 0) {
-			iListRet = new ArrayList<>();
-			iterator = iList.iterator();
-			for (int i = 0; i < iList.size(); i++) {
-				int id = iterator.next();
-				int k = arrayContainInt(stdSourceId, id); // get the index to standard source if possible
-				if (k < 0) continue;
-				if ((filterLevel & 2) > 0 && !stdAudioSourcePermission[k].equals("")) continue;
-				if ((filterLevel & 4) > 0 && stdSourceApi[k] > Build.VERSION.SDK_INT) continue;
-				iListRet.add(id);
-			}
-		}
-
-		// Return an int array
-		int[] ids = new int[iListRet.size()];
-		iterator = iListRet.iterator();
-		for (int i = 0; i < ids.length; i++) {
-			ids[i] = iterator.next();
-		}
-		return ids;
-	}
-
-	// Java s**ks
-	int arrayContainInt(int[] arr, int v) {
-		if (arr == null) return -1;
-		for (int i = 0; i < arr.length; i++) {
-			if (arr[i] == v) return i;
-		}
-		return -1;
-	}
-
-	int arrayContainString(String[] arr, String v) {
-		if (arr == null) return -1;
-		for (int i = 0; i < arr.length; i++) {
-			if (arr[i].equals(v)) return i;
-		}
-		return -1;
+		testResultSt = tv.getText();
 	}
 }
