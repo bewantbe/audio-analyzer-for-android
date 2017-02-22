@@ -485,12 +485,16 @@ class SpectrogramPlot {
 
         // show Spectrogram
         float halfFreqResolutionShift;  // move the color patch to match the center frequency
+        if (axisFreq.mapType == ScreenPhysicalMapping.Type.LINEAR) {
+            halfFreqResolutionShift = axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints / 2;
+        } else {
+            halfFreqResolutionShift = 0;  // the correction is included in log axis render algo.
+        }
         matrixSpectrogram.reset();
         if (showFreqAlongX) {
             // when xZoom== 1: nFreqPoints -> canvasWidth; 0 -> labelBeginX
             matrixSpectrogram.postScale(axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints,
                     axisTime.zoom * axisTime.nCanvasPixel / nTimePoints);
-            halfFreqResolutionShift = axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints / 2;
             matrixSpectrogram.postTranslate((labelBeginX - axisFreq.shift * axisFreq.zoom * axisFreq.nCanvasPixel + halfFreqResolutionShift),
                     -axisTime.shift * axisTime.zoom * axisTime.nCanvasPixel);
         } else {
@@ -500,7 +504,6 @@ class SpectrogramPlot {
                     axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints);
             // (1-yShift) is relative position of shift (after rotation)
             // yZoom*labelBeginY is canvas length in frequency direction in pixel unit
-            halfFreqResolutionShift = axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints/2;
             matrixSpectrogram.postTranslate((labelBeginX - axisTime.shift * axisTime.zoom * axisTime.nCanvasPixel),
                     (1-axisFreq.shift) * axisFreq.zoom * axisFreq.nCanvasPixel - halfFreqResolutionShift);
         }
@@ -927,13 +930,12 @@ class SpectrogramPlot {
 
         void draw(Canvas c) {
             if (bm.length == 0) return;
-            // revert the effect of axisFreq.zoom axisFreq.shift
-            // - 0.5f is for revert the half pixel correction.
-            c.scale(1f/axisFreq.zoom, 1f);
+            // Revert the effect of axisFreq.zoom axisFreq.shift
+            c.scale(1f / axisFreq.zoom, 1f);
             if (showFreqAlongX) {
-                c.translate((nFreq * axisFreq.shift - 0.5f) * axisFreq.zoom, 0.0f);
+                c.translate(nFreq * axisFreq.shift * axisFreq.zoom, 0.0f);
             } else {
-                c.translate((nFreq * (1f - axisFreq.shift - 1f / axisFreq.zoom) - 0.5f) * axisFreq.zoom, 0.0f);
+                c.translate(nFreq * (1f - axisFreq.shift - 1f / axisFreq.zoom) * axisFreq.zoom, 0.0f);
             }
             if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                 System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * nFreq, bmPt * nFreq);
