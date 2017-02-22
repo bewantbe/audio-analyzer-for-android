@@ -105,7 +105,7 @@ class RangeViewDialogC {
 
     private void buildDialog(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        rangeViewView = inflater.inflate(R.layout.dialog_freq_range_lock, null);
+        rangeViewView = inflater.inflate(R.layout.dialog_view_range, null);
         AlertDialog.Builder freqDialogBuilder = new AlertDialog.Builder(context);
         freqDialogBuilder
                 .setView(rangeViewView)

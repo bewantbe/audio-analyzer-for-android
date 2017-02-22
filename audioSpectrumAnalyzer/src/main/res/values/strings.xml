@@ -3,7 +3,7 @@
 
     <string name="app_name">Audio Spectrum Analyzer</string>
 
-    <!-- main UI -->
+    <!-- Main UI -->
     <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>
     <string name="textview_cur_text" >Cur :XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
@@ -31,29 +31,29 @@
 
     <!-- Pop-up menu -->
     <string name="user_manual">User Manual</string>
-    <string name="application_preferences">Application Preferences</string>
-    <string name="test_amp_show_hardware_s_ability"><![CDATA[Test & Show hardware\'s Ability]]></string>
+    <string name="application_preferences">Preferences</string>
+    <string name="menu_test_rec_sources">Test Recorder Sources</string>
     <string name="view_range_setting">View Range Setting</string>
 
-    <!--InfoRecActivity (Test & Show hardware's Ability)-->
+    <!-- InfoRecActivity (Test Recorder Sources) -->
     <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
     <string name="title_activity_info_rec">Info of Input Audio</string>
     <string name="rec_tester_std">Standard Sources</string>
     <string name="rec_tester_support">Supported Sources</string>
     <string name="rec_tester_all">All Sources</string>
-    <string name="activity_test_hint1">"(Only test MONO, 16BIT format)\n"</string>
-    <string name="activity_test_col1">"\nSampleRate MinBuf    (Time)\n"</string>
-    <string name="activity_test_col2">"%1$5d Hz  %2$4d Byte  (%3$4.1f ms)\n"</string>
-    <string name="activity_test_error1">"  ERROR\n"</string>
-    <string name="activity_test_hint2">"\n--- Audio Source Test ---\n"</string>
-    <string name="activity_test_col3">"\nSource: %1$s\n"</string>
-    <string name="activity_test_col3_row1">"%1$5d Hz  "</string>
-    <string name="activity_test_col3_succeed">"succeed"</string>
-    <string name="activity_test_col3_error1">"Illegal Argument"</string>
-    <string name="activity_test_col3_error2">"read 0 byte"</string>
-    <string name="activity_test_col3_error3">"fail to read sample"</string>
-    <string name="activity_test_col3_error4">"fail to initialize"</string>
-    <string name="activity_test_col3_hint1">"(source alter: %1$s)"></string>
-    <string name="activity_test_col3_end">".\n"</string>
+    <string name="rec_tester_hint1">"(Only test MONO, 16BIT format)\n"</string>
+    <string name="rec_tester_col1">"\nSampleRate MinBuf    (Time)\n"</string>
+    <string name="rec_tester_col2">"%1$5d Hz  %2$4d Byte  (%3$4.1f ms)\n"</string>
+    <string name="rec_tester_error1">"  ERROR\n"</string>
+    <string name="rec_tester_hint2">"\n--- Audio Source Test ---\n"</string>
+    <string name="rec_tester_col3">"\nSource: %1$s\n"</string>
+    <string name="rec_tester_col3_row1">"%1$5d Hz  "</string>
+    <string name="rec_tester_col3_succeed">"succeed"</string>
+    <string name="rec_tester_col3_error1">"Illegal Argument"</string>
+    <string name="rec_tester_col3_error2">"read 0 byte"</string>
+    <string name="rec_tester_col3_error3">"fail to read sample"</string>
+    <string name="rec_tester_col3_error4">"fail to initialize"</string>
+    <string name="rec_tester_col3_hint1">"(source alter: %1$s)"></string>
+    <string name="rec_tester_col3_end">".\n"</string>
 
 </resources>

@@ -22,7 +22,7 @@
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="@string/test_amp_show_hardware_s_ability"
+        android:title="@string/menu_test_rec_sources"
         android:titleCondensed="info rec"/>
 
     <item

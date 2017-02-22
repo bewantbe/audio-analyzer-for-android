@@ -556,10 +556,10 @@ public class AnalyzerGraphic extends View {
         state.nfq  = savedDBSpectrum.length;
         state.tmpS = savedDBSpectrum;
 
-        state.nsc   = spectrogramPlot.spectrogramColors.length;
+        state.nsc   = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray.length;
         state.nFP   = spectrogramPlot.nFreqPoints;
-        state.nSCP  = spectrogramPlot.spectrogramColorsPt;
-        state.tmpSC = spectrogramPlot.spectrogramColors;
+        state.nSCP  = spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer;
+        state.tmpSC = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
         Log.i(TAG, "onSaveInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
         return state;
     }
@@ -588,9 +588,9 @@ public class AnalyzerGraphic extends View {
             this.savedDBSpectrum = s.tmpS;
 
             this.spectrogramPlot.nFreqPoints = s.nFP;
-            this.spectrogramPlot.spectrogramColorsPt = s.nSCP;
-            this.spectrogramPlot.spectrogramColors = s.tmpSC;
-            this.spectrogramPlot.spectrogramColorsShifting = new int[this.spectrogramPlot.spectrogramColors.length];
+            this.spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = s.nSCP;
+            this.spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = s.tmpSC;
+//            this.spectrogramPlot.spectrogramColorsShifting = new int[this.spectrogramPlot.spectrogramColors.length];
 
             // Will constructor of this class been called?
             // spectrumPlot == null || spectrumPlot.axisX == null is always false
@@ -615,7 +615,7 @@ public class AnalyzerGraphic extends View {
         int nsc;  // size of tmpSC
         int nFP;
         int nSCP;
-        int[] tmpSC;
+        short[] tmpSC;
 
         State(Parcelable state) {
             super(state);
@@ -675,8 +675,8 @@ public class AnalyzerGraphic extends View {
             nsc = in.readInt();
             nFP = in.readInt();
             nSCP = in.readInt();
-            tmpSC = new int[nsc];
-//            in.readIntArray(tmpSC);
+            tmpSC = new short[nsc];
+            //in.readIntArray(tmpSC);
         }
     }
 

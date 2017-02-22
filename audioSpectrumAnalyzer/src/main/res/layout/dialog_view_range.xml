@@ -72,6 +72,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="numberDecimal|numberSigned"
-        android:hint="dB upper bound" />
+        android:hint="@string/et_db_setting_upper_bound" />
 
 </RelativeLayout>

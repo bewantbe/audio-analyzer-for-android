@@ -437,7 +437,7 @@ class AnalyzerViews {
                 timeToUpdate = t+frameTime;
             }
             idPaddingInvalidate = false;
-            // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
+            // Take care of synchronization of graphView.spectrogramColors and iTimePointer,
             // and then just do invalidate() here.
             if ((viewMask & VIEW_MASK_graphView) != 0)
                 graphView.invalidate();
