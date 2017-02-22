@@ -584,16 +584,13 @@ class SpectrogramPlot {
                     int nTime = logSegBmp.nTime;
                     logSegBmp = new LogSegFreqSpectrogramBMP();  // Release
                     logBmp.init(nFreq, nTime, axisF, bmpWidth);
-//                    logBmp.clear();
-//                    logBmp.bmPt = linBmp.iTimePointer;     // sync
                     logBmp.rebuild(spectrumStore, logBmp.axis);
                 } else {
                     int nFreq = logBmp.nFreq;
                     int nTime = logBmp.nTime;
                     logBmp = new LogFreqSpectrogramBMP();  // Release
                     logSegBmp.init(nFreq, nTime, axisF);
-                    logSegBmp.clear();
-                    logSegBmp.bmPt = linBmp.iTimePointer;  // sync
+                    logSegBmp.rebuild(spectrumStore, axisF);
                 }
                 logAxisMode = _mode;
             }
@@ -1092,6 +1089,28 @@ class SpectrogramPlot {
             }
             bmPt++;
             if (bmPt >= nTime) bmPt = 0;
+        }
+
+        double[] dbTmp = new double[0];
+
+        void rebuild(SpectrumCompressStore dbLevelPic, ScreenPhysicalMapping _axisF) {
+            nFreq = dbLevelPic.nFreq;
+            nTime = dbLevelPic.nTime;
+            init(nFreq, nTime, _axisF);  // reallocate and rebuild index
+
+            if (dbTmp.length != nFreq + 1) {
+                dbTmp = new double[nFreq + 1];
+            }
+            bmPt = 0;
+            for (int k = 0; k < nTime; k++) {
+                int p0 = (nFreq + 1) * k;
+                for (int i = 0; i <= nFreq; i++) {
+                    // See colorFromDBLevel
+                    dbTmp[i] = AnalyzerGraphic.maxDB - (AnalyzerGraphic.maxDB - AnalyzerGraphic.minDB) / 32768.0 * dbLevelPic.dbShortArray[p0 + i];
+                }
+                fill(dbTmp);
+            }
+            bmPt = dbLevelPic.iTimePointer;
         }
 
         String st1old;  // for debug
