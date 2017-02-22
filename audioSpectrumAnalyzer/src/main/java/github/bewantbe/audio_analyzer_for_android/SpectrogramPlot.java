@@ -551,6 +551,8 @@ class SpectrogramPlot {
         private LogFreqSpectrogramBMP logBmp = new LogFreqSpectrogramBMP();
         private LogSegFreqSpectrogramBMP logSegBmp = new LogSegFreqSpectrogramBMP();
 
+        int bmpWidth = 1000;
+
         private LogAxisPlotMode logAxisMode = LogAxisPlotMode.REPLOT;
 //        private LogAxisPlotMode logAxisMode = LogAxisPlotMode.SEGMENT;
 
@@ -565,7 +567,7 @@ class SpectrogramPlot {
             }
             if (logAxisMode == LogAxisPlotMode.REPLOT) {
                 synchronized (this) {
-                    logBmp.init(_nFreq, _nTime, _axis);
+                    logBmp.init(_nFreq, _nTime, _axis, bmpWidth);
                 }
             } else {
                 synchronized (this) {
@@ -581,9 +583,10 @@ class SpectrogramPlot {
                     int nFreq = logSegBmp.nFreq;
                     int nTime = logSegBmp.nTime;
                     logSegBmp = new LogSegFreqSpectrogramBMP();  // Release
-                    logBmp.init(nFreq, nTime, axisF);
-                    logBmp.clear();
-                    logBmp.bmPt = linBmp.iTimePointer;     // sync
+                    logBmp.init(nFreq, nTime, axisF, bmpWidth);
+//                    logBmp.clear();
+//                    logBmp.bmPt = linBmp.iTimePointer;     // sync
+                    logBmp.rebuild(spectrumStore, logBmp.axis);
                 } else {
                     int nFreq = logBmp.nFreq;
                     int nTime = logBmp.nTime;
@@ -596,13 +599,21 @@ class SpectrogramPlot {
             }
         }
 
+        void setBmpWidth(int w) {
+            bmpWidth = w;
+            if (logAxisMode == LogAxisPlotMode.REPLOT) {
+                logBmp.init(logBmp.nFreq, logBmp.nTime, logBmp.axis, bmpWidth);
+                logBmp.rebuild(spectrumStore, logBmp.axis);
+            }
+        }
+
         void updateAxis(ScreenPhysicalMapping _axisFreq) {
             if (_axisFreq.mapType == ScreenPhysicalMapping.Type.LINEAR) {
                 return;  // a linear axis, do not update
             }
             if (logAxisMode == LogAxisPlotMode.REPLOT) {
                 synchronized (this) {
-                    logBmp.init(nFreqPoints, nTimePoints, _axisFreq);
+                    logBmp.init(nFreqPoints, nTimePoints, _axisFreq, bmpWidth);
                 }
             } else {
                 synchronized (this) {
@@ -672,7 +683,7 @@ class SpectrogramPlot {
                         }
                         logBmp.draw(c);
                         pt = logBmp.bmPt;
-                        lineLen = logBmp.nFreq;
+                        lineLen = logBmp.bmpWidth;
                     } else {
                         // Draw in log, method: segmentation log freq BMP
                         c.scale((float) nFreqPoints / logSegBmp.bmpWidth, 1.0f);
@@ -739,7 +750,6 @@ class SpectrogramPlot {
         private final static String TAG = "PlainLinearSpamBMP:";
         private int nFreq;
         private int nTime;
-        //private int iTimePointer;
 
         int[] spectrogramColors = new int[0];  // int:ARGB, nFreqPoints columns, nTimePoints rows
         int[] spectrogramColorsShifting;       // temporarily of spectrogramColors for shifting mode
@@ -805,6 +815,7 @@ class SpectrogramPlot {
         int[] bm = new int[0];   // elememts are in "time major" order.
         int[] bmShiftCache = new int[0];
         int bmPt = 0;
+        int bmpWidth = 1000;     // width in Frequency direction
         int[] mapFreqToPixL = new int[0];  // map that a frequency point should map to bm[]
         int[] mapFreqToPixH = new int[0];
         ScreenPhysicalMapping axis = null;
@@ -812,10 +823,11 @@ class SpectrogramPlot {
         LogFreqSpectrogramBMP() { }
 
         // like setupSpectrogram()
-        void init(int _nFreq, int _nTime, ScreenPhysicalMapping _axis) {
+        void init(int _nFreq, int _nTime, ScreenPhysicalMapping _axis, int _bmpWidth) {
+            bmpWidth = _bmpWidth;
             // _nFreq == 2^n
-            if (bm.length != _nFreq * _nTime) {
-                bm = new int[_nFreq * _nTime];
+            if (bm.length != bmpWidth * _nTime) {
+                bm = new int[bmpWidth * _nTime];
                 bmShiftCache = new int[bm.length];
             }
             if (mapFreqToPixL.length != _nFreq + 1) {
@@ -832,22 +844,22 @@ class SpectrogramPlot {
                 Log.e(TAG, "init(): damn: axis == null");
                 return;
             }
-            if (_axis.vLowerBound > _axis.vUpperBound) {  // ensure axis.vLowerBound < axis.vUpperBound
+            if (axis != _axis) {  // not itself
                 axis = new ScreenPhysicalMapping(_axis);
+            }
+            if (_axis.vLowerBound > _axis.vUpperBound) {  // ensure axis.vLowerBound < axis.vUpperBound
                 axis.reverseBounds();
-            } else {
-                axis = _axis;
             }
             float dFreq = axis.vUpperBound / nFreq;
             Log.i(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vU=" + axis.vUpperBound + "  axis.nC=" + axis.nCanvasPixel);
             for (int i = 0; i <= nFreq; i++) {  // freq = i * dFreq
                 // do not show DC component (xxx - 1).
-                mapFreqToPixL[i] = (int) Math.floor(axis.pixelFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
-                mapFreqToPixH[i] = (int) Math.floor(axis.pixelFromV((i + 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
-                if (mapFreqToPixH[i] >= nFreq) mapFreqToPixH[i] = nFreq - 1;
-                if (mapFreqToPixH[i] < 0) mapFreqToPixH[i] = 0;
-                if (mapFreqToPixL[i] >= nFreq) mapFreqToPixL[i] = nFreq - 1;
-                if (mapFreqToPixL[i] < 0) mapFreqToPixL[i] = 0;
+                mapFreqToPixL[i] = (int) Math.floor(axis.pixelFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * bmpWidth);
+                mapFreqToPixH[i] = (int) Math.floor(axis.pixelFromV((i + 0.5f) * dFreq) / axis.nCanvasPixel * bmpWidth);
+                if (mapFreqToPixH[i] >= bmpWidth) mapFreqToPixH[i] = bmpWidth - 1;
+                if (mapFreqToPixH[i] <         0) mapFreqToPixH[i] = 0;
+                if (mapFreqToPixL[i] >= bmpWidth) mapFreqToPixL[i] = bmpWidth - 1;
+                if (mapFreqToPixL[i] <         0) mapFreqToPixL[i] = 0;
 //                Log.i(TAG, "init(): [" + i + "]  L = " + axis.pixelNoZoomFromV((i-0.5f)*dFreq) + "  H = " + axis.pixelNoZoomFromV((i+0.5f)*dFreq));
             }
         }
@@ -857,12 +869,16 @@ class SpectrogramPlot {
             bmPt = 0;
         }
 
+//        void setBmpWidth(int w) {
+//            init(nFreq, nTime, axis, w);
+//        }
+//
         void fill(double[] db) {
             if (db.length - 1 != nFreq) {
                 Log.e(TAG, "fill(): WTF");
                 return;
             }
-            int bmP0 = bmPt * nFreq;
+            int bmP0 = bmPt * bmpWidth;
             double maxDB;
             int i = 1;  // skip DC component(i = 0).
             while (i <= nFreq) {
@@ -888,7 +904,7 @@ class SpectrogramPlot {
                 Log.e(TAG, "fill(): WTF");
                 return;
             }
-            int bmP0 = bmPt * nFreq;
+            int bmP0 = bmPt * bmpWidth;
             short maxDBLevel;
             int i = 1;  // skip DC component(i = 0).
             while (i <= nFreq) {
@@ -915,7 +931,7 @@ class SpectrogramPlot {
         void rebuild(SpectrumCompressStore dbLevelPic, ScreenPhysicalMapping _axisF) {
             nFreq = dbLevelPic.nFreq;
             nTime = dbLevelPic.nTime;
-            init(nFreq, nTime, _axisF);  // reallocate and rebuild index
+            init(nFreq, nTime, _axisF, bmpWidth);  // reallocate and rebuild index
 
             if (dbLTmp.length != nFreq + 1) {
                 dbLTmp = new short[nFreq + 1];
@@ -928,6 +944,7 @@ class SpectrogramPlot {
             bmPt = dbLevelPic.iTimePointer;
         }
 
+        // draw to a regime size nFreq * nTime
         void draw(Canvas c) {
             if (bm.length == 0) return;
             // Revert the effect of axisFreq.zoom axisFreq.shift
@@ -937,14 +954,15 @@ class SpectrogramPlot {
             } else {
                 c.translate(nFreq * (1f - axisFreq.shift - 1f / axisFreq.zoom) * axisFreq.zoom, 0.0f);
             }
+            c.scale((float)nFreq / bmpWidth, 1f);
             if (showModeSpectrogram == TimeAxisMode.SHIFT) {
-                System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * nFreq, bmPt * nFreq);
-                System.arraycopy(bm, bmPt * nFreq, bmShiftCache, 0, (nTime - bmPt) * nFreq);
-                c.drawBitmap(bmShiftCache, 0, nFreq, 0.0f, 0.0f,
-                        nFreq, nTime, false, smoothBmpPaint);
+                System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * bmpWidth, bmPt * bmpWidth);
+                System.arraycopy(bm, bmPt * bmpWidth, bmShiftCache, 0, (nTime - bmPt) * bmpWidth);
+                c.drawBitmap(bmShiftCache, 0, bmpWidth, 0.0f, 0.0f,
+                        bmpWidth, nTime, false, smoothBmpPaint);
             } else {
-                c.drawBitmap(bm, 0, nFreq, 0.0f, 0.0f,
-                        nFreq, nTime, false, smoothBmpPaint);
+                c.drawBitmap(bm, 0, bmpWidth, 0.0f, 0.0f,
+                        bmpWidth, nTime, false, smoothBmpPaint);
             }
         }
     }

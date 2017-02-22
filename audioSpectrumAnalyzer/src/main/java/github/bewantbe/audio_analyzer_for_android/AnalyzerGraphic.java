@@ -300,6 +300,10 @@ public class AnalyzerGraphic extends View {
         spectrogramPlot.spectrogramBMP.setLogAxisMode(mode);
     }
 
+    void setSpectrogramBMPWidth(int w) {
+        spectrogramPlot.spectrogramBMP.setBmpWidth(w);
+    }
+
     static boolean isBusy() {
         return isBusy;
     }
