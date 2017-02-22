@@ -160,12 +160,18 @@ class SamplingLoop extends Thread {
         // Use the mic with AGC turned off. e.g. VOICE_RECOGNITION for measurement
         // The buffer size here seems not relate to the delay.
         // So choose a larger size (~1sec) so that overrun is unlikely.
-        if (analyzerParam.audioSourceId < 1000) {
-            record = new AudioRecord(analyzerParam.audioSourceId, analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT, analyzerParam.BYTE_OF_SAMPLE * bufferSampleSize);
-        } else {
-            record = new AudioRecord(analyzerParam.RECORDER_AGC_OFF, analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT, analyzerParam.BYTE_OF_SAMPLE * bufferSampleSize);
+        try {
+            if (analyzerParam.audioSourceId < 1000) {
+                record = new AudioRecord(analyzerParam.audioSourceId, analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT, analyzerParam.BYTE_OF_SAMPLE * bufferSampleSize);
+            } else {
+                record = new AudioRecord(analyzerParam.RECORDER_AGC_OFF, analyzerParam.sampleRate, AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT, analyzerParam.BYTE_OF_SAMPLE * bufferSampleSize);
+            }
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Fail to initialize recorder.");
+            activity.analyzerViews.notifyToast("Illegal recorder argument. (change source)");
+            return;
         }
         Log.i(TAG, "SamplingLoop::Run(): Starting recorder... \n" +
                 "  source          : " + analyzerParam.getAudioSourceName() + "\n" +
@@ -179,6 +185,7 @@ class SamplingLoop extends Thread {
 
         if (record.getState() == AudioRecord.STATE_UNINITIALIZED) {
             Log.e(TAG, "SamplingLoop::run(): Fail to initialize AudioRecord()");
+            activity.analyzerViews.notifyToast("Fail to initialize recorder.");
             // If failed somehow, leave user a chance to change preference.
             return;
         }
@@ -207,7 +214,13 @@ class SamplingLoop extends Thread {
         }
 
         // Start recording
-        record.startRecording();
+        try {
+            record.startRecording();
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Fail to start recording.");
+            activity.analyzerViews.notifyToast("Fail to start recording.");
+            return;
+        }
 
         // Main loop
         // When running in this loop (including when paused), you can not change properties

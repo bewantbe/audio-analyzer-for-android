@@ -158,12 +158,16 @@ class AnalyzerViews {
     }
 
     void notifyWAVSaved(final String path) {
+        String text = "WAV saved to " + path;
+        notifyToast(text);
+    }
+
+    void notifyToast(final String st) {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Context context = activity.getApplicationContext();
-                String text = "WAV saved to " + path;
-                Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(context, st, Toast.LENGTH_SHORT);
                 toast.show();
             }
         });
