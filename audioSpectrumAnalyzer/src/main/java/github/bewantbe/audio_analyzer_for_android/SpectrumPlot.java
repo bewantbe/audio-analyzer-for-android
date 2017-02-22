@@ -46,7 +46,7 @@ class SpectrumPlot {
     private GridLabel fqGridLabel;
     private GridLabel dbGridLabel;
     private float DPRatio;
-    float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
+    private float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
 
     float cursorFreq, cursorDB;  // cursor location
     ScreenPhysicalMapping axisX;  // For frequency axis
@@ -115,7 +115,7 @@ class SpectrumPlot {
         Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType + " axisX.vL=" + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
     }
 
-    boolean isAlmostInteger(float x) {
+    private boolean isAlmostInteger(float x) {
         // return x % 1 == 0;
         float i = round(x);
         if (i == 0) {

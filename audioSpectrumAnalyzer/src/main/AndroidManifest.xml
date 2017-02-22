@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="github.bewantbe.audio_analyzer_for_android"
-    android:versionCode="20170218"
-    android:versionName="1.4"
+    android:versionCode="20170222"
+    android:versionName="1.5"
     android:installLocation="auto" >
 
     <!--<uses-sdk-->
@@ -24,9 +24,9 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-
+            </intent-filter>
+            <intent-filter>
                 <!-- Deeplink support -->
                 <!-- https://developer.android.com/training/app-indexing/deep-linking.html -->
                 <!-- Can start app by -->
@@ -35,7 +35,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="bewantbe" android:host="asa" />
-
             </intent-filter>
         </activity>
         <activity

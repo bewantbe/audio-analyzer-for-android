@@ -235,8 +235,12 @@ public class AnalyzerGraphic extends View {
             spectrumPlot.axisX.setZoomShiftFromV((float) ranges[0], (float) ranges[1]);
             spectrumPlot.axisY.setZoomShiftFromV((float) ranges[3], (float) ranges[2]);  // reversed
         } else if (showMode == PlotMode.SPECTROGRAM) {
-            spectrogramPlot.axisFreq.setZoomShiftFromV((float) ranges[0], (float) ranges[1]);
             spectrogramPlot.axisTime.setZoomShiftFromV((float) ranges[4], (float) ranges[5]);
+            if (spectrogramPlot.showFreqAlongX) {
+                spectrogramPlot.axisFreq.setZoomShiftFromV((float) ranges[0], (float) ranges[1]);
+            } else {
+                spectrogramPlot.axisFreq.setZoomShiftFromV((float) ranges[1], (float) ranges[0]);
+            }
         }
 
         // Set zoom shift for view
