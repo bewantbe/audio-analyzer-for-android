@@ -86,4 +86,13 @@
             android:title="Ovrrun Warning" />
     </PreferenceCategory>
 
+    <PreferenceCategory
+        android:key="developerSetting"
+        android:title="Developer Settings" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="spectrogramLogPlotMethod"
+            android:summary="Replot spectrogram only when change zooming. (save battery)"
+            android:title="Log plot: replot when zoom" />
+    </PreferenceCategory>
 </PreferenceScreen>

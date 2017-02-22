@@ -292,6 +292,14 @@ public class AnalyzerGraphic extends View {
         spectrogramPlot.setSpectrogramModeShifting(b);
     }
 
+    void setLogAxisMode(boolean b) {
+        SpectrogramPlot.LogAxisPlotMode mode = SpectrogramPlot.LogAxisPlotMode.REPLOT;
+        if (!b) {
+            mode = SpectrogramPlot.LogAxisPlotMode.SEGMENT;
+        }
+        spectrogramPlot.spectrogramBMP.setLogAxisMode(mode);
+    }
+
     static boolean isBusy() {
         return isBusy;
     }
@@ -676,7 +684,7 @@ public class AnalyzerGraphic extends View {
             nFP = in.readInt();
             nSCP = in.readInt();
             tmpSC = new short[nsc];
-            //in.readIntArray(tmpSC);
+            //in.readIntArray(tmpSC);  // java has no readShortArray()......damn
         }
     }
 

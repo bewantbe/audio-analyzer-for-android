@@ -158,6 +158,10 @@ public class AnalyzerActivity extends Activity
 
     analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
 
+    analyzerViews.graphView.setLogAxisMode(
+      sharedPref.getBoolean("spectrogramLogPlotMethod", true)
+    );
+
     // Travel the views with android:tag="select" to apply setting values.
     visit((ViewGroup) analyzerViews.graphView.getRootView(), new Visit() {
       @Override
