@@ -579,17 +579,24 @@ class SpectrogramPlot {
                     int nTime = logSegBmp.nTime;
                     logSegBmp = new LogSegFreqSpectrogramBMP();  // Release
                     logBmp.init(nFreq, nTime, axisF);
+                    logBmp.clear();
+                    logBmp.bmPt = linBmp.iTimePointer;     // sync
                 } else {
                     int nFreq = logBmp.nFreq;
                     int nTime = logBmp.nTime;
                     logBmp = new LogFreqSpectrogramBMP();  // Release
                     logSegBmp.init(nFreq, nTime, axisF);
+                    logSegBmp.clear();
+                    logSegBmp.bmPt = linBmp.iTimePointer;  // sync
                 }
                 logAxisMode = _mode;
             }
         }
 
         void updateAxis(ScreenPhysicalMapping _axisFreq) {
+            if (_axisFreq.mapType == ScreenPhysicalMapping.Type.LINEAR) {
+                return;  // a linear axis, do not update
+            }
             if (logAxisMode == LogAxisPlotMode.REPLOT) {
                 synchronized (this) {
                     logBmp.init(nFreqPoints, nTimePoints, _axisFreq);
@@ -657,7 +664,7 @@ class SpectrogramPlot {
                     if (logAxisMode == LogAxisPlotMode.REPLOT) {
                         // Draw in log, method: draw by axis
                         if (bNeedReplot) {
-                            logBmp.rebuild(spectrumStore);
+                            logBmp.rebuild(spectrumStore, axisF);
                             bNeedReplot = false;
                         }
                         logBmp.draw(c);
@@ -686,6 +693,7 @@ class SpectrogramPlot {
         }
     }
 
+    // Save spectrum in a lower resolution short[] (0~32767) instead of double[]
     class SpectrumCompressStore {
         private final static String TAG = "SpectrumCompressStore:";
         int nFreq;
@@ -699,11 +707,15 @@ class SpectrogramPlot {
                 dbShortArray = new short[(_nFreq + 1) * _nTime];
             }
             if (nFreq != _nFreq || nTime != _nTime) {
-                Arrays.fill(dbShortArray, (short)32767);
-                iTimePointer = 0;
+                clear();
             }
             nFreq = _nFreq;
             nTime = _nTime;
+        }
+
+        void clear() {
+            Arrays.fill(dbShortArray, (short)32767);
+            iTimePointer = 0;
         }
 
         void fill(double[] db) {
@@ -743,11 +755,15 @@ class SpectrogramPlot {
                 bNeedClean = true;
             }
             if (bNeedClean) {
-                iTimePointer = 0;
-                Arrays.fill(spectrogramColors, 0);
+                clear();
             }
             nFreq = _nFreq;
             nTime = _nTime;
+        }
+
+        void clear() {
+            Arrays.fill(spectrogramColors, 0);
+            iTimePointer = 0;
         }
 
         void fill(double[] db) {
@@ -778,6 +794,7 @@ class SpectrogramPlot {
         }
     }
 
+    // Actually capable to show both Linear and Log spectrogram
     private class LogFreqSpectrogramBMP {
         final static String TAG = "LogFreqSpectrogramBMP:";
         int nFreq = 0;
@@ -804,33 +821,37 @@ class SpectrogramPlot {
                 mapFreqToPixH = new int[_nFreq + 1];
             }
             if (nFreq != _nFreq || nTime != _nTime) {
-                Arrays.fill(bm, 0);
-                bmPt = 0;
+                clear();
             }  // else only update axis
             nFreq = _nFreq;
             nTime = _nTime;
-            axis = _axis;
-            if (axis == null) {
+            if (_axis == null) {
                 Log.e(TAG, "init(): damn: axis == null");
+                return;
             }
-            float dFreq = Math.max(axis.vLowerBound, axis.vUpperBound) / nFreq;
+            if (_axis.vLowerBound > _axis.vUpperBound) {  // ensure axis.vLowerBound < axis.vUpperBound
+                axis = new ScreenPhysicalMapping(_axis);
+                axis.reverseBounds();
+            } else {
+                axis = _axis;
+            }
+            float dFreq = axis.vUpperBound / nFreq;
             Log.i(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vU=" + axis.vUpperBound + "  axis.nC=" + axis.nCanvasPixel);
             for (int i = 0; i <= nFreq; i++) {  // freq = i * dFreq
                 // do not show DC component (xxx - 1).
-                mapFreqToPixL[i] = (int) Math.floor(axis.pixelNoZoomFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
-                mapFreqToPixH[i] = (int) Math.floor(axis.pixelNoZoomFromV((i + 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
+                mapFreqToPixL[i] = (int) Math.floor(axis.pixelFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
+                mapFreqToPixH[i] = (int) Math.floor(axis.pixelFromV((i + 0.5f) * dFreq) / axis.nCanvasPixel * nFreq);
                 if (mapFreqToPixH[i] >= nFreq) mapFreqToPixH[i] = nFreq - 1;
                 if (mapFreqToPixH[i] < 0) mapFreqToPixH[i] = 0;
                 if (mapFreqToPixL[i] >= nFreq) mapFreqToPixL[i] = nFreq - 1;
                 if (mapFreqToPixL[i] < 0) mapFreqToPixL[i] = 0;
 //                Log.i(TAG, "init(): [" + i + "]  L = " + axis.pixelNoZoomFromV((i-0.5f)*dFreq) + "  H = " + axis.pixelNoZoomFromV((i+0.5f)*dFreq));
             }
-            if (axis.vLowerBound > axis.vUpperBound) {
-                // swap mapFreqToPixL and mapFreqToPixH
-                int[] tmpV = mapFreqToPixL;
-                mapFreqToPixL = mapFreqToPixH;
-                mapFreqToPixH = tmpV;
-            }
+        }
+
+        void clear() {
+            Arrays.fill(bm, 0);
+            bmPt = 0;
         }
 
         void fill(double[] db) {
@@ -887,19 +908,16 @@ class SpectrogramPlot {
 
         short[] dbLTmp = new short[0];
 
-        void rebuild(SpectrumCompressStore dbLevelPic) {
-            // From dbShortArray
-            if (dbLevelPic.nFreq * dbLevelPic.nTime != bm.length) {
-                Log.e(TAG, "Length mismatch.");
-                return;
-            }
+        // re-calculate whole spectrogram, according to dbLevelPic under axis _axis
+        void rebuild(SpectrumCompressStore dbLevelPic, ScreenPhysicalMapping _axisF) {
             nFreq = dbLevelPic.nFreq;
             nTime = dbLevelPic.nTime;
-            bmPt = 0;
+            init(nFreq, nTime, _axisF);  // reallocate and rebuild index
 
             if (dbLTmp.length != nFreq + 1) {
                 dbLTmp = new short[nFreq + 1];
             }
+            bmPt = 0;
             for (int k = 0; k < nTime; k++) {
                 System.arraycopy(dbLevelPic.dbShortArray, (nFreq+1) * k, dbLTmp, 0, (nFreq+1));
                 fill(dbLTmp);
@@ -909,6 +927,14 @@ class SpectrogramPlot {
 
         void draw(Canvas c) {
             if (bm.length == 0) return;
+            // revert the effect of axisFreq.zoom axisFreq.shift
+            // - 0.5f is for revert the half pixel correction.
+            c.scale(1f/axisFreq.zoom, 1f);
+            if (showFreqAlongX) {
+                c.translate((nFreq * axisFreq.shift - 0.5f) * axisFreq.zoom, 0.0f);
+            } else {
+                c.translate((nFreq * (1f - axisFreq.shift - 1f / axisFreq.zoom) - 0.5f) * axisFreq.zoom, 0.0f);
+            }
             if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                 System.arraycopy(bm, 0, bmShiftCache, (nTime - bmPt) * nFreq, bmPt * nFreq);
                 System.arraycopy(bm, bmPt * nFreq, bmShiftCache, 0, (nTime - bmPt) * nFreq);
@@ -949,8 +975,7 @@ class SpectrogramPlot {
                 bmShiftCache = new int[bm.length];
             }
             if (nFreq != _nFreq || nTime != _nTime) {
-                Arrays.fill(bm, 0);
-                bmPt = 0;
+                clear();
             }  // else only update axis and mapping
             nFreq = _nFreq;
             nTime = _nTime;
@@ -1001,6 +1026,11 @@ class SpectrogramPlot {
             if (iF < nFreq) {  // last point
                 iFreqToPix[nFreq] = pixelAbscissa[nSegment];
             }
+        }
+
+        void clear() {
+            Arrays.fill(bm, 0);
+            bmPt = 0;
         }
 
         double[] dbPixelMix = new double[0];

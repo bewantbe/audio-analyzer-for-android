@@ -48,6 +48,15 @@ class ScreenPhysicalMapping {
         mapType      = _mapType;
     }
 
+    ScreenPhysicalMapping(ScreenPhysicalMapping _axis) {
+        mapType      = _axis.mapType;
+        nCanvasPixel = _axis.nCanvasPixel;
+        vLowerBound  = _axis.vLowerBound;
+        vUpperBound  = _axis.vUpperBound;
+        zoom         = _axis.zoom;
+        shift        = _axis.shift;
+    }
+
     void setNCanvasPixel(float _nCanvasPixel) {
         nCanvasPixel = _nCanvasPixel;
     }
