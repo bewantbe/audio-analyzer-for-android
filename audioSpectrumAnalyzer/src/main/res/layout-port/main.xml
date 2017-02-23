@@ -70,7 +70,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/mon"
+            android:text="Mon"
             android:textSize="20sp"
             custom:items="Mon Rec" />
 
@@ -115,7 +115,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/spum"
+            android:text="spum"
             android:textSize="20sp"
             custom:items="spum spam" />
 
@@ -127,7 +127,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/db"
+            android:text="dB"
             android:textSize="20sp"
             custom:items="dB dBA" />
 
@@ -150,7 +150,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/linear"
+            android:text="linear"
             android:textSize="20sp"
             custom:items="linear log" />
 
@@ -162,7 +162,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/run"
+            android:text="run"
             android:textSize="20sp"
             custom:items="run stop" />
     </LinearLayout>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--List of all standard audio source-->
+    <!--In the order of ID-->
+    <!--https://developer.android.com/reference/android/media/MediaRecorder.AudioSource.html-->
+
+    <!--                    val	API-->
+    <!--DEFAULT				0	1-->
+    <!--MIC					1	1-->
+    <!--VOICE_UPLINK		2	4	CAPTURE_AUDIO_OUTPUT-->
+    <!--VOICE_DOWNLINK		3	4	CAPTURE_AUDIO_OUTPUT-->
+    <!--VOICE_CALL			4	4-->
+    <!--CAMCORDER			5	7-->
+    <!--VOICE_RECOGNITION	6	7-->
+    <!--VOICE_COMMUNICATION	7	11-->
+    <!--REMOTE_SUBMIX		8	19	CAPTURE_AUDIO_OUTPUT-->
+    <!--UNPROCESSED			9	24-->
+
+    <integer-array name="std_audio_source_id">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+    </integer-array>
+
+    <string-array name="std_audio_source_name">
+        <item>DEFAULT</item>
+        <item>MIC</item>
+        <item>VOICE_UPLINK</item>
+        <item>VOICE_DOWNLINK</item>
+        <item>VOICE_CALL</item>
+        <item>CAMCORDER</item>
+        <item>VOICE_RECOGNITION</item>
+        <item>VOICE_COMMUNICATION</item>
+        <item>REMOTE_SUBMIX</item>
+        <item>UNPROCESSED</item>
+    </string-array>
+
+    <!--API level that this source is available-->
+    <integer-array name="std_audio_source_api_level">
+        <item>1</item>
+        <item>1</item>
+        <item>4</item>
+        <item>4</item>
+        <item>4</item>
+        <item>7</item>
+        <item>7</item>
+        <item>11</item>
+        <item>19</item>
+        <item>24</item>
+    </integer-array>
+
+    <!--Some sources not available for third-party applications.-->
+    <string-array name="std_audio_source_permission">
+        <item>""</item>
+        <item>""</item>
+        <item>"CAPTURE_AUDIO_OUTPUT"</item>
+        <item>"CAPTURE_AUDIO_OUTPUT"</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>""</item>
+        <item>"CAPTURE_AUDIO_OUTPUT"</item>
+        <item>""</item>
+    </string-array>
+
+    <string-array name="std_sampling_rates">
+        <item>8000</item>
+        <item>11025</item>
+        <item>16000</item>
+        <item>22050</item>
+        <item>32000</item>
+        <item>44100</item>
+        <item>48000</item>
+        <item>96000</item>
+    </string-array>
+</resources>

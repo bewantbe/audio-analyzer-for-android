@@ -19,7 +19,6 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
@@ -30,7 +29,13 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
+// Test all (including unknown) recorder sources by open it and read data.
+
 public class InfoRecActivity extends Activity {
+	AnalyzerUtil analyzerUtil;
+	CharSequence testResultSt = null;
+
+	volatile boolean bShouldStop = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,12 @@ public class InfoRecActivity extends Activity {
 		setContentView(R.layout.activity_info_rec);
 		// Show the Up button in the action bar.
 		setupActionBar();
+
+		analyzerUtil = new AnalyzerUtil(this);
+		testResultSt = null;
+
+		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
+		tv.setMovementMethod(new ScrollingMovementMethod());
 	}
 
 	/**
@@ -46,7 +57,8 @@ public class InfoRecActivity extends Activity {
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 	private void setupActionBar() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			getActionBar().setDisplayHomeAsUpEnabled(true);
+			if (getActionBar() != null)
+				getActionBar().setDisplayHomeAsUpEnabled(true);
 		}
 	}
 
@@ -59,88 +71,136 @@ public class InfoRecActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
 		switch (item.getItemId()) {
-		case android.R.id.home:
-			// This ID represents the Home or Up button. In the case of this
-			// activity, the Up button is shown. Use NavUtils to allow users
-			// to navigate up one level in the application structure. For
-			// more details, see the Navigation pattern on Android Design:
-			//
-			// http://developer.android.com/design/patterns/navigation.html#up-vs-back
-			//
-			NavUtils.navigateUpFromSameTask(this);
-			return true;
+			case android.R.id.home:
+				// This ID represents the Home or Up button. In the case of this
+				// activity, the Up button is shown. Use NavUtils to allow users
+				// to navigate up one level in the application structure. For
+				// more details, see the Navigation pattern on Android Design:
+				//
+				// http://developer.android.com/design/patterns/navigation.html#up-vs-back
+				//
+				NavUtils.navigateUpFromSameTask(this);
+				return true;
+			case R.id.rec_tester_std:
+				bShouldStop = true;
+				runTest(tv, 1);
+				break;
+			case R.id.rec_tester_support:
+				bShouldStop = true;
+				runTest(tv, 7);
+				break;
+			case R.id.rec_tester_all:
+				bShouldStop = true;
+				runTest(tv, 0);
+				break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
-
 	@Override
 	protected void onResume() {
 		super.onResume();
-		TextView tv = (TextView) findViewById(R.id.textview_info_rec);
-		tv.setMovementMethod(new ScrollingMovementMethod());
+		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
 
-		tv.setText(R.string.Testing);  // TODO: No use...
-		tv.invalidate();
+		if (testResultSt != null) {
+			tv.setText(testResultSt);
+			return;
+		}
 
-		// Show supported sample rate and corresponding minimum buffer size.
-		String[] requested = new String[] { "8000", "11025", "16000", "22050",
-				"32000", "44100", "48000", "96000"};
-		String st = "sampleRate minBufSize\n";
-		ArrayList<String> validated = new ArrayList<>();
-		for (String s : requested) {
-			int rate = Integer.parseInt(s);
+		runTest(tv, 7);
+	}
+
+	Thread testerThread;
+
+	void runTest(final TextView tv, final int testLevel) {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (testerThread != null) {
+					try {
+						testerThread.join();
+					} catch (InterruptedException e) {
+						// ???
+					}
+				}
+				testResultSt = null;
+				setTextData(tv, getString(R.string.rec_tester_hint1));
+				bShouldStop = false;
+				testerThread = new Thread(new Runnable() {
+					@Override
+					public void run() {
+						TestAudioRecorder(tv, testLevel);
+					}
+				});
+				testerThread.start();
+			}
+		}).start();
+	}
+
+	private void setTextData(final TextView tv, final String st) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				tv.setText(st);
+			}
+		});
+	}
+
+	private void appendTextData(final TextView tv, final String st) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				tv.append(st);
+			}
+		});
+	}
+
+	// Show supported sample rate and corresponding minimum buffer size.
+	private void TestAudioRecorder(final TextView tv, int testLevel) {
+		// All possible sample rate
+		String[] sampleRates = getResources().getStringArray(R.array.std_sampling_rates);
+		String st = getString(R.string.rec_tester_col1);
+
+		ArrayList<String> resultMinBuffer = new ArrayList<>();
+		for (String sr : sampleRates) {
+			int rate = Integer.parseInt(sr.trim());
 			int minBufSize = AudioRecord
 					.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
 							AudioFormat.ENCODING_PCM_16BIT);
 			if (minBufSize != AudioRecord.ERROR_BAD_VALUE) {
-				validated.add(s);
-				st += s + "  \t" + Integer.toString(minBufSize) + "\n";
+				resultMinBuffer.add(sr);
+				// /2.0 due to ENCODING_PCM_16BIT, CHANNEL_IN_MONO
+				st += getString(R.string.rec_tester_col2, rate, minBufSize, 1000.0*minBufSize/2.0/rate);
+			} else {
+				st += sr + getString(R.string.rec_tester_error1);
 			}
 		}
-		requested = validated.toArray(new String[0]);
+		sampleRates = resultMinBuffer.toArray(new String[0]);
 
-		tv.setText(st);
-		tv.invalidate();
+		appendTextData(tv, st);
 
-		// Test audio source
-		String[] audioSourceString = new String[] { "DEFAULT", "MIC", "VOICE_UPLINK", "VOICE_DOWNLINK",
-				"VOICE_CALL", "CAMCORDER", "VOICE_RECOGNITION" };
-		int[] audioSourceId = new int[] {
-				MediaRecorder.AudioSource.DEFAULT,           // Default audio source
-				MediaRecorder.AudioSource.MIC,               // Microphone audio source
-				MediaRecorder.AudioSource.VOICE_UPLINK,      // Voice call uplink (Tx) audio source
-				MediaRecorder.AudioSource.VOICE_DOWNLINK,    // Voice call downlink (Rx) audio source
-				MediaRecorder.AudioSource.VOICE_CALL,        // Voice call uplink + downlink audio source
-				MediaRecorder.AudioSource.CAMCORDER,         // Microphone audio source with same orientation as camera if available, the main device microphone otherwise (apilv7)
-				MediaRecorder.AudioSource.VOICE_RECOGNITION, // Microphone audio source tuned for voice recognition if available, behaves like DEFAULT otherwise. (apilv7)
-//				MediaRecorder.AudioSource.VOICE_COMMUNICATION, // Microphone audio source tuned for voice communications such as VoIP. It will for instance take advantage of echo cancellation or automatic gain control if available. It otherwise behaves like DEFAULT if no voice processing is applied. (apilv11)
-//				MediaRecorder.AudioSource.REMOTE_SUBMIX,       // Audio source for a submix of audio streams to be presented remotely. (apilv19)
-		};
-		if (Build.VERSION.SDK_INT >= 19) {
-			// https://developer.android.com/reference/android/Manifest.permission.html#CAPTURE_AUDIO_OUTPUT
-			// VOICE_UPLINK and VOICE_DOWNLINK not available for third-party applications.
-			audioSourceString = new String[] { "DEFAULT", "MIC",
-					"VOICE_CALL", "CAMCORDER", "VOICE_RECOGNITION", "VOICE_COMMUNICATION", "REMOTE_SUBMIX"};
-			audioSourceId = new int[] {
-					MediaRecorder.AudioSource.DEFAULT,
-					MediaRecorder.AudioSource.MIC,
-					MediaRecorder.AudioSource.VOICE_CALL,
-					MediaRecorder.AudioSource.CAMCORDER,
-					MediaRecorder.AudioSource.VOICE_RECOGNITION,
-					MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-					MediaRecorder.AudioSource.REMOTE_SUBMIX,
-			};
+		// Get audio source list
+		int[] audioSourceId = analyzerUtil.GetAllAudioSource(testLevel);
+		ArrayList<String> audioSourceStringList = new ArrayList<>();
+		for (int id : audioSourceId) {
+			audioSourceStringList.add(analyzerUtil.getAudioSourceName(id));
 		}
-		tv.append("\n-- Audio Source Test --");
-		for (String s : requested) {
-			int sampleRate = Integer.parseInt(s);
-			int recBufferSize = AudioRecord.getMinBufferSize(sampleRate,
-	            AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-			tv.append("\n("+Integer.toString(sampleRate)+"Hz, MONO, 16BIT)\n");
-			for (int iass = 0; iass<audioSourceId.length; iass++) {
-				st = "";
+		String[] audioSourceString = audioSourceStringList.toArray(new String[0]);
+
+		appendTextData(tv, getString(R.string.rec_tester_hint2));
+		for (int ias = 0; ias < audioSourceId.length; ias++) {
+			if (bShouldStop) return;
+			st = getString(R.string.rec_tester_col3, audioSourceString[ias]);
+			appendTextData(tv, st);
+			for (String sr : sampleRates) {
+				if (bShouldStop) return;
+				int sampleRate = Integer.parseInt(sr.trim());
+				int recBufferSize = AudioRecord.getMinBufferSize(sampleRate,
+						AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+				st = getString(R.string.rec_tester_col3_row1, sampleRate);
+
 				// wait for AudioRecord fully released...
 				try {
 					Thread.sleep(100);
@@ -148,35 +208,46 @@ public class InfoRecActivity extends Activity {
 					e.printStackTrace();
 				}
 				AudioRecord record;
-				record =  new AudioRecord(audioSourceId[iass], sampleRate,
-				          AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT,  recBufferSize);
-				if (record.getState() == AudioRecord.STATE_INITIALIZED) {
-					st += audioSourceString[iass] + " successed";
-					int as = record.getAudioSource();
-					if (as != audioSourceId[iass]) {
-						int i = 0;
-						while (i<audioSourceId.length) {
-							if (as == audioSourceId[iass]) {
-								break;
-							}
-							i++;
-						}
-						if (i >= audioSourceId.length) {
-							st += "(auto set to \"unknown source\")";
-						} else {
-							st += "(auto set to " + audioSourceString[i] + ")";
-						}
-					}
-					st += "\n";
-				} else {
-					st += audioSourceString[iass] + " failed\n";
+				try {
+					record = new AudioRecord(audioSourceId[ias], sampleRate,
+							AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recBufferSize);
+				} catch (IllegalArgumentException e) {
+					st += getString(R.string.rec_tester_col3_error1);
+					record = null;
 				}
-				record.release();
-				tv.append(st);
-				tv.invalidate();
+				if (record != null) {
+					if (record.getState() == AudioRecord.STATE_INITIALIZED) {
+						int numOfReadShort;
+						try {  // try read some samples.
+							record.startRecording();
+							short[] audioSamples = new short[recBufferSize];
+							numOfReadShort = record.read(audioSamples, 0, recBufferSize);
+						} catch (IllegalStateException e) {
+							numOfReadShort = -1;
+						}
+						if (numOfReadShort > 0) {
+							st += getString(R.string.rec_tester_col3_succeed);
+						} else if (numOfReadShort == 0) {
+							st += getString(R.string.rec_tester_col3_error2);
+						} else {
+							st += getString(R.string.rec_tester_col3_error3);
+						}
+						int as = record.getAudioSource();
+						if (as != audioSourceId[ias]) {  // audio source altered
+							st += getString(R.string.rec_tester_col3_hint1,
+									analyzerUtil.getAudioSourceName(as));
+						}
+						record.stop();
+					} else {
+						st += getString(R.string.rec_tester_col3_error4);
+					}
+					record.release();
+				}
+				st += getString(R.string.rec_tester_col3_end);
+				appendTextData(tv, st);
 			}
 		}
 
+		testResultSt = tv.getText();
 	}
-
 }

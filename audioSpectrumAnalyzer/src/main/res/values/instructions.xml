@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        <string name="instructions_title">      Instructions</string>
+        <string name="dismiss">      Dismiss</string>
+
+        <string name="instructions_text">&lt;h2&gt;Important Notes&lt;/h2&gt;
+All the dB in this software are Decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustics dB (e.g. dB SPL or dBA) (at least need a full spectrum calibration).
+&lt;br/&gt;
+The dBA in this software is a simple minded A-weighting dBFS.
+&lt;br/&gt;
+Some (if not many) cell phone have a low quality sampling rate converter. In these devices, one can have fake spectrum lines (usually weak, while visible). To test that, you may generate a sine wave swap signal, then analyze its spectrogram using different sampling rate.
+&lt;br/&gt;
+This software have a high power consumption.
+&lt;br/&gt;
+
+&lt;h2&gt;Implementation Notes&lt;/h2&gt;
+A full-scale sine wave is designated 0 dBFS.
+&lt;br/&gt;
+All the calculation of spectrum and spectrogram are done through FFT with chosen window function, with a 50% data overlapping.
+&lt;br/&gt;
+The peak frequency is found by look for max spectrum point, then correct it by a quadratic interpolation using 3 nearby points. The error is ususlly smaller than one tenth of (sample rate)/(FFT length).
+&lt;br/&gt;
+This software will drop frames if the required frame rate is too high. e.g. sampling rate 48000 with FFT length 1024 lead to a frame rate 48000 / 1024 * 2 = 93.75 fps, which is far too high for a cell phone.
+&lt;br/&gt;
+
+&lt;h2&gt;Button operation&lt;/h2&gt;
+&lt;font color=&quot;red&quot;&gt;spum/spam&lt;/font&gt;
+&lt;br/&gt;&lt;b&gt;spum&lt;/b&gt;: Show the &lt;b&gt;sp&lt;/b&gt;ectr&lt;b&gt;um&lt;/b&gt; at each time point.
+&lt;br/&gt;&lt;b&gt;spam&lt;/b&gt;: Show the &lt;b&gt;sp&lt;/b&gt;ectrogr&lt;b&gt;am&lt;/b&gt; in a duration. The color represent strength of the sound at certain frequency and certain time.
+&lt;p/&gt;
+Note: &lt;b&gt;spam&lt;/b&gt; mode cost more power than &lt;b&gt;spum&lt;/b&gt; mode, and counld exhaust all you computing power(CPU/GPU) at high sampling rate (you will receive a &quot;Recorder buffer overrun&quot; warning).
+&lt;p/&gt;
+&lt;font color=&quot;red&quot;&gt;dB/dBA&lt;/font&gt;
+&lt;br/&gt;Switch between dBFS and A-weighting dBFS. dBA is widely used in environmental noise measurement. But here dBA is only for reference (simple minded A-weighting dBFS, instead of acoustics dBA).
+&lt;p/&gt;
+&lt;font color=&quot;red&quot;&gt;cursor/scale&lt;/font&gt;
+&lt;br/&gt;In &lt;b&gt;cursor&lt;/b&gt; mode, touching the plot area moves the cursor
+&lt;br/&gt;In &lt;b&gt;scale&lt;/b&gt; mode, moving or &quot;pinching&quot; scales and zooms the x axis. Double click the plot area to switch to &lt;b&gt;cursor&lt;/b&gt; mode.
+&lt;p/&gt;
+&lt;font color=&quot;red&quot;&gt;run/stop&lt;/font&gt;
+&lt;br/&gt;&lt;b&gt;stop&lt;/b&gt; freezes the display(paused), making it easier to inspect the waveform. The recorder is still working when paused.
+&lt;br/&gt;&lt;b&gt;run&lt;/b&gt; resumes analyzing samples.
+&lt;p/&gt;
+by S A Uhler and xyy
+&lt;/p&gt;</string>
+
+</resources>

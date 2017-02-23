@@ -47,7 +47,7 @@ It is provided "as is" without expressed or implied warranty.
    * @param coef the coefficients of the polynomial.
    * @param N the number of coefficients.
    */
-  private static double chbevl(double x, double coef[], int N) throws ArithmeticException {
+  static double chbevl(double x, double coef[], int N) throws ArithmeticException {
     double b0, b1, b2;
 
     int p = 0;

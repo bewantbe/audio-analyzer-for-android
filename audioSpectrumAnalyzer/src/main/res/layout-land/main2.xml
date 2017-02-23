@@ -30,7 +30,7 @@
                 android:paddingLeft="15dp"
                 android:paddingStart="15dp"
                 android:tag="select"
-                android:text="@string/spum"
+                android:text="spum"
                 android:textSize="20sp"
                 custom:items="spum spam" />
         <github.bewantbe.audio_analyzer_for_android.SelectorText
@@ -41,7 +41,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/dB"
+            android:text="dB"
             android:textSize="20sp"
             custom:items="dB dBA" />
 
@@ -53,7 +53,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/cursor"
+            android:text="cursor"
             android:textSize="20sp"
             custom:items="cursor scale" />
 
@@ -65,7 +65,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/run"
+            android:text="run"
             android:textSize="20sp"
             custom:items="run stop" />
 
@@ -77,7 +77,7 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="@string/Mon"
+            android:text="Mon"
             android:textSize="20sp"
             custom:items="Mon Rec" />
 
@@ -135,7 +135,7 @@
             android:layout_toLeftOf="@+id/button_fftlen"
             android:layout_toStartOf="@+id/button_fftlen"
             android:onClick="showPopupMenu"
-            android:text="@string/Sample_S"
+            android:text="@string/sample_s"
             android:textSize="18sp" />
 
         <Button

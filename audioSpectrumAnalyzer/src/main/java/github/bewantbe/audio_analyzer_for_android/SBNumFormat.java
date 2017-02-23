@@ -21,7 +21,7 @@ class SBNumFormat {
   private static final char charDigits[] = {'0','1','2','3','4','5','6','7','8','9'};
 
   // Invent wheel... so we can eliminate GC
-  private static void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac, char padChar) {
+  static void fillInNumFixedWidthPositive(StringBuilder sb, double d, int nInt, int nFrac, char padChar) {
     if (d<0) {
       for (int i = 0; i < nInt+nFrac+(nFrac>0?1:0); i++) {
         sb.append(padChar);
@@ -88,7 +88,6 @@ class SBNumFormat {
     fillInNumFixedWidthPositive(sb, d, nInt, nFrac);
   }
 
-  //fillInNumFixedWidthSigned not used...
   static public void fillInNumFixedWidthSigned(StringBuilder sb, double d, int nInt, int nFrac) {
     int it = sb.length();
     sb.append(' ');

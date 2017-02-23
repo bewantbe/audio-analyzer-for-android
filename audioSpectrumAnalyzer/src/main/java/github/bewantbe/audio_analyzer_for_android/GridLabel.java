@@ -1,3 +1,18 @@
+/* Copyright 2017 Eddy Xiao <bewantbe@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package github.bewantbe.audio_analyzer_for_android;
 
 import android.util.Log;
@@ -142,6 +157,7 @@ class GridLabel {
         return (int)floor(log10(gridIntervalBig));
     }
 
+    // TODO: might be merge to genLinearGridPoints.
     private static int genLogarithmicGridPoints(double[][] gridPointsArray, double startValue, double endValue,
                                                  double gridDensity, int scale_mode) {
         if (Double.isInfinite(startValue + endValue) || Double.isNaN(startValue + endValue)) {
@@ -192,7 +208,7 @@ class GridLabel {
                 }
                 gapChangingPoint *= 10;
             }
-            return 0;
+            return Integer.MAX_VALUE;
         } else if (endValue / startValue > 10 && false) {  // not implemented
             // Major:  1, 2, 3, ... , 9, 10, 20, 30, ...
             // Minor:  1, 1.5, 2, 2.5, ..., 9, 9.5, 10, 15, 20 25, ...
@@ -293,7 +309,14 @@ class GridLabel {
             oldGridBoundary[1] = values[values.length-1];
             for (int i = 0; i < strings.length; i++) {
                 strings[i].setLength(0);
-                if (gapPrecision >= 3) {  // use 1k 2k ...
+                if (gapPrecision == Integer.MAX_VALUE) {  // 1000, 10000 -> 1k, 10k
+                    if (values[i] >= 1000) {
+                        SBNumFormat.fillInNumFixedFrac(strings[i], values[i]/1000, 7, 0);
+                        strings[i].append('k');
+                    } else {
+                        SBNumFormat.fillInNumFixedFrac(strings[i], values[i], 7, 0);
+                    }
+                } else if (gapPrecision >= 3) {  // use 1k 2k ...
                     SBNumFormat.fillInNumFixedFrac(strings[i], values[i]/1000, 7, 0);
                     strings[i].append('k');
                 } else if (gapPrecision >= 0) {

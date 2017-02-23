@@ -1,20 +1,20 @@
 apply plugin: 'com.android.library'
-
 android {
-    compileSdkVersion 23
+    compileSdkVersion 25
     buildToolsVersion '25.0.2'
 
     defaultConfig {
         minSdkVersion 7
-        targetSdkVersion 23
+        targetSdkVersion 25
     }
 
     buildTypes {
-        /*release {
+        release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'*/
-        debug {
-            debuggable true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
         }
     }
+}
+
+dependencies {
 }

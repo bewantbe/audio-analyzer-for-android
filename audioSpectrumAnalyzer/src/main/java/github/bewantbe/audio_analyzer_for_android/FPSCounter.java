@@ -39,13 +39,13 @@ class FPSCounter {
     long timeNow = SystemClock.uptimeMillis();
     if (timeOld + timeUpdateInterval <= timeNow) {
       fps = 1000 * (double) frameCount / (timeNow - timeOld);
-      Log.i(TAG_OUTSIDE, "FPS: " + Math.round(100*fps)/100.0 +
+      Log.d(TAG_OUTSIDE, "FPS: " + Math.round(100*fps)/100.0 +
             " (" + frameCount + "/" + (timeNow - timeOld) + "ms)");
       timeOld = timeNow;
       frameCount = 0;
     }
   }
-  // Note: getFPS() not used
+
   public double getFPS() {
     return fps;
   }

@@ -21,14 +21,20 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -45,23 +51,22 @@ import android.widget.Button;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Audio "FFT" analyzer.
  * @author suhler@google.com (Stephen Uhler)
  */
 
-// TODO: Require the permission for android >=6.
-// https://developer.android.com/training/permissions/requesting.html
-// https://developer.android.com/guide/topics/permissions/requesting.html
-
 public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
-               OnItemClickListener, AnalyzerGraphic.Ready {
+               OnItemClickListener, AnalyzerGraphic.Ready
+{
   static final String TAG="AnalyzerActivity:";
 
   AnalyzerViews analyzerViews;
-  SamplingLoop samplingThread;
+  SamplingLoop samplingThread = null;
+  private RangeViewDialogC rangeViewDialogC;
   private GestureDetectorCompat mDetector;
 
   AnalyzerParameters analyzerParam = null;
@@ -94,7 +99,7 @@ public class AnalyzerActivity extends Activity
 
     analyzerViews = new AnalyzerViews(this);
 
-    // travel Views, and attach ClickListener to the views that contain android:tag="select"  
+    // travel Views, and attach ClickListener to the views that contain android:tag="select"
     visit((ViewGroup) analyzerViews.graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -103,6 +108,8 @@ public class AnalyzerActivity extends Activity
         ((TextView) view).setFreezesText(true);
       }
     }, "select");
+
+    rangeViewDialogC = new RangeViewDialogC(this, analyzerViews.graphView);
 
     mDetector = new GestureDetectorCompat(this, new AnalyzerGestureListener());
   }
@@ -131,17 +138,6 @@ public class AnalyzerActivity extends Activity
     analyzerParam.timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
             Double.toString(6.0)));
 
-    // Crash detection and recovery.
-    SharedPreferences.Editor editor = sharedPref.edit();
-    boolean bCrashed = sharedPref.getBoolean("Crashed", false);
-    if (bCrashed) {  // If crashed last time, use default audio source.
-      Log.w(TAG, "onResume(): abnormal exit detected. Changing default audio source.");
-      analyzerParam.audioSourceId = analyzerParam.RECORDER_AGC_OFF;
-      editor.putString("audioSource", Integer.toString(analyzerParam.audioSourceId));
-    }
-    editor.putBoolean("Crashed", true);  // will be reset in normal exit.
-    editor.commit();
-
     // Settings of graph view
     // spectrum
     analyzerViews.graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
@@ -162,7 +158,11 @@ public class AnalyzerActivity extends Activity
 
     analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
 
-    // Travel the views with android:tag="select" to get default setting values
+    analyzerViews.graphView.setLogAxisMode(
+      sharedPref.getBoolean("spectrogramLogPlotMethod", true)
+    );
+
+    // Travel the views with android:tag="select" to apply setting values.
     visit((ViewGroup) analyzerViews.graphView.getRootView(), new Visit() {
       @Override
       public void exec(View view) {
@@ -172,20 +172,20 @@ public class AnalyzerActivity extends Activity
     analyzerViews.graphView.setReady(this);
     analyzerViews.enableSaveWavView(bSaveWav);
 
+    bSamplingPreparation = true;
+
     // Start sampling
-    samplingThread = new SamplingLoop(this, analyzerParam);
-    samplingThread.start();
+    restartSampling(analyzerParam);
   }
 
   @Override
   protected void onPause() {
     super.onPause();
-    samplingThread.finish();
+    bSamplingPreparation = false;
+    if (samplingThread != null) {
+      samplingThread.finish();
+    }
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-    SharedPreferences.Editor editor = sharedPref.edit();
-    editor.putBoolean("Crashed", false);  // will be reset in normal exit.
-    editor.commit();
   }
 
   @Override
@@ -214,14 +214,14 @@ public class AnalyzerActivity extends Activity
     maxAmpDB    = savedInstanceState.getDouble("maxAmpDB");
     maxAmpFreq  = savedInstanceState.getDouble("maxAmpFreq");
   }
-  
+
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
       MenuInflater inflater = getMenuInflater();
       inflater.inflate(R.menu.info, menu);
       return true;
   }
-  
+
   // for pass audioSourceIDs and audioSourceNames to MyPreferences
   public final static String MYPREFERENCES_MSG_SOURCE_ID = "AnalyzerActivity.SOURCE_ID";
   public final static String MYPREFERENCES_MSG_SOURCE_NAME = "AnalyzerActivity.SOURCE_NAME";
@@ -230,19 +230,22 @@ public class AnalyzerActivity extends Activity
   public boolean onOptionsItemSelected(MenuItem item) {
       Log.i(TAG, item.toString());
       switch (item.getItemId()) {
-      case R.id.info:
-        analyzerViews.showInstructions();
-        return true;
-      case R.id.settings:
-        Intent settings = new Intent(getBaseContext(), MyPreferences.class);
-        settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, analyzerParam.audioSourceIDs);
-        settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
-        startActivity(settings);
-        return true;
-      case R.id.info_recoder:
-        Intent int_info_rec = new Intent(this, InfoRecActivity.class);
-        startActivity(int_info_rec);
-      return true;
+        case R.id.info:
+          analyzerViews.showInstructions();
+          return true;
+        case R.id.settings:
+          Intent settings = new Intent(getBaseContext(), MyPreferences.class);
+          settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, analyzerParam.audioSourceIDs);
+          settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
+          startActivity(settings);
+          return true;
+        case R.id.info_recoder:
+          Intent int_info_rec = new Intent(this, InfoRecActivity.class);
+          startActivity(int_info_rec);
+          return true;
+        case R.id.view_range_setting:
+          rangeViewDialogC.ShowRangeViewDialog();
+          return true;
       default:
           return super.onOptionsItemSelected(item);
       }
@@ -271,7 +274,7 @@ public class AnalyzerActivity extends Activity
     // Save the choosen preference
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
-    
+
     // dismiss the pop up
     switch (buttonId) {
     case R.id.button_sample_rate:
@@ -301,9 +304,9 @@ public class AnalyzerActivity extends Activity
     }
 
     editor.commit();
-    
+
     if (b_need_restart_audio) {
-      reRecur();
+      restartSampling(analyzerParam);
     }
   }
 
@@ -311,10 +314,12 @@ public class AnalyzerActivity extends Activity
   // When this function is called, the SamplingLoop must not running in the meanwhile.
   void loadPreferenceForView() {
     // load preferences for buttons
+    // list-buttons
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     analyzerParam.sampleRate   = sharedPref.getInt("button_sample_rate", 8000);
     analyzerParam.fftLen       = sharedPref.getInt("button_fftlen",      1024);
     analyzerParam.nFFTAverage  = sharedPref.getInt("button_average",        1);
+    // toggle-buttons
     analyzerParam.isAWeighting = sharedPref.getBoolean("dbA", false);
     if (analyzerParam.isAWeighting) {
       ((SelectorText) findViewById(R.id.dbA)).nextValue();
@@ -323,7 +328,12 @@ public class AnalyzerActivity extends Activity
     if (!isSpam) {
       ((SelectorText) findViewById(R.id.spectrum_spectrogram_mode)).nextValue();
     }
-    
+    String axisMode = sharedPref.getString("freq_scaling_mode", "linear");
+    SelectorText st = (SelectorText) findViewById(R.id.freq_scaling_mode);
+    if (! axisMode.equals(st.getText())) {
+      st.nextValue();
+    }
+
     Log.i(TAG, "loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
     Log.i(TAG, "loadPreferenceForView(): fftLen      = " + analyzerParam.fftLen);
     Log.i(TAG, "loadPreferenceForView(): nFFTAverage = " + analyzerParam.nFFTAverage);
@@ -331,7 +341,7 @@ public class AnalyzerActivity extends Activity
     ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(analyzerParam.fftLen));
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
   }
-  
+
   private boolean isInGraphView(float x, float y) {
     analyzerViews.graphView.getLocationInWindow(windowLocation);
     return x >= windowLocation[0] && y >= windowLocation[1] &&
@@ -365,7 +375,7 @@ public class AnalyzerActivity extends Activity
       }
       measureEvent(event);  // force insert this event
     }
-    
+
     @Override
     public boolean onDoubleTap(MotionEvent event) {
       if (!isMeasure) {
@@ -376,7 +386,7 @@ public class AnalyzerActivity extends Activity
     }
 
     @Override
-    public boolean onFling(MotionEvent event1, MotionEvent event2, 
+    public boolean onFling(MotionEvent event1, MotionEvent event2,
             float velocityX, float velocityY) {
       if (isMeasure) {
         // seems never reach here...
@@ -393,7 +403,7 @@ public class AnalyzerActivity extends Activity
       flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
     }
-    
+
     Handler flyingMoveHandler = new Handler();
     long timeFlingStart;                     // Prevent from running forever
     float flyDt = 1/20f;                     // delta t of refresh
@@ -401,7 +411,7 @@ public class AnalyzerActivity extends Activity
     float shiftingComponentX;                // fling direction x
     float shiftingComponentY;                // fling direction y
     float flyAcceleration = 1200f;           // damping acceleration of fling, pixels/second^2
-    
+
     Runnable flyingMoveRunnable = new Runnable() {
       @Override
       public void run() {
@@ -429,7 +439,7 @@ public class AnalyzerActivity extends Activity
     //SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
     //st.performClick();
   }
-  
+
   @Override
   public boolean onTouchEvent(MotionEvent event) {
     if (isInGraphView(event.getX(0), event.getY(0))) {
@@ -455,7 +465,7 @@ public class AnalyzerActivity extends Activity
     }
     return super.onTouchEvent(event);
   }
-  
+
   /**
    *  Manage cursor for measurement
    */
@@ -528,10 +538,10 @@ public class AnalyzerActivity extends Activity
         break;
     }
   }
-  
+
   @Override
   public boolean onLongClick(View view) {
-    vibrate();
+    vibrate(300);
     Log.i(TAG, "long click: " + view.toString());
     return true;
   }
@@ -541,20 +551,143 @@ public class AnalyzerActivity extends Activity
   @Override
   public void onClick(View v) {
     if (processClick(v)) {
-      reRecur();
+      restartSampling(analyzerParam);
     }
     analyzerViews.invalidateGraphView();
   }
 
-  private void reRecur() {
-    samplingThread.finish();
-    try {
-      samplingThread.join();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+  private final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;  // just a number
+  private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 2;
+  Thread graphInit;
+  boolean bSamplingPreparation = false;
+
+  private void restartSampling(AnalyzerParameters _analyzerParam) {
+    // Stop previous sampler if any.
+    if (samplingThread != null) {
+      samplingThread.finish();
+      try {
+        samplingThread.join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      samplingThread = null;
     }
-    samplingThread = new SamplingLoop(this, analyzerParam);
+
+    // Set the view for incoming data
+    graphInit = new Thread(new Runnable() {
+      public void run() {
+        analyzerViews.setupView(analyzerParam);
+      }
+    });
+    graphInit.start();
+
+    // Check and request permissions
+    if (! checkAndRequestPermissions())
+      return;
+
+    if (! bSamplingPreparation)
+      return;
+
+    // Start sampling
+    samplingThread = new SamplingLoop(this, _analyzerParam);
     samplingThread.start();
+  }
+
+  // For call requestPermissions() after each showPermissionExplanation()
+  private int count_permission_explanation = 0;
+
+  // For preventing infinity loop: onResume() -> requestPermissions() -> onRequestPermissionsResult() -> onResume()
+  private int count_permission_request = 0;
+
+  // Test and try to gain permissions.
+  // Return true if it is OK to proceed.
+  // Ref.
+  //   https://developer.android.com/training/permissions/requesting.html
+  //   https://developer.android.com/guide/topics/permissions/requesting.html
+  private boolean checkAndRequestPermissions() {
+    if (ContextCompat.checkSelfPermission(AnalyzerActivity.this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED) {
+      Log.w(TAG, "Permission RECORD_AUDIO denied. Trying  to request...");
+      if (ActivityCompat.shouldShowRequestPermissionRationale(AnalyzerActivity.this, Manifest.permission.RECORD_AUDIO) &&
+              count_permission_explanation < 1) {
+        Log.w(TAG, "  Show explanation here....");
+        analyzerViews.showPermissionExplanation(R.string.permission_explanation_recorder);
+        count_permission_explanation++;
+      } else {
+        Log.w(TAG, "  Requesting...");
+        if (count_permission_request < 3) {
+          ActivityCompat.requestPermissions(AnalyzerActivity.this,
+                  new String[]{Manifest.permission.RECORD_AUDIO},
+                  MY_PERMISSIONS_REQUEST_RECORD_AUDIO);
+          count_permission_explanation = 0;
+          count_permission_request++;
+        } else {
+          this.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              Context context = getApplicationContext();
+              String text = "Permission denied.";
+              Toast toast = Toast.makeText(context, text, Toast.LENGTH_LONG);
+              toast.show();
+            }
+          });
+        }
+      }
+      return false;
+    }
+    if (bSaveWav &&
+            ContextCompat.checkSelfPermission(AnalyzerActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+      Log.w(TAG, "Permission WRITE_EXTERNAL_STORAGE denied. Trying  to request...");
+      ((SelectorText) findViewById(R.id.button_recording)).nextValue();
+      bSaveWav = false;
+      analyzerViews.enableSaveWavView(bSaveWav);
+//      ((SelectorText) findViewById(R.id.button_recording)).performClick();
+      ActivityCompat.requestPermissions(AnalyzerActivity.this,
+              new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+              MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+      // Still possible to proceed with bSaveWav == false
+      // simulate a view click, so that bSaveWav = false
+    }
+
+    return true;
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode,
+                                         @NonNull String permissions[], @NonNull int[] grantResults) {
+    switch (requestCode) {
+      case MY_PERMISSIONS_REQUEST_RECORD_AUDIO: {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          Log.w(TAG, "RECORD_AUDIO Permission granted by user.");
+        } else {
+          Log.w(TAG, "RECORD_AUDIO Permission denied by user.");
+        }
+        break;
+      }
+      case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+          Log.w(TAG, "WRITE_EXTERNAL_STORAGE Permission granted by user.");
+          if (! bSaveWav) {
+            Log.w(TAG, "... bSaveWav == true");
+            runOnUiThread(new Runnable() {
+              @Override
+              public void run() {
+                ((SelectorText) findViewById(R.id.button_recording)).nextValue();
+                bSaveWav = true;
+                analyzerViews.enableSaveWavView(bSaveWav);
+              }
+            });
+          } else {
+            Log.w(TAG, "... bSaveWav == false");
+          }
+        } else {
+          Log.w(TAG, "WRITE_EXTERNAL_STORAGE Permission denied by user.");
+        }
+        break;
+      }
+    }
+    // Then onResume() will be called.
   }
 
   /**
@@ -584,15 +717,16 @@ public class AnalyzerActivity extends Activity
         if (samplingThread != null && samplingThread.getPause() != pause) {
           samplingThread.setPause(pause);
         }
+        analyzerViews.graphView.spectrogramPlot.setPause(pause);
         return false;
 //      case R.id.graph_view_mode:
 //        isMeasure = !value.equals("scale");
 //        return false;
       case R.id.freq_scaling_mode:
         isLinearFreq = value.equals("linear");
-        Log.i(TAG, "processClick(): isLinearFreq="+isLinearFreq);
+        Log.d(TAG, "processClick(): isLinearFreq="+isLinearFreq);
         analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
-        editor.putString("freq_scaling_mode", "linear");
+        editor.putString("freq_scaling_mode", value);
         editor.commit();
         return false;
       case R.id.dbA:
@@ -617,7 +751,7 @@ public class AnalyzerActivity extends Activity
     }
   }
 
-  private void vibrate() {
+  private void vibrate(int ms) {
     //((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(ms);
   }
 

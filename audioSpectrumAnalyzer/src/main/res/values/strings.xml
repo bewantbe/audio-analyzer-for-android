@@ -2,85 +2,58 @@
 <resources>
 
     <string name="app_name">Audio Spectrum Analyzer</string>
-    <string name="instructions_text">&lt;h2&gt;Important Notes&lt;/h2&gt;
-All the dB in this software are Decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustics dB (e.g. dB SPL or dBA) (at least need a full spectrum calibration).
-&lt;br/&gt;
-The dBA in this software is a simple minded A-weighting dBFS.
-&lt;br/&gt;
-Some (if not many) cell phone have a low quality sampling rate converter. In these devices, one can have fake spectrum lines (usually weak, while visible). To test that, you may generate a sine wave swap signal, then analyze its spectrogram using different sampling rate.
-&lt;br/&gt;
-This software have a high power consumption.
-&lt;br/&gt;
 
-&lt;h2&gt;Implementation Notes&lt;/h2&gt;
-A full-scale sine wave is designated 0 dBFS.
-&lt;br/&gt;
-All the calculation of spectrum and spectrogram are done through FFT with chosen window function, with a 50% data overlapping.
-&lt;br/&gt;
-The peak frequency is found by look for max spectrum point, then correct it by a quadratic interpolation using 3 nearby points. The error is ususlly smaller than one tenth of (sample rate)/(FFT length).
-&lt;br/&gt;
-This software will drop frames if the required frame rate is too high. e.g. sampling rate 48000 with FFT length 1024 lead to a frame rate 48000 / 1024 * 2 = 93.75 fps, which is far too high for a cell phone.
-&lt;br/&gt;
-
-&lt;h2&gt;Button operation&lt;/h2&gt;
-&lt;font color=&quot;red&quot;&gt;spum/spam&lt;/font&gt;
-&lt;br/&gt;&lt;b&gt;spum&lt;/b&gt;: Show the &lt;b&gt;sp&lt;/b&gt;ectr&lt;b&gt;um&lt;/b&gt; at each time point.
-&lt;br/&gt;&lt;b&gt;spam&lt;/b&gt;: Show the &lt;b&gt;sp&lt;/b&gt;ectrogr&lt;b&gt;am&lt;/b&gt; in a duration. The color represent strength of the sound at certain frequency and certain time. 
-&lt;p/&gt;
-Note: &lt;b&gt;spam&lt;/b&gt; mode cost more power than &lt;b&gt;spum&lt;/b&gt; mode, and counld exhaust all you computing power(CPU/GPU) at high sampling rate (you will receive a &quot;Recorder buffer overrun&quot; warning).
-&lt;p/&gt;
-&lt;font color=&quot;red&quot;&gt;dB/dBA&lt;/font&gt;
-&lt;br/&gt;Switch between dBFS and A-weighting dBFS. dBA is widely used in environmental noise measurement. But here dBA is only for reference (simple minded A-weighting dBFS, instead of acoustics dBA).
-&lt;p/&gt;
-&lt;font color=&quot;red&quot;&gt;cursor/scale&lt;/font&gt;
-&lt;br/&gt;In &lt;b&gt;cursor&lt;/b&gt; mode, touching the plot area moves the cursor
-&lt;br/&gt;In &lt;b&gt;scale&lt;/b&gt; mode, moving or &quot;pinching&quot; scales and zooms the x axis. Double click the plot area to switch to &lt;b&gt;cursor&lt;/b&gt; mode.
-&lt;p/&gt;
-&lt;font color=&quot;red&quot;&gt;run/stop&lt;/font&gt;
-&lt;br/&gt;&lt;b&gt;stop&lt;/b&gt; freezes the display(paused), making it easier to inspect the waveform. The recorder is still working when paused.
-&lt;br/&gt;&lt;b&gt;run&lt;/b&gt; resumes analyzing samples.
-&lt;p/&gt;
-by S A Uhler and xyy
-&lt;/p&gt;</string>
-    <string name="instructions_title">      Instructions</string>
-    <string name="dismiss">      Dismiss</string>
-    <string name="title_activity_info_rec">Info of Input Audio</string>
-    <string name="action_settings">Settings</string>
-    <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
+    <!-- Main UI -->
     <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>
     <string name="textview_cur_text" >Cur :XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
-    
-    <string name="max_DB_range">-150</string>
-    
-    <string name="test_signal_1_freq1">440.0</string>
-    <string name="test_signal_1_db1">-6.0</string>
-
-    <string name="test_signal_2_freq1">625.0</string>
-    <string name="test_signal_2_db1">-6.0</string>
-    <string name="test_signal_2_freq2">1875.0</string>
-    <string name="test_signal_2_db2">-12.0</string>
     <string name="textview_rec_text">Rec: 00:00:00.0, Remain: 0000:00:00</string>
     <string name="sample_s">Sample/S</string>
     <string name="fftlen">fftlen</string>
-    <string name="mon">Mon</string>
-    <string name="spum">spum</string>
-    <string name="db">dB</string>
-    <string name="cursor">cursor</string>
-    <string name="run">run</string>
     <string name="ave">ave</string>
-    <string name="Sample_S" />
-    <string name="Scale">scale</string>
-    <string name="dB" >dB</string>
-    <string name="scale" >scale</string>
-    <string name="Mon" />
+
+    <!-- permission dialog -->
+    <string name="permission_explanation_title">Permission denied</string>
+    <string name="permission_explanation_recorder">This app analyze the sound heard by *this* device. A permission of using microphone is required.</string>
+    <string name="permission_explanation_write">To record the sound, A permission of using read/write is required.</string>
+
+    <!-- Show range dialog -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="show_range_tv_fL">"Low Frequency Bound (&gt;=%1$.2f)"</string>
+    <string name="show_range_tv_fH">"Up Frequency Bound (&lt;=%1$.2f)"</string>
+    <string name="show_range_tv_dBL">"Low dB Bound (&gt;=%1$.2f)"</string>
+    <string name="show_range_tv_dBH">"Up dB Bound (&lt;=%1$.2f)"</string>
+    <string name="et_freq_setting_lower_bound">frequency lower bound</string>
+    <string name="et_freq_setting_upper_bound">frequency upper bound</string>
+    <string name="et_db_setting_lower_bound">dB lower bound</string>
+    <string name="et_db_setting_upper_bound">dB upper bound</string>
+
+    <!-- Pop-up menu -->
     <string name="user_manual">User Manual</string>
-    <string name="application_preferences">Application Preferences</string>
-    <string name="test_amp_show_hardware_s_ability"><![CDATA[Test & Show hardware\'s Ability]]></string>
-    <string name="one">One</string>
-    <string name="two">Two</string>
-    <string name="three">Three</string>
-    <string name="Testing">Testing…</string>
-    <string name="linear">linear</string>
+    <string name="application_preferences">Preferences</string>
+    <string name="menu_test_rec_sources">Test Recorder Sources</string>
+    <string name="view_range_setting">View Range Setting</string>
+
+    <!-- InfoRecActivity (Test Recorder Sources) -->
+    <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
+    <string name="title_activity_info_rec">Info of Input Audio</string>
+    <string name="rec_tester_std">Standard Sources</string>
+    <string name="rec_tester_support">Supported Sources</string>
+    <string name="rec_tester_all">All Sources</string>
+    <string name="rec_tester_hint1">"(Only test MONO, 16BIT format)\n"</string>
+    <string name="rec_tester_col1">"\nSampleRate MinBuf    (Time)\n"</string>
+    <string name="rec_tester_col2">"%1$5d Hz  %2$4d Byte  (%3$4.1f ms)\n"</string>
+    <string name="rec_tester_error1">"  ERROR\n"</string>
+    <string name="rec_tester_hint2">"\n--- Audio Source Test ---\n"</string>
+    <string name="rec_tester_col3">"\nSource: %1$s\n"</string>
+    <string name="rec_tester_col3_row1">"%1$5d Hz  "</string>
+    <string name="rec_tester_col3_succeed">"succeed"</string>
+    <string name="rec_tester_col3_error1">"Illegal Argument"</string>
+    <string name="rec_tester_col3_error2">"read 0 byte"</string>
+    <string name="rec_tester_col3_error3">"fail to read sample"</string>
+    <string name="rec_tester_col3_error4">"fail to initialize"</string>
+    <string name="rec_tester_col3_hint1">"(source alter: %1$s)"></string>
+    <string name="rec_tester_col3_end">".\n"</string>
 
 </resources>

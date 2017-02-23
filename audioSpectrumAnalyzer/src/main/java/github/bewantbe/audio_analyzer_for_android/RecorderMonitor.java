@@ -19,7 +19,7 @@ import android.os.SystemClock;
 import android.util.Log;
 
 class RecorderMonitor {
-  private static final String TAG0 = "RecorderMonitor:";
+  static final String TAG0 = "RecorderMonitor:";
   private String TAG;
   private long timeUpdateOld, timeUpdateInterval, timeStarted;  // in ms
   private long lastOverrunTime;
@@ -100,7 +100,7 @@ class RecorderMonitor {
     return lastCheckOverrun;
   }
 
-  long getLastOverrunTime() { //Not currently used
+  long getLastOverrunTime() {
     return lastOverrunTime;
   }
 

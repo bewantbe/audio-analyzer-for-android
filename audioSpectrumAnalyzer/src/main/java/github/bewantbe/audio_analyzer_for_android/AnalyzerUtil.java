@@ -1,10 +1,31 @@
+/* Copyright 2014 Eddy Xiao <bewantbe@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.content.Context;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.MediaRecorder;
+import android.os.Build;
 import android.util.Log;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Utility functions for audio analyzer.
@@ -56,7 +77,6 @@ class AnalyzerUtil {
             if (same) {
                 Log.i(TAG, "sameTest(): same data row!!");
             }
-            //Changing old for loop to system array copy from manual
             System.arraycopy(data, 0, cmpDB, 0, data.length);
         }
     }
@@ -86,4 +106,96 @@ class AnalyzerUtil {
         }
         return validated.toArray(new String[0]);
     }
+
+    static double parseDouble(String st) {
+        try {
+            return Double.parseDouble(st);
+        } catch (NumberFormatException e) {
+            return 0.0/0.0;  // nan
+        }
+    }
+
+    final int[]    stdSourceId;  // how to make it final?
+    final int[]    stdSourceApi;
+    final String[] stdSourceName;
+    final String[] stdAudioSourcePermission;
+    AnalyzerUtil(Context context) {
+        stdSourceId   = context.getResources().getIntArray(R.array.std_audio_source_id);
+        stdSourceApi  = context.getResources().getIntArray(R.array.std_audio_source_api_level);
+        stdSourceName            = context.getResources().getStringArray(R.array.std_audio_source_name);
+        stdAudioSourcePermission = context.getResources().getStringArray(R.array.std_audio_source_permission);
+
+    }
+
+    // filterLevel = 0: no filter
+    //             & 1: leave only standard source
+    //             & 2: leave only permitted source (&1)
+    //             & 4: leave only source coincide the API level (&1)
+    int[] GetAllAudioSource(int filterLevel) {
+        // Use reflection to get all possible audio source (in compilation environment)
+        ArrayList<Integer> iList = new ArrayList<>();
+        Class<MediaRecorder.AudioSource> clazz = MediaRecorder.AudioSource.class;
+        Field[] arr = clazz.getFields();
+        for (Field f : arr) {
+            if (f.getType().equals(int.class)) {
+                try {
+                    int id = (int)f.get(null);
+                    iList.add(id);
+                    Log.w("Sources:", "" + id);
+                } catch (IllegalAccessException e) {}
+            }
+        }
+        Collections.sort(iList);
+
+        // Filter unnecessary audio source
+        Iterator<Integer> iterator;
+        ArrayList<Integer> iListRet = iList;
+        if (filterLevel > 0) {
+            iListRet = new ArrayList<>();
+            iterator = iList.iterator();
+            for (int i = 0; i < iList.size(); i++) {
+                int id = iterator.next();
+                int k = arrayContainInt(stdSourceId, id); // get the index to standard source if possible
+                if (k < 0) continue;
+                if ((filterLevel & 2) > 0 && !stdAudioSourcePermission[k].equals("")) continue;
+                if ((filterLevel & 4) > 0 && stdSourceApi[k] > Build.VERSION.SDK_INT) continue;
+                iListRet.add(id);
+            }
+        }
+
+        // Return an int array
+        int[] ids = new int[iListRet.size()];
+        iterator = iListRet.iterator();
+        for (int i = 0; i < ids.length; i++) {
+            ids[i] = iterator.next();
+        }
+        return ids;
+    }
+
+    String getAudioSourceName(int id) {
+        int k = arrayContainInt(stdSourceId, id);
+        if (k >= 0) {
+            return stdSourceName[k];
+        } else {
+            return "(unknown id=" + id +")";
+        }
+    }
+
+    // Java s**ks
+    static int arrayContainInt(int[] arr, int v) {
+        if (arr == null) return -1;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] == v) return i;
+        }
+        return -1;
+    }
+
+    static int arrayContainString(String[] arr, String v) {
+        if (arr == null) return -1;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i].equals(v)) return i;
+        }
+        return -1;
+    }
+
 }

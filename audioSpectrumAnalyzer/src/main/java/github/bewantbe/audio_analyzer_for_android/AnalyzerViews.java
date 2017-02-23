@@ -1,3 +1,18 @@
+/* Copyright 2014 Eddy Xiao <bewantbe@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package github.bewantbe.audio_analyzer_for_android;
 
 import android.app.AlertDialog;
@@ -5,7 +20,6 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -107,8 +121,9 @@ class AnalyzerViews {
         ((TextView) activity.findViewById(R.id.textview_peak)).setTextSize(TypedValue.COMPLEX_UNIT_PX, fs);
     }
 
+    // Prepare the spectrum and spectrogram plot (from scratch or full reset)
+    // Should be called before samplingThread starts.
     void setupView(AnalyzerParameters analyzerParam) {
-        // Maybe move these out of this class
         graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
     }
 
@@ -143,12 +158,16 @@ class AnalyzerViews {
     }
 
     void notifyWAVSaved(final String path) {
+        String text = "WAV saved to " + path;
+        notifyToast(text);
+    }
+
+    void notifyToast(final String st) {
         activity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 Context context = activity.getApplicationContext();
-                String text = "WAV saved to " + path;
-                Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(context, st, Toast.LENGTH_SHORT);
                 toast.show();
             }
         });
@@ -185,6 +204,17 @@ class AnalyzerViews {
                 .create().show();
     }
 
+    void showPermissionExplanation(int resId) {
+        TextView tv = new TextView(activity);
+        tv.setMovementMethod(new ScrollingMovementMethod());
+        tv.setText(Html.fromHtml(activity.getString(resId)));
+        new AlertDialog.Builder(activity)
+                .setTitle(R.string.permission_explanation_title)
+                .setView(tv)
+                .setNegativeButton(R.string.dismiss, null)
+                .create().show();
+    }
+
     void enableSaveWavView(boolean bSaveWav) {
         if (bSaveWav) {
             ((TextView) activity.findViewById(R.id.textview_rec)).setHeight((int)(19*DPRatio));
@@ -208,15 +238,15 @@ class AnalyzerViews {
         switch (view.getId()) {
             case R.id.button_sample_rate:
                 popupMenuSampleRate.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuSampleRate.showAsDropDown(view, 0, 0);
+//                popupMenuSampleRate.showAsDropDown(view, 0, 0);
                 break;
             case R.id.button_fftlen:
                 popupMenuFFTLen.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuFFTLen.showAsDropDown(view, 0, 0);
+//                popupMenuFFTLen.showAsDropDown(view, 0, 0);
                 break;
             case R.id.button_average:
                 popupMenuAverage.showAtLocation(view, gravity, x_left, y_bottom);
-//      popupMenuAverage.showAsDropDown(view, 0, 0);
+//                popupMenuAverage.showAsDropDown(view, 0, 0);
                 break;
         }
     }
@@ -382,7 +412,7 @@ class AnalyzerViews {
         invalidateGraphView(-1);
     }
 
-    private static final int VIEW_MASK_graphView     = 1;
+    private static final int VIEW_MASK_graphView     = 1<<0;
     private static final int VIEW_MASK_textview_RMS  = 1<<1;
     private static final int VIEW_MASK_textview_peak = 1<<2;
     private static final int VIEW_MASK_CursorLabel   = 1<<3;
@@ -394,7 +424,7 @@ class AnalyzerViews {
         }
         isInvalidating = true;
         long frameTime;                      // time delay for next frame
-        if (graphView.getShowMode() != 0) {
+        if (graphView.getShowMode() != AnalyzerGraphic.PlotMode.SPECTRUM) {
             frameTime = 1000/8;  // use a much lower frame rate for spectrogram
         } else {
             frameTime = 1000/60;
@@ -407,7 +437,7 @@ class AnalyzerViews {
                 timeToUpdate = t+frameTime;
             }
             idPaddingInvalidate = false;
-            // Take care of synchronization of graphView.spectrogramColors and spectrogramColorsPt,
+            // Take care of synchronization of graphView.spectrogramColors and iTimePointer,
             // and then just do invalidate() here.
             if ((viewMask & VIEW_MASK_graphView) != 0)
                 graphView.invalidate();
@@ -419,10 +449,10 @@ class AnalyzerViews {
                 refreshPeakLabel(activity.maxAmpFreq, activity.maxAmpDB);
             if ((viewMask & VIEW_MASK_CursorLabel) != 0)
                 refreshCursorLabel();
-            if ((viewMask & VIEW_MASK_RecTimeLable) != 0)
+            if ((viewMask & VIEW_MASK_RecTimeLable) != 0 && activity.samplingThread != null)
                 refreshRecTimeLable(activity.samplingThread.wavSec, activity.samplingThread.wavSecRemain);
         } else {
-            if (!idPaddingInvalidate) {
+            if (! idPaddingInvalidate) {
                 idPaddingInvalidate = true;
                 paddingViewMask = viewMask;
                 paddingInvalidateHandler.postDelayed(paddingInvalidateRunnable, timeToUpdate - t + 1);

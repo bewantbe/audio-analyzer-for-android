@@ -1,3 +1,18 @@
+/* Copyright 2014 Eddy Xiao <bewantbe@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package github.bewantbe.audio_analyzer_for_android;
 
 import android.content.Context;
@@ -31,7 +46,7 @@ class SpectrumPlot {
     private GridLabel fqGridLabel;
     private GridLabel dbGridLabel;
     private float DPRatio;
-    float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
+    private float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
 
     float cursorFreq, cursorDB;  // cursor location
     ScreenPhysicalMapping axisX;  // For frequency axis
@@ -97,13 +112,10 @@ class SpectrumPlot {
         } else {
             fqGridLabel.setGridType(GridLabel.Type.FREQ);
         }
-        Log.i(TAG, "setFreqAxisMode(): axisX.vLowerBound = " + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
+        Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType + " axisX.vL=" + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
     }
 
-    float getFreqMin() { return axisX.vMinInView(); }
-    float getFreqMax() { return axisX.vMaxInView(); }
-
-    boolean isAlmostInteger(float x) {
+    private boolean isAlmostInteger(float x) {
         // return x % 1 == 0;
         float i = round(x);
         if (i == 0) {
@@ -225,13 +237,13 @@ class SpectrumPlot {
         float canvasMaxFreq = axisX.vMaxInView();
         // There are db.length frequency points, including DC component
         int nFreqPointsTotal = db_cache.length - 1;
-        float freqDelta = axisX.vHigherBound / nFreqPointsTotal;
+        float freqDelta = axisX.vUpperBound / nFreqPointsTotal;
         int beginFreqPt = (int)floor(canvasMinFreq / freqDelta);    // pointer to tmpLineXY
         int endFreqPt   = (int)ceil (canvasMaxFreq / freqDelta)+1;
         final float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
 
         // add one more boundary points
-        if (beginFreqPt == 0 && axisX.mapTypeInt == ScreenPhysicalMapping.Type.LOG.getValue()) {
+        if (beginFreqPt == 0 && axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
             beginFreqPt++;
         }
         if (endFreqPt > db_cache.length) {
@@ -249,7 +261,7 @@ class SpectrumPlot {
             // If bars are very close to each other, draw bars as lines
             // Otherwise, zoom in so that lines look like bars.
             if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2
-                    || axisX.mapTypeInt != ScreenPhysicalMapping.Type.LINEAR.getValue()) {
+                    || axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
                 matrix.reset();
                 matrix.setTranslate(0, -axisY.shift * canvasHeight);
                 matrix.postScale(1, axisY.zoom);

@@ -116,7 +116,10 @@ class WavWriter {
       return false;
     }
     File path = new File(Environment.getExternalStorageDirectory().getPath() + relativeDir);
-    path.mkdirs(); //Is this expecting a return?
+    if (!path.exists() && !path.mkdirs()) {
+      Log.e(TAG, "Failed to make directory: " + path.toString());
+      return false;
+    }
     DateFormat df = new SimpleDateFormat("yyyy-MM-dd_HH'h'mm'm'ss.SSS's'", Locale.US);
     String nowStr = df.format(new Date());
     outPath = new File(path, "rec" + nowStr + ".wav");
@@ -150,15 +153,15 @@ class WavWriter {
       totalDataLen = header.length + totalAudioLen - 8;
       raf = new RandomAccessFile(outPath, "rw");
       raf.seek(4);
-      raf.write((byte) (totalDataLen & 0xff));
-      raf.write((byte) (totalDataLen >>  8 & 0xff));
-      raf.write((byte) (totalDataLen >> 16 & 0xff));
-      raf.write((byte) (totalDataLen >> 24 & 0xff));
+      raf.write((byte) ((totalDataLen      ) & 0xff));
+      raf.write((byte) ((totalDataLen >>  8) & 0xff));
+      raf.write((byte) ((totalDataLen >> 16) & 0xff));
+      raf.write((byte) ((totalDataLen >> 24) & 0xff));
       raf.seek(40);
-      raf.write((byte) (totalAudioLen & 0xff));
-      raf.write((byte) (totalAudioLen >>  8 & 0xff));
-      raf.write((byte) (totalAudioLen >> 16 & 0xff));
-      raf.write((byte) (totalAudioLen >> 24 & 0xff));
+      raf.write((byte) ((totalAudioLen      ) & 0xff));
+      raf.write((byte) ((totalAudioLen >>  8) & 0xff));
+      raf.write((byte) ((totalAudioLen >> 16) & 0xff));
+      raf.write((byte) ((totalAudioLen >> 24) & 0xff));
       raf.close();
     } catch (IOException e) {
       Log.w(TAG, "stop(): Error modifying " + outPath, e);
@@ -177,7 +180,7 @@ class WavWriter {
       byteBuffer = new byte[ss.length*2];
     }
     for (int i = 0; i < numOfReadShort; i++) {
-      byteBuffer[2 * i] = (byte)(ss[i] & 0xff); //Adding zero
+      byteBuffer[2*i  ] = (byte)(ss[i] & 0xff);
       byteBuffer[2*i+1] = (byte)((ss[i]>>8) & 0xff);
     }
     framesWrited += numOfReadShort;
@@ -195,7 +198,7 @@ class WavWriter {
   }
   
   /* Checks if external storage is available for read and write */
-  private boolean isExternalStorageWritable() {
+  boolean isExternalStorageWritable() {
     String state = Environment.getExternalStorageState();  // Need API level 8
     return Environment.MEDIA_MOUNTED.equals(state);
   }
