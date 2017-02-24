@@ -92,9 +92,9 @@ public class AnalyzerActivity extends Activity
     Resources res = getResources();
     analyzerParam = new AnalyzerParameters(res);
 
-    // Set and get preferences in PreferenceActivity
+    // Initialized preferences by default values
     PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-    // Set variable according to the preferences
+    // Read preferences and set corresponding variables
     loadPreferenceForView();
 
     analyzerViews = new AnalyzerViews(this);
@@ -121,57 +121,14 @@ public class AnalyzerActivity extends Activity
 
   @Override
   protected void onResume() {
+    Log.d(TAG, "onResume()");
     super.onResume();
 
-    // Load preferences
-    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-    boolean keepScreenOn = sharedPref.getBoolean("keepScreenOn", true);
-    if (keepScreenOn) {
-      getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    } else {
-      getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    }
-
-    analyzerParam.audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(analyzerParam.RECORDER_AGC_OFF)));
-    analyzerParam.wndFuncName = sharedPref.getString("windowFunction", "Hanning");
-    analyzerParam.timeDurationPref = Double.parseDouble(sharedPref.getString("spectrogramDuration",
-            Double.toString(6.0)));
-
-    // Settings of graph view
-    // spectrum
-    analyzerViews.graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
-    // set spectrum show range
-    analyzerViews.graphView.setSpectrumDBLowerBound(
-            Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(AnalyzerGraphic.minDB)))
-    );
-
-    // spectrogram
-    analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
-    analyzerViews.graphView.setShowTimeAxis           (sharedPref.getBoolean("spectrogramTimeAxis", true));
-    analyzerViews.graphView.setShowFreqAlongX         (sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
-    analyzerViews.graphView.setSmoothRender           (sharedPref.getBoolean("spectrogramSmoothRender", false));
-    // set spectrogram show range
-    analyzerViews.graphView.setSpectrogramDBLowerBound(
-            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))
-    );
-
-    analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
-
-    analyzerViews.graphView.setLogAxisMode(
-      sharedPref.getBoolean("spectrogramLogPlotMethod", true)
-    );
-
-    // Travel the views with android:tag="select" to apply setting values.
-    visit((ViewGroup) analyzerViews.graphView.getRootView(), new Visit() {
-      @Override
-      public void exec(View view) {
-        processClick(view);
-      }
-    }, "select");
-    analyzerViews.graphView.setReady(this);
+    LoadPreferences();
+    analyzerViews.graphView.setReady(this);  // TODO: move this earlier
     analyzerViews.enableSaveWavView(bSaveWav);
 
+    // Used to prevent extra calling to restartSampling() (e.g. in LoadPreferences())
     bSamplingPreparation = true;
 
     // Start sampling
@@ -180,22 +137,25 @@ public class AnalyzerActivity extends Activity
 
   @Override
   protected void onPause() {
-    super.onPause();
+    Log.d(TAG, "onPause()");
     bSamplingPreparation = false;
     if (samplingThread != null) {
       samplingThread.finish();
     }
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    super.onPause();
   }
 
   @Override
   protected void onDestroy() {
+    Log.d(TAG, "onDestroy()");
 //    Debug.stopMethodTracing();
     super.onDestroy();
   }
 
   @Override
   public void onSaveInstanceState(Bundle savedInstanceState) {
+    Log.d(TAG, "onSaveInstanceState()");
     savedInstanceState.putDouble("dtRMS",       dtRMS);
     savedInstanceState.putDouble("dtRMSFromFT", dtRMSFromFT);
     savedInstanceState.putDouble("maxAmpDB",    maxAmpDB);
@@ -206,7 +166,8 @@ public class AnalyzerActivity extends Activity
 
   @Override
   public void onRestoreInstanceState(Bundle savedInstanceState) {
-    // will be calls after the onStart()
+    Log.d(TAG, "onRestoreInstanceState()");
+    // will be called after the onStart()
     super.onRestoreInstanceState(savedInstanceState);
 
     dtRMS       = savedInstanceState.getDouble("dtRMS");
@@ -228,7 +189,7 @@ public class AnalyzerActivity extends Activity
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-      Log.i(TAG, item.toString());
+      Log.i(TAG, "onOptionsItemSelected(): " + item.toString());
       switch (item.getItemId()) {
         case R.id.info:
           analyzerViews.showInstructions();
@@ -303,7 +264,7 @@ public class AnalyzerActivity extends Activity
       b_need_restart_audio = false;
     }
 
-    editor.commit();
+    editor.apply();
 
     if (b_need_restart_audio) {
       restartSampling(analyzerParam);
@@ -340,6 +301,54 @@ public class AnalyzerActivity extends Activity
     ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(analyzerParam.sampleRate));
     ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(analyzerParam.fftLen));
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
+  }
+
+  void LoadPreferences() {
+    // Load preferences for recorder and views, beside loadPreferenceForView()
+    SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+    boolean keepScreenOn = sharedPref.getBoolean("keepScreenOn", true);
+    if (keepScreenOn) {
+      getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    } else {
+      getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    analyzerParam.audioSourceId = Integer.parseInt(sharedPref.getString("audioSource", Integer.toString(analyzerParam.RECORDER_AGC_OFF)));
+    analyzerParam.wndFuncName = sharedPref.getString("windowFunction", "Hanning");
+    analyzerParam.spectrogramDuration = Double.parseDouble(sharedPref.getString("spectrogramDuration",
+            Double.toString(6.0)));
+
+    // Settings of graph view
+    // spectrum
+    analyzerViews.graphView.setShowLines( sharedPref.getBoolean("showLines", false) );
+    // set spectrum show range
+    analyzerViews.graphView.setSpectrumDBLowerBound(
+            Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(AnalyzerGraphic.minDB)))
+    );
+
+    // spectrogram
+    analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
+    analyzerViews.graphView.setShowTimeAxis           (sharedPref.getBoolean("spectrogramTimeAxis", true));
+    analyzerViews.graphView.setShowFreqAlongX         (sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
+    analyzerViews.graphView.setSmoothRender           (sharedPref.getBoolean("spectrogramSmoothRender", false));
+    // set spectrogram show range
+    analyzerViews.graphView.setSpectrogramDBLowerBound(
+            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))
+    );
+    analyzerViews.graphView.setLogAxisMode(
+            sharedPref.getBoolean("spectrogramLogPlotMethod", true)
+    );
+
+    analyzerViews.bWarnOverrun = sharedPref.getBoolean("warnOverrun", false);
+
+    // Apply settings by travel the views with android:tag="select".
+    visit((ViewGroup) analyzerViews.graphView.getRootView(), new Visit() {
+      @Override
+      public void exec(View view) {
+        processClick(view);
+      }
+    }, "select");
   }
 
   private boolean isInGraphView(float x, float y) {
@@ -727,7 +736,7 @@ public class AnalyzerActivity extends Activity
         Log.d(TAG, "processClick(): isLinearFreq="+isLinearFreq);
         analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
         editor.putString("freq_scaling_mode", value);
-        editor.commit();
+        editor.apply();
         return false;
       case R.id.dbA:
         analyzerParam.isAWeighting = !value.equals("dB");
@@ -735,7 +744,7 @@ public class AnalyzerActivity extends Activity
           samplingThread.setAWeighting(analyzerParam.isAWeighting);
         }
         editor.putBoolean("dbA", analyzerParam.isAWeighting);
-        editor.commit();
+        editor.apply();
         return false;
       case R.id.spectrum_spectrogram_mode:
         if (value.equals("spum")) {
@@ -744,7 +753,7 @@ public class AnalyzerActivity extends Activity
           analyzerViews.graphView.switch2Spectrogram();
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
-        editor.commit();
+        editor.apply();
         return false;
       default:
         return true;

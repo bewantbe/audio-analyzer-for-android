@@ -124,7 +124,7 @@ class AnalyzerViews {
     // Prepare the spectrum and spectrogram plot (from scratch or full reset)
     // Should be called before samplingThread starts.
     void setupView(AnalyzerParameters analyzerParam) {
-        graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
+        graphView.setupPlot(analyzerParam);
     }
 
     // Will be called by SamplingLoop (in another thread)

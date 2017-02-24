@@ -22,7 +22,8 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.util.Log;
 
-// I'm using an old cell phone -- API level 9 (android 2.3.6)
+// I was using an old cell phone -- API level 9 (android 2.3.6),
+// so here use PreferenceActivity instead of PreferenceFragment.
 // http://developer.android.com/guide/topics/ui/settings.html
 @SuppressWarnings("deprecation")
 public class MyPreferences extends PreferenceActivity {
