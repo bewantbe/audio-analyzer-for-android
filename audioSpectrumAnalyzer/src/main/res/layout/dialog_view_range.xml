@@ -74,4 +74,10 @@
         android:inputType="numberDecimal|numberSigned"
         android:hint="@string/et_db_setting_upper_bound" />
 
+    <CheckBox android:id="@+id/show_range_lock"
+        android:layout_below="@+id/et_db_setting_upper_bound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/show_range_lock" />
+
 </RelativeLayout>

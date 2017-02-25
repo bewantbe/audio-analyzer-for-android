@@ -18,11 +18,14 @@ package github.bewantbe.audio_analyzer_for_android;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -40,10 +43,10 @@ class RangeViewDialogC {
     private AlertDialog rangeViewDialog = null;
     private View rangeViewView;
 
-    private Context ct;
+    private AnalyzerActivity ct;
     private AnalyzerGraphic graphView;
 
-    RangeViewDialogC(Context _ct, AnalyzerGraphic _graphView) {
+    RangeViewDialogC(AnalyzerActivity _ct, AnalyzerGraphic _graphView) {
         ct = _ct;
         graphView = _graphView;
         buildDialog(ct);
@@ -62,7 +65,7 @@ class RangeViewDialogC {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            mEditText.setTag(true);
+            mEditText.setTag(true);  // flag that indicate range been changed
         }
 
         @Override
@@ -100,6 +103,11 @@ class RangeViewDialogC {
             et.setTag(false);                                     // false = no modified
             et.addTextChangedListener(new MyTextWatcher(et));
         }
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
+        boolean isLock = sharedPref.getBoolean("view_range_lock", false);
+        ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
+
         rangeViewDialog.show();
     }
 
@@ -113,7 +121,7 @@ class RangeViewDialogC {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         double[] rangeDefault = graphView.getViewPhysicalRange();
-                        double[] rr = new double[6];
+                        double[] rr = new double[rangeDefault.length / 2];
                         int[] resList = {R.id.et_freq_setting_lower_bound, R.id.et_freq_setting_upper_bound,
                                 R.id.et_db_setting_lower_bound,   R.id.et_db_setting_upper_bound};
                         for (int i = 0; i < resList.length; i++) {
@@ -125,10 +133,18 @@ class RangeViewDialogC {
                                 rr[i] = AnalyzerUtil.parseDouble(et.getText().toString());
                             } else {
                                 rr[i] = rangeDefault[i];
-                                Log.v(TAG, "  EditText[" + i + "] not change.");
+                                Log.v(TAG, "  EditText[" + i + "] not change. rr[i] = " + rr[i]);
                             }
                         }
                         graphView.setViewRange(rr, rangeDefault);
+                        // Save setting to preference, after sanitized.
+                        boolean isLock = ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).isChecked();
+                        SaveViewRange(rr, isLock);
+                        if (isLock) {
+                            ct.stickToMeasureMode();
+                        } else {
+                            ct.stickToMeasureModeCancel();
+                        }
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -139,5 +155,15 @@ class RangeViewDialogC {
 //    freqDialogBuilder
 //            .setTitle("dialog_title");
         rangeViewDialog = freqDialogBuilder.create();
+    }
+
+    private void SaveViewRange(double[] rr, boolean isLock) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        for (int i = 0; i < rr.length; i++) {
+            AnalyzerUtil.putDouble(editor, "view_range_rr_" + i, rr[i]);  // no editor.putDouble ? kidding me?
+        }
+        editor.putBoolean("view_range_lock", isLock);
+        editor.apply();
     }
 }

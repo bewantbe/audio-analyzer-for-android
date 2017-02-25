@@ -102,8 +102,7 @@ public class AnalyzerGraphic extends View {
         spectrumPlot.axisY.vLowerBound = Float.parseFloat(res.getString(R.string.max_DB_range));
     }
 
-    // Call this when settings changed.
-    void setupPlot(AnalyzerParameters analyzerParam) {
+    void setupAxes(AnalyzerParameters analyzerParam) {
         int sampleRate       = analyzerParam.sampleRate;
         int fftLen           = analyzerParam.fftLen;
         int nAve             = analyzerParam.nFFTAverage;
@@ -130,7 +129,12 @@ public class AnalyzerGraphic extends View {
             axisBounds = new RectF(0.0f, sampleRate/2.0f, (float)timeDurationE * nAve, freq_lower_bound_local);
         }
         spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
-        spectrogramPlot.setupSpectrogram(sampleRate, fftLen, timeDurationE, nAve);
+    }
+
+    // Call this when settings changed.
+    void setupPlot(AnalyzerParameters analyzerParam) {
+        setupAxes(analyzerParam);
+        spectrogramPlot.setupSpectrogram(analyzerParam);
     }
 
     void setAxisModeLinear(boolean b) {
@@ -224,13 +228,13 @@ public class AnalyzerGraphic extends View {
                 return;
             }
             for (int i = 0; i < 6; i += 2) {
-                if (ranges[i] == ranges[i + 1] || Double.isNaN(ranges[i]) || Double.isNaN(ranges[i + 1])) {  // invalid input value
+                if (ranges[i    ] == ranges[i + 1] || Double.isNaN(ranges[i]) || Double.isNaN(ranges[i + 1])) {  // invalid input value
                     ranges[i    ] = rangesDefault[i];
                     ranges[i + 1] = rangesDefault[i + 1];
                 }
                 if (ranges[i  ] < rangesDefault[i+6]) ranges[i  ] = rangesDefault[i+6];  // lower  than lower bound
                 if (ranges[i+1] > rangesDefault[i+7]) ranges[i+1] = rangesDefault[i+7];  // higher than upper bound
-                if (ranges[i] > ranges[i+1]) {                     // order reversed
+                if (ranges[i  ] > ranges[i+1]) {                     // order reversed
                     double t = ranges[i]; ranges[i] = ranges[i+1]; ranges[i+1] = t;
                 }
             }
@@ -413,6 +417,7 @@ public class AnalyzerGraphic extends View {
             r[4] = 0;
             r[5] = 0;
 
+            // Limits of fL, fU, dBL dBU, time L, time U
             r[6] = spectrumPlot.axisX.vLowerBound;
             r[7] = spectrumPlot.axisX.vUpperBound;
             r[8] = AnalyzerGraphic.minDB;

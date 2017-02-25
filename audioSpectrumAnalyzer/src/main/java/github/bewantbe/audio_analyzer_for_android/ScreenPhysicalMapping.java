@@ -73,13 +73,16 @@ class ScreenPhysicalMapping {
 
     // set zoom and shift from physical value bounds
     void setZoomShiftFromV(float vLower, float vHigher) {
-        if (vLower == vHigher || nCanvasPixel <= 0) {
+        if (vLower == vHigher) {
             return;  // Or throw an exception?
         }
+        float nCanvasPixelSave = nCanvasPixel;
+        nCanvasPixel = 1;                       // This function do not depends on nCanvasPixel
         float p1 = pixelNoZoomFromV(vLower);
         float p2 = pixelNoZoomFromV(vHigher);
         zoom = nCanvasPixel / (p2 - p1);
         shift = p1 / nCanvasPixel;
+        nCanvasPixel = nCanvasPixelSave;
     }
 
     //    | lower bound  ...  higher bound |  physcial unit

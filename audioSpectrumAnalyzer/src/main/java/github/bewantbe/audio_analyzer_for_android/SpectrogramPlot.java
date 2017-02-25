@@ -173,7 +173,12 @@ class SpectrogramPlot {
         spectrogramBMP.updateAxis(axisFreq);
     }
 
-    void setupSpectrogram(int sampleRate, int fftLen, double timeDurationE, int nAve) {
+    void setupSpectrogram(AnalyzerParameters analyzerParam) {
+        int sampleRate       = analyzerParam.sampleRate;
+        int fftLen           = analyzerParam.fftLen;
+        int nAve             = analyzerParam.nFFTAverage;
+        double timeDurationE = analyzerParam.spectrogramDuration;
+
         timeWatch = timeDurationE;
         timeMultiplier = nAve;
         timeInc     = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
@@ -816,6 +821,7 @@ class SpectrogramPlot {
         }
 
         void draw(Canvas c) {
+            if (spectrogramColors.length == 0) return;
             if (showModeSpectrogram == TimeAxisMode.SHIFT) {
                 System.arraycopy(spectrogramColors, 0, spectrogramColorsShifting,
                         (nTimePoints - iTimePointer) * nFreqPoints, iTimePointer * nFreqPoints);

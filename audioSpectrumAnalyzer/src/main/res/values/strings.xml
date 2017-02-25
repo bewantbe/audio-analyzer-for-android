@@ -28,6 +28,7 @@
     <string name="et_freq_setting_upper_bound">frequency upper bound</string>
     <string name="et_db_setting_lower_bound">dB lower bound</string>
     <string name="et_db_setting_upper_bound">dB upper bound</string>
+    <string name="show_range_lock">Lock Range</string>
 
     <!-- Pop-up menu -->
     <string name="user_manual">User Manual</string>

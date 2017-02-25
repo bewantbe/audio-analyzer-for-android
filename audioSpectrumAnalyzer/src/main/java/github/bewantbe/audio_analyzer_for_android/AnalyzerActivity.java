@@ -78,6 +78,7 @@ public class AnalyzerActivity extends Activity
 
   private boolean isLinearFreq = true;
   private boolean isMeasure = false;
+  private boolean bLockToMeasureMode = false;
   volatile boolean bSaveWav = false;
 
   @Override
@@ -349,6 +350,40 @@ public class AnalyzerActivity extends Activity
         processClick(view);
       }
     }, "select");
+
+    analyzerViews.graphView.setupAxes(analyzerParam);
+
+    boolean isLock = sharedPref.getBoolean("view_range_lock", false);
+    if (isLock) {
+      Log.i(TAG, "LoadPreferences(): isLocked");
+      // Set view range and stick to measure mode
+      double[] rangeDefault = analyzerViews.graphView.getViewPhysicalRange();
+      double[] rr = new double[rangeDefault.length / 2];
+      for (int i = 0; i < rr.length; i++) {
+        rr[i] = AnalyzerUtil.getDouble(sharedPref, "view_range_rr_" + i, 0.0/0.0);
+        if (Double.isNaN(rr[i])) {  // not properly initialized
+          Log.w(TAG, "LoadPreferences(): rr is not properly initialized");
+          rr = null;
+          break;
+        }
+      }
+      if (rr != null) {
+        analyzerViews.graphView.setViewRange(rr, null);
+      }
+      stickToMeasureMode();
+    } else {
+      bLockToMeasureMode = false;
+    }
+  }
+
+  void stickToMeasureMode() {
+    bLockToMeasureMode = true;
+    switchMeasureAndScaleMode();
+  }
+
+  void stickToMeasureModeCancel() {
+    bLockToMeasureMode = false;
+    switchMeasureAndScaleMode();
   }
 
   private boolean isInGraphView(float x, float y) {
@@ -444,6 +479,10 @@ public class AnalyzerActivity extends Activity
   }
 
   private void switchMeasureAndScaleMode() {
+    if (bLockToMeasureMode) {
+      isMeasure = true;
+      return;
+    }
     isMeasure = !isMeasure;
     //SelectorText st = (SelectorText) findViewById(R.id.graph_view_mode);
     //st.performClick();
@@ -570,7 +609,7 @@ public class AnalyzerActivity extends Activity
   Thread graphInit;
   boolean bSamplingPreparation = false;
 
-  private void restartSampling(AnalyzerParameters _analyzerParam) {
+  private void restartSampling(final AnalyzerParameters _analyzerParam) {
     // Stop previous sampler if any.
     if (samplingThread != null) {
       samplingThread.finish();
@@ -585,7 +624,7 @@ public class AnalyzerActivity extends Activity
     // Set the view for incoming data
     graphInit = new Thread(new Runnable() {
       public void run() {
-        analyzerViews.setupView(analyzerParam);
+        analyzerViews.setupView(_analyzerParam);
       }
     });
     graphInit.start();

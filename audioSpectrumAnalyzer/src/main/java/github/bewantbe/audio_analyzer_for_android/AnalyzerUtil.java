@@ -16,6 +16,7 @@
 package github.bewantbe.audio_analyzer_for_android;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -113,6 +114,14 @@ class AnalyzerUtil {
         } catch (NumberFormatException e) {
             return 0.0/0.0;  // nan
         }
+    }
+
+    // Thanks http://stackoverflow.com/questions/16319237/cant-put-double-sharedpreferences
+    static SharedPreferences.Editor putDouble(final SharedPreferences.Editor edit, final String key, final double value) {
+        return edit.putLong(key, Double.doubleToRawLongBits(value));
+    }
+    static double getDouble(final SharedPreferences prefs, final String key, final double defaultValue) {
+        return Double.longBitsToDouble(prefs.getLong(key, Double.doubleToLongBits(defaultValue)));
     }
 
     final int[]    stdSourceId;  // how to make it final?
