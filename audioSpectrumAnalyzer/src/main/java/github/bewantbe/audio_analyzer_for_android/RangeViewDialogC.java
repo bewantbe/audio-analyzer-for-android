@@ -78,6 +78,24 @@ class RangeViewDialogC {
             return;
         }
         double[] vals = graphView.getViewPhysicalRange();
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
+        boolean isLock = sharedPref.getBoolean("view_range_lock", false);
+        // If locked, load the saved value
+        if (isLock) {
+            double[] rr = new double[AnalyzerGraphic.VIEW_RANGE_DATA_LENGTH];
+            for (int i = 0; i < rr.length; i++) {
+                rr[i] = AnalyzerUtil.getDouble(sharedPref, "view_range_rr_" + i, 0.0 / 0.0);
+                if (Double.isNaN(rr[i])) {  // not properly initialized
+                    Log.w(TAG, "LoadPreferences(): rr is not properly initialized");
+                    rr = null;
+                    break;
+                }
+            }
+            if (rr != null)
+                System.arraycopy(rr, 0, vals, 0, rr.length);
+        }
+
         DecimalFormat df = new DecimalFormat("#.##");
         ((EditText) rangeViewView.findViewById(R.id.et_freq_setting_lower_bound))
                 .setText(df.format(vals[0]));
@@ -104,8 +122,6 @@ class RangeViewDialogC {
             et.addTextChangedListener(new MyTextWatcher(et));
         }
 
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
-        boolean isLock = sharedPref.getBoolean("view_range_lock", false);
         ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
 
         rangeViewDialog.show();
@@ -136,12 +152,13 @@ class RangeViewDialogC {
                                 Log.v(TAG, "  EditText[" + i + "] not change. rr[i] = " + rr[i]);
                             }
                         }
-                        graphView.setViewRange(rr, rangeDefault);
+                        rr = graphView.setViewRange(rr, rangeDefault);
                         // Save setting to preference, after sanitized.
                         boolean isLock = ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).isChecked();
                         SaveViewRange(rr, isLock);
                         if (isLock) {
                             ct.stickToMeasureMode();
+                            ct.viewRangeArray = rr;
                         } else {
                             ct.stickToMeasureModeCancel();
                         }

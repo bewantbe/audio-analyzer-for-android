@@ -48,6 +48,7 @@ public class AnalyzerGraphic extends View {
     private volatile static boolean isBusy = false;
     private float freq_lower_bound_for_log = 0f;
     private double[] savedDBSpectrum = new double[0];
+    static final int VIEW_RANGE_DATA_LENGTH = 6;
 
     SpectrumPlot    spectrumPlot;
     SpectrogramPlot spectrogramPlot;
@@ -218,24 +219,34 @@ public class AnalyzerGraphic extends View {
         showMode = PlotMode.SPECTROGRAM;
     }
 
-    void setViewRange(double[] ranges, double[] rangesDefault) {
+    double[] setViewRange(double[] _ranges, double[] rangesDefault) {
         // See AnalyzerActivity::getViewPhysicalRange() for ranges[]
+        if (_ranges.length < VIEW_RANGE_DATA_LENGTH) {
+            Log.i(TAG, "setViewRange(): invalid input.");
+            return null;
+        }
+
+        // do not modify input parameter
+        double[] ranges = new double[VIEW_RANGE_DATA_LENGTH];
+        System.arraycopy(_ranges, 0, ranges, 0, VIEW_RANGE_DATA_LENGTH);
 
         if (rangesDefault != null) {
             // Sanity check
-            if (ranges.length != 6 || rangesDefault.length != 12) {
+            if (rangesDefault.length != 2 * VIEW_RANGE_DATA_LENGTH) {
                 Log.i(TAG, "setViewRange(): invalid input.");
-                return;
+                return null;
             }
             for (int i = 0; i < 6; i += 2) {
+                if (ranges[i  ] > ranges[i+1]) {                     // order reversed
+                    double t = ranges[i]; ranges[i] = ranges[i+1]; ranges[i+1] = t;
+                }
+                if (ranges[i  ] < rangesDefault[i+6]) ranges[i  ] = rangesDefault[i+6];  // lower  than lower bound
+                if (ranges[i+1] < rangesDefault[i+6]) ranges[i+1] = rangesDefault[i+7];  // all lower  than lower bound?
+                if (ranges[i  ] > rangesDefault[i+7]) ranges[i  ] = rangesDefault[i+6];  // all higher than upper bound?
+                if (ranges[i+1] > rangesDefault[i+7]) ranges[i+1] = rangesDefault[i+7];  // higher than upper bound
                 if (ranges[i    ] == ranges[i + 1] || Double.isNaN(ranges[i]) || Double.isNaN(ranges[i + 1])) {  // invalid input value
                     ranges[i    ] = rangesDefault[i];
                     ranges[i + 1] = rangesDefault[i + 1];
-                }
-                if (ranges[i  ] < rangesDefault[i+6]) ranges[i  ] = rangesDefault[i+6];  // lower  than lower bound
-                if (ranges[i+1] > rangesDefault[i+7]) ranges[i+1] = rangesDefault[i+7];  // higher than upper bound
-                if (ranges[i  ] > ranges[i+1]) {                     // order reversed
-                    double t = ranges[i]; ranges[i] = ranges[i+1]; ranges[i+1] = t;
                 }
             }
         }
@@ -272,6 +283,8 @@ public class AnalyzerGraphic extends View {
                 xShift = spectrogramPlot.axisTime.shift;
             }
         }
+
+        return ranges;
     }
 
     private void updateAxisZoomShift() {

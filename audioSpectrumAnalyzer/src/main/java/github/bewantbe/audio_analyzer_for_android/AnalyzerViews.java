@@ -55,7 +55,7 @@ class AnalyzerViews {
     private StringBuilder textCur = new StringBuilder("");  // for textCurChar
     private StringBuilder textRMS  = new StringBuilder("");
     private StringBuilder textPeak = new StringBuilder("");
-    private StringBuilder textRec = new StringBuilder("");  // for textCurChar
+    private StringBuilder textRec = new StringBuilder("");
     private char[] textRMSChar;   // for text in R.id.textview_RMS
     private char[] textCurChar;   // for text in R.id.textview_cur
     private char[] textPeakChar;  // for text in R.id.textview_peak

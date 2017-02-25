@@ -16,7 +16,7 @@
  *
  * 2014 Eddy Xiao <bewantbe@gmail.com>
  * GUI extensively modified.
- * Add some naive auto refresh rate control logic.
+ * Add spectrogram plot, smooth gesture view control and various settings.
  */
 
 package github.bewantbe.audio_analyzer_for_android;
@@ -75,10 +75,10 @@ public class AnalyzerActivity extends Activity
   double dtRMSFromFT = 0;
   double maxAmpDB;
   double maxAmpFreq;
+  double[] viewRangeArray = null;
 
-  private boolean isLinearFreq = true;
   private boolean isMeasure = false;
-  private boolean bLockToMeasureMode = false;
+  private boolean isLockViewRange = false;
   volatile boolean bSaveWav = false;
 
   @Override
@@ -241,6 +241,17 @@ public class AnalyzerActivity extends Activity
     switch (buttonId) {
     case R.id.button_sample_rate:
       analyzerViews.popupMenuSampleRate.dismiss();
+      if (! isLockViewRange) {  // so change of sample rate do not change view range
+        viewRangeArray = analyzerViews.graphView.getViewPhysicalRange();
+        // if range is align at boundary, extend the range.
+        if (viewRangeArray[0] == viewRangeArray[6]) {
+          viewRangeArray[0] = 0;
+        }
+        if (viewRangeArray[1] == viewRangeArray[6 + 1]) {
+          viewRangeArray[1] = Integer.parseInt(selectedItemTag) / 2;
+        }
+        Log.i(TAG, "onItemClick(): viewRangeArray saved. " + viewRangeArray[0] + " ~ " + viewRangeArray[1]);
+      }
       analyzerParam.sampleRate = Integer.parseInt(selectedItemTag);
       b_need_restart_audio = true;
       editor.putInt("button_sample_rate", analyzerParam.sampleRate);
@@ -351,14 +362,11 @@ public class AnalyzerActivity extends Activity
       }
     }, "select");
 
-    analyzerViews.graphView.setupAxes(analyzerParam);
-
     boolean isLock = sharedPref.getBoolean("view_range_lock", false);
     if (isLock) {
       Log.i(TAG, "LoadPreferences(): isLocked");
       // Set view range and stick to measure mode
-      double[] rangeDefault = analyzerViews.graphView.getViewPhysicalRange();
-      double[] rr = new double[rangeDefault.length / 2];
+      double[] rr = new double[AnalyzerGraphic.VIEW_RANGE_DATA_LENGTH];
       for (int i = 0; i < rr.length; i++) {
         rr[i] = AnalyzerUtil.getDouble(sharedPref, "view_range_rr_" + i, 0.0/0.0);
         if (Double.isNaN(rr[i])) {  // not properly initialized
@@ -368,21 +376,21 @@ public class AnalyzerActivity extends Activity
         }
       }
       if (rr != null) {
-        analyzerViews.graphView.setViewRange(rr, null);
+        viewRangeArray = rr;
       }
       stickToMeasureMode();
     } else {
-      bLockToMeasureMode = false;
+      stickToMeasureModeCancel();
     }
   }
 
   void stickToMeasureMode() {
-    bLockToMeasureMode = true;
+    isLockViewRange = true;
     switchMeasureAndScaleMode();
   }
 
   void stickToMeasureModeCancel() {
-    bLockToMeasureMode = false;
+    isLockViewRange = false;
     switchMeasureAndScaleMode();
   }
 
@@ -479,7 +487,7 @@ public class AnalyzerActivity extends Activity
   }
 
   private void switchMeasureAndScaleMode() {
-    if (bLockToMeasureMode) {
+    if (isLockViewRange) {
       isMeasure = true;
       return;
     }
@@ -619,6 +627,14 @@ public class AnalyzerActivity extends Activity
         e.printStackTrace();
       }
       samplingThread = null;
+    }
+
+    if (viewRangeArray != null) {
+      analyzerViews.graphView.setupAxes(analyzerParam);
+      double[] rangeDefault = analyzerViews.graphView.getViewPhysicalRange();
+      Log.i(TAG, "restartSampling(): setViewRange: " + viewRangeArray[0] + " ~ " + viewRangeArray[1]);
+      analyzerViews.graphView.setViewRange(viewRangeArray, rangeDefault);
+      if (! isLockViewRange) viewRangeArray = null;  // do not conserve
     }
 
     // Set the view for incoming data
@@ -770,13 +786,14 @@ public class AnalyzerActivity extends Activity
 //      case R.id.graph_view_mode:
 //        isMeasure = !value.equals("scale");
 //        return false;
-      case R.id.freq_scaling_mode:
-        isLinearFreq = value.equals("linear");
-        Log.d(TAG, "processClick(): isLinearFreq="+isLinearFreq);
+      case R.id.freq_scaling_mode: {
+        boolean isLinearFreq = value.equals("linear");
+        Log.d(TAG, "processClick(): isLinearFreq=" + isLinearFreq);
         analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
         editor.putString("freq_scaling_mode", value);
         editor.apply();
         return false;
+      }
       case R.id.dbA:
         analyzerParam.isAWeighting = !value.equals("dB");
         if (samplingThread != null) {

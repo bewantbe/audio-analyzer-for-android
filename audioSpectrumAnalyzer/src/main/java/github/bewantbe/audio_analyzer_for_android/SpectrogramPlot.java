@@ -880,7 +880,7 @@ class SpectrogramPlot {
                 axis.reverseBounds();
             }
             float dFreq = axis.vUpperBound / nFreq;
-            Log.i(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vU=" + axis.vUpperBound + "  axis.nC=" + axis.nCanvasPixel);
+//            Log.v(TAG, "init(): axis.vL=" + axis.vLowerBound + "  axis.vU=" + axis.vUpperBound + "  axis.nC=" + axis.nCanvasPixel);
             for (int i = 0; i <= nFreq; i++) {  // freq = i * dFreq
                 // do not show DC component (xxx - 1).
                 mapFreqToPixL[i] = (int) Math.floor(axis.pixelFromV((i - 0.5f) * dFreq) / axis.nCanvasPixel * bmpWidth);
