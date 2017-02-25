@@ -72,7 +72,7 @@ class RangeViewDialogC {
         public void afterTextChanged(Editable editable) {}
     }
 
-    void ShowRangeViewDialog() {
+    private void SetRangeView(boolean loadSaved) {
         if (rangeViewDialog == null) {
             Log.d(TAG, "ShowRangeViewDialog(): rangeViewDialog is not prepared.");
             return;
@@ -82,7 +82,7 @@ class RangeViewDialogC {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
         boolean isLock = sharedPref.getBoolean("view_range_lock", false);
         // If locked, load the saved value
-        if (isLock) {
+        if (isLock || loadSaved) {
             double[] rr = new double[AnalyzerGraphic.VIEW_RANGE_DATA_LENGTH];
             for (int i = 0; i < rr.length; i++) {
                 rr[i] = AnalyzerUtil.getDouble(sharedPref, "view_range_rr_" + i, 0.0 / 0.0);
@@ -114,15 +114,20 @@ class RangeViewDialogC {
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_dBH))
                 .setText(ct.getString(R.string.show_range_tv_dBH,vals[9]));
 
+        ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
+    }
+
+    void ShowRangeViewDialog() {
+        SetRangeView(false);
+
+        // Listener for test if a field is modified
         int[] resList = {R.id.et_freq_setting_lower_bound, R.id.et_freq_setting_upper_bound,
                 R.id.et_db_setting_lower_bound,   R.id.et_db_setting_upper_bound};
         for (int id : resList) {
             EditText et = (EditText) rangeViewView.findViewById(id);
             et.setTag(false);                                     // false = no modified
-            et.addTextChangedListener(new MyTextWatcher(et));
+            et.addTextChangedListener(new MyTextWatcher(et));     // Am I need to remove previous Listener first?
         }
-
-        ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
 
         rangeViewDialog.show();
     }
@@ -130,6 +135,13 @@ class RangeViewDialogC {
     private void buildDialog(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
         rangeViewView = inflater.inflate(R.layout.dialog_view_range, null);
+        rangeViewView.findViewById(R.id.show_range_button_load).setOnClickListener(
+            new View.OnClickListener() {
+                public void onClick(View v) {
+                    SetRangeView(true);
+                }
+            }
+        );
         AlertDialog.Builder freqDialogBuilder = new AlertDialog.Builder(context);
         freqDialogBuilder
                 .setView(rangeViewView)

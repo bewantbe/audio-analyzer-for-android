@@ -204,8 +204,8 @@ class ScreenPhysicalMapping {
             if (vL  < lower_bound_ref) vL = lower_bound_ref;
             if (vH  < lower_bound_ref) vH = lower_bound_ref;
         } else {
-            if (vL  < lower_bound_ref) vL = 0;
-            if (vH  < lower_bound_ref) vH = 0;
+            if (vL  <= lower_bound_ref) vL = 0;
+            if (vH  <= lower_bound_ref) vH = 0;
         }
         setZoomShiftFromV(vL, vH);
     }

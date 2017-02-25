@@ -74,12 +74,35 @@
         android:inputType="numberDecimal|numberSigned"
         android:hint="@string/et_db_setting_upper_bound" />
 
-    <CheckBox android:id="@+id/show_range_lock"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_below="@+id/et_db_setting_upper_bound"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:layout_marginTop="4dp"
         android:layout_marginBottom="12dp"
-        android:text="@string/show_range_lock" />
+        android:orientation="horizontal" >
+
+        <CheckBox android:id="@+id/show_range_lock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="1dp"
+            android:text="@string/show_range_lock" />
+
+        <Button android:id="@+id/show_range_button_load"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginStart="20dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="1dp"
+            android:layout_marginBottom="1dp"
+            android:textSize="16sp"
+            android:text="@string/show_range_button_lock" />
+
+    </LinearLayout>
 
 </RelativeLayout>
