@@ -11,7 +11,7 @@ understand various features of the Android SDK, including:
 
 Files:
 - fftLibrary: a library project containing the FFT code
-- audioAnalyzer: A simple android app to excersize the FFT library
+- audioAnalyzer: A simple android app to exercise the FFT library
 
 I'm making this available in the hope that it is useful.
 Stephen Uhler

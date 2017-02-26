@@ -15,6 +15,7 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -39,12 +40,12 @@ import java.text.DecimalFormat;
  */
 
 class RangeViewDialogC {
-    static final String TAG = "RangeViewDialogC:";
+    private static final String TAG = "RangeViewDialogC:";
     private AlertDialog rangeViewDialog = null;
     private View rangeViewView;
 
-    private AnalyzerActivity ct;
-    private AnalyzerGraphic graphView;
+    private final AnalyzerActivity ct;
+    private final AnalyzerGraphic graphView;
 
     RangeViewDialogC(AnalyzerActivity _ct, AnalyzerGraphic _graphView) {
         ct = _ct;
@@ -132,9 +133,10 @@ class RangeViewDialogC {
         rangeViewDialog.show();
     }
 
+    @SuppressLint("InflateParams")
     private void buildDialog(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        rangeViewView = inflater.inflate(R.layout.dialog_view_range, null);
+        rangeViewView = inflater.inflate(R.layout.dialog_view_range, null);  // null because there is no parent. https://possiblemobile.com/2013/05/layout-inflation-as-intended/
         rangeViewView.findViewById(R.id.show_range_button_load).setOnClickListener(
             new View.OnClickListener() {
                 public void onClick(View v) {

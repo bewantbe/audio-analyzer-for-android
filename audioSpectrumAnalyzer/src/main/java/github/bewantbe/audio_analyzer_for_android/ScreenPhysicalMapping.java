@@ -26,7 +26,7 @@ import static java.lang.Math.log;
  */
 
 class ScreenPhysicalMapping {
-    final static String TAG = "ScreenPhysicalMapping";
+    private final static String TAG = "ScreenPhysicalMapping";
 
     enum Type {  // java's enum type is inconvenient
         LINEAR(0), LINEAR_ON(1), LOG(2);
@@ -85,7 +85,7 @@ class ScreenPhysicalMapping {
         nCanvasPixel = nCanvasPixelSave;
     }
 
-    //    | lower bound  ...  higher bound |  physcial unit
+    //    | lower bound  ...  higher bound |  physical unit
     //    | 0            ...             1 |  "unit 1" (Mapping can be linear or logarithmic)
 
     // In LINEAR mode (default):
@@ -164,7 +164,7 @@ class ScreenPhysicalMapping {
         return pixelFromV(v, 1, 0);
     }
 
-    float diffVBounds() { return vUpperBound - vLowerBound; };
+    float diffVBounds() { return vUpperBound - vLowerBound; }
 
     void reverseBounds() {
 //        float vL = vMinInView();

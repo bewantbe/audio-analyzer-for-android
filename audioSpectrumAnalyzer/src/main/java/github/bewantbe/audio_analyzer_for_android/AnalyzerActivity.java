@@ -62,14 +62,14 @@ public class AnalyzerActivity extends Activity
     implements OnLongClickListener, OnClickListener,
                OnItemClickListener, AnalyzerGraphic.Ready
 {
-  static final String TAG="AnalyzerActivity:";
+  private static final String TAG="AnalyzerActivity:";
 
   AnalyzerViews analyzerViews;
   SamplingLoop samplingThread = null;
   private RangeViewDialogC rangeViewDialogC;
   private GestureDetectorCompat mDetector;
 
-  AnalyzerParameters analyzerParam = null;
+  private AnalyzerParameters analyzerParam = null;
 
   double dtRMS = 0;
   double dtRMSFromFT = 0;
@@ -201,7 +201,7 @@ public class AnalyzerActivity extends Activity
           settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
           startActivity(settings);
           return true;
-        case R.id.info_recoder:
+        case R.id.info_recorder:
           Intent int_info_rec = new Intent(this, InfoRecActivity.class);
           startActivity(int_info_rec);
           return true;
@@ -285,7 +285,7 @@ public class AnalyzerActivity extends Activity
 
   // Load preferences for Views
   // When this function is called, the SamplingLoop must not running in the meanwhile.
-  void loadPreferenceForView() {
+  private void loadPreferenceForView() {
     // load preferences for buttons
     // list-buttons
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -315,7 +315,7 @@ public class AnalyzerActivity extends Activity
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
   }
 
-  void LoadPreferences() {
+  private void LoadPreferences() {
     // Load preferences for recorder and views, beside loadPreferenceForView()
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -546,8 +546,8 @@ public class AnalyzerActivity extends Activity
   final private static float INIT = Float.MIN_VALUE;
   private boolean isPinching = false;
   private float xShift0 = INIT, yShift0 = INIT;
-  float x0, y0;
-  int[] windowLocation = new int[2];
+  private float x0, y0;
+  private int[] windowLocation = new int[2];
 
   private void scaleEvent(MotionEvent event) {
     if (event.getAction() != MotionEvent.ACTION_MOVE) {
@@ -617,7 +617,7 @@ public class AnalyzerActivity extends Activity
   private final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;  // just a number
   private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 2;
   Thread graphInit;
-  boolean bSamplingPreparation = false;
+  private boolean bSamplingPreparation = false;
 
   private void restartSampling(final AnalyzerParameters _analyzerParam) {
     // Stop previous sampler if any.

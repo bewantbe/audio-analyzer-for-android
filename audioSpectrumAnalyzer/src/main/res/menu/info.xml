@@ -18,7 +18,7 @@
         android:titleCondensed="settings"/>
 
     <item
-        android:id="@+id/info_recoder"
+        android:id="@+id/info_recorder"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"

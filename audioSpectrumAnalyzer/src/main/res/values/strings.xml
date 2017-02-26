@@ -45,7 +45,7 @@
     <string name="rec_tester_all">All Sources</string>
     <string name="rec_tester_hint1">"(Only test MONO, 16BIT format)\n"</string>
     <string name="rec_tester_col1">"\nSampleRate MinBuf    (Time)\n"</string>
-    <string name="rec_tester_col2">"%1$5d Hz  %2$4d Byte  (%3$4.1f ms)\n"</string>
+    <string name="rec_tester_col2">"%1$5d Hz  %2$4d Bytes (%3$4.1f ms)\n"</string>
     <string name="rec_tester_error1">"  ERROR\n"</string>
     <string name="rec_tester_hint2">"\n--- Audio Source Test ---\n"</string>
     <string name="rec_tester_col3">"\nSource: %1$s\n"</string>

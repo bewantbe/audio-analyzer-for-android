@@ -33,7 +33,7 @@ import java.util.Iterator;
  */
 
 class AnalyzerUtil {
-    static String TAG = "AnalyzerUtil";
+    private static String TAG = "AnalyzerUtil";
     private static final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
     // Convert frequency to pitch
@@ -150,7 +150,7 @@ class AnalyzerUtil {
                 try {
                     int id = (int)f.get(null);
                     iList.add(id);
-                    Log.w("Sources:", "" + id);
+                    Log.i("Sources id:", "" + id);
                 } catch (IllegalAccessException e) {}
             }
         }

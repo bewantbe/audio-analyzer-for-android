@@ -39,7 +39,7 @@ class SamplingLoop extends Thread {
     private SineGenerator sineGen2;
     private double[] spectrumDBcopy;   // XXX, transfers data from SamplingLoop to AnalyzerGraphic
 
-    private AnalyzerActivity activity;
+    private final AnalyzerActivity activity;
 
     volatile double wavSecRemain;
     volatile double wavSec = 0;

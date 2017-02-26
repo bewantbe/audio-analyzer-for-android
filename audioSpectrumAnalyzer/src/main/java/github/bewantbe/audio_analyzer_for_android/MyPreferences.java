@@ -27,9 +27,9 @@ import android.util.Log;
 // http://developer.android.com/guide/topics/ui/settings.html
 @SuppressWarnings("deprecation")
 public class MyPreferences extends PreferenceActivity {
-    static final String TAG = "MyPreference";
-    static String[] as;
-    static int[] asid;
+    private static final String TAG = "MyPreference";
+    private static String[] as;
+    private static int[] asid;
     private static String getAudioSourceNameFromId(int id) {
         for (int i = 0; i < as.length; i++) {
             if (asid[i] == id) {
@@ -53,7 +53,7 @@ public class MyPreferences extends PreferenceActivity {
         // the system saves the changes to a default SharedPreferences file
     }
 
-    SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+    private SharedPreferences.OnSharedPreferenceChangeListener prefListener =
         new SharedPreferences.OnSharedPreferenceChangeListener() {
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Log.i(TAG, key + "=" + prefs);

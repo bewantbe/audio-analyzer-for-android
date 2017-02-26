@@ -32,10 +32,10 @@ import java.util.ArrayList;
 // Test all (including unknown) recorder sources by open it and read data.
 
 public class InfoRecActivity extends Activity {
-	AnalyzerUtil analyzerUtil;
-	CharSequence testResultSt = null;
+	private AnalyzerUtil analyzerUtil;
+	private CharSequence testResultSt = null;
 
-	volatile boolean bShouldStop = false;
+	private volatile boolean bShouldStop = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +47,7 @@ public class InfoRecActivity extends Activity {
 		analyzerUtil = new AnalyzerUtil(this);
 		testResultSt = null;
 
-		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
+		final TextView tv = (TextView) findViewById(R.id.info_rec_tv);
 		tv.setMovementMethod(new ScrollingMovementMethod());
 	}
 
@@ -71,7 +71,7 @@ public class InfoRecActivity extends Activity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
+		final TextView tv = (TextView) findViewById(R.id.info_rec_tv);
 		switch (item.getItemId()) {
 			case android.R.id.home:
 				// This ID represents the Home or Up button. In the case of this
@@ -102,7 +102,7 @@ public class InfoRecActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		final TextView tv = (TextView) findViewById(R.id.textview_info_rec);
+		final TextView tv = (TextView) findViewById(R.id.info_rec_tv);
 
 		if (testResultSt != null) {
 			tv.setText(testResultSt);
@@ -112,9 +112,9 @@ public class InfoRecActivity extends Activity {
 		runTest(tv, 7);
 	}
 
-	Thread testerThread;
+	private Thread testerThread;
 
-	void runTest(final TextView tv, final int testLevel) {
+	private void runTest(final TextView tv, final int testLevel) {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {

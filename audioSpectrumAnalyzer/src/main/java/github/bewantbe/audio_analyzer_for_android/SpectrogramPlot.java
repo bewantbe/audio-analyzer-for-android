@@ -34,8 +34,8 @@ import static java.lang.Math.pow;
  */
 
 class SpectrogramPlot {
-    static final String TAG = "SpectrogramPlot:";
-    static final String[] axisLabels = {"Hz", "dB", "Sec"};
+    private static final String TAG = "SpectrogramPlot:";
+    private static final String[] axisLabels = {"Hz", "dB", "Sec"};
     boolean showFreqAlongX = false;
 
     private static final int[] cma = ColorMapArray.hot;
@@ -221,8 +221,8 @@ class SpectrogramPlot {
 
         // plot axis mark
         float posAlongAxis;
-        float textHeigh     = labelPaint.getFontMetrics(null);
-        float labelLargeLen = 0.5f * textHeigh;
+        float textHeight = labelPaint.getFontMetrics(null);
+        float labelLargeLen = 0.5f * textHeight;
         float labelSmallLen = 0.6f*labelLargeLen;
         for(int i = 0; i < gridPoints[1].length; i++) {
             //posAlongAxis =((float)gridPoints[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
@@ -250,7 +250,7 @@ class SpectrogramPlot {
 
         // plot labels
         float widthDigit = labelPaint.measureText("0");
-        float posOffAxis = labelBeginY + 0.3f*labelLargeLen + textHeigh;
+        float posOffAxis = labelBeginY + 0.3f*labelLargeLen + textHeight;
         for(int i = 0; i < gridPointsStr.length; i++) {
             //posAlongAxis = ((float)gridPoints[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
             posAlongAxis = canvasMin + axis.pixelFromV((float)gridPoints[0][i]);
@@ -260,9 +260,9 @@ class SpectrogramPlot {
                 }
                 c.drawText(gridPointsSt[i], 0, gridPointsStr[i].length(), posAlongAxis, posOffAxis, labelPaint);
             } else {
-//                Log.i(TAG, "posAlongAxis = " + posAlongAxis + "  canvasMax+textHeigh = " + (canvasMax+textHeigh) +
-//                           "  diff = " + (canvasMax + textHeigh - (posAlongAxis - 0.5f*textHeigh)));
-                if (posAlongAxis - 1.0f*textHeigh < canvasMin + textHeigh) {
+//                Log.i(TAG, "posAlongAxis = " + posAlongAxis + "  canvasMax+textHeight = " + (canvasMax+textHeight) +
+//                           "  diff = " + (canvasMax + textHeight - (posAlongAxis - 0.5f*textHeight)));
+                if (posAlongAxis - 1.0f*textHeight < canvasMin + textHeight) {
                     continue;
                 }
                 c.drawText(gridPointsSt[i], 0, gridPointsStr[i].length(),
@@ -272,7 +272,7 @@ class SpectrogramPlot {
         if (drawOnXAxis) {
             c.drawText(axisLabel, canvasWidth - (axisLabel.length() +.3f)*widthDigit, posOffAxis, labelPaint);
         } else {
-            c.drawText(axisLabel, labelBeginX - widthDigit * axisLabel.length() - 0.5f * labelLargeLen, canvasMin+textHeigh, labelPaint);
+            c.drawText(axisLabel, labelBeginX - widthDigit * axisLabel.length() - 0.5f * labelLargeLen, canvasMin+textHeight, labelPaint);
         }
     }
 
@@ -443,18 +443,18 @@ class SpectrogramPlot {
 
     private float getLabelBeginY() {
         float textHeigh     = labelPaint.getFontMetrics(null);
-        float labelLaegeLen = 0.5f * textHeigh;
+        float labelLargeLen = 0.5f * textHeigh;
         if (!showFreqAlongX && !bShowTimeAxis) {
             return canvasHeight;
         } else {
-            return canvasHeight - 0.6f*labelLaegeLen - textHeigh;
+            return canvasHeight - 0.6f*labelLargeLen - textHeigh;
         }
     }
 
     // Left margin for ruler
     private float getLabelBeginX() {
-        float textHeigh     = labelPaint.getFontMetrics(null);
-        float labelLaegeLen = 0.5f * textHeigh;
+        float textHeight = labelPaint.getFontMetrics(null);
+        float labelLaegeLen = 0.5f * textHeight;
         if (showFreqAlongX) {
             if (bShowTimeAxis) {
                 int j = 3;
@@ -463,12 +463,12 @@ class SpectrogramPlot {
                         j = tmGridLabel.strings[i].length();
                     }
                 }
-                return 0.6f*labelLaegeLen + j*0.5f*textHeigh;
+                return 0.6f*labelLaegeLen + j*0.5f*textHeight;
             } else {
                 return 0;
             }
         } else {
-            return 0.6f*labelLaegeLen + 2.5f*textHeigh;
+            return 0.6f*labelLaegeLen + 2.5f*textHeight;
         }
     }
 
@@ -841,7 +841,7 @@ class SpectrogramPlot {
         final static String TAG = "LogFreqSpectrogramBMP:";
         int nFreq = 0;
         int nTime = 0;
-        int[] bm = new int[0];   // elememts are in "time major" order.
+        int[] bm = new int[0];   // elements are in "time major" order.
         int[] bmShiftCache = new int[0];
         int bmPt = 0;
         int bmpWidth = 1000;     // width in Frequency direction
@@ -1000,7 +1000,7 @@ class SpectrogramPlot {
         final static String TAG = "LogSeg..:";
         int nFreq = 0;
         int nTime = 0;
-        int[] bm = new int[0];   // elememts are in "time major" order.
+        int[] bm = new int[0];   // elements are in "time major" order.
         int[] bmShiftCache = new int[0];
         int bmPt = 0;
         double[] iFreqToPix = new double[0];

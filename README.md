@@ -19,9 +19,9 @@ Features
 * Show peak frequency, in a moderate accuracy (FFT + interpolation).
 * Show dB or [A-weighting dB (dBA)](http://en.wikipedia.org/wiki/A-weighting), although not suitable for serious application.
 * Take averages of several spectrum then plot, make the spectrum smoother.
-* You may record the sound (while analyzing or not) to a WAV file (PCM format). Then deal with it with your favarite tool.
+* You may record the sound (while analyzing or not) to a WAV file (PCM format). Then deal with it with your favorite tool.
 * You can choose various recorder source. (see Android reference: [MediaRecorder.AudioSource](http://developer.android.com/reference/android/media/MediaRecorder.AudioSource.html))
-* You can try different sampling rates that your phone supports. Useful for example to find out the native (or best) sampling formate for you phone.
+* You can try different sampling rates that your phone supports. Useful for example to find out the native (or best) sampling format for you phone.
 
 
 Installation Requirements
@@ -72,5 +72,5 @@ Import eclipse project to Android Studio (tested in Android Studio 1.1.0 with Op
 Thanks
 ------
 
-The code [Audio spectrum Analyzer for Android](https://code.google.com/p/audio-analyzer-for-android/) gives me a good starting point, for leanring Java and write this software (that I desired long ago).
+The code [Audio spectrum Analyzer for Android](https://code.google.com/p/audio-analyzer-for-android/) gives me a good starting point, for learning Java and write this software (that I desired long ago).
 

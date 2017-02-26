@@ -3,5 +3,5 @@
       package="com.google.corp.productivity.specialprojects.android.fft"
       android:versionCode="1"
       android:versionName="1.0">
-    <uses-sdk android:minSdkVersion="7" />
+    <!--<uses-sdk android:minSdkVersion="7" />-->
 </manifest>

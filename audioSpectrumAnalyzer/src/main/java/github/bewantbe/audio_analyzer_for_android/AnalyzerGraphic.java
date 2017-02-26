@@ -215,6 +215,7 @@ public class AnalyzerGraphic extends View {
                 yShift = spectrogramPlot.axisTime.shift;
                 spectrogramPlot.axisFreq.setZoomShift(xZoom, xShift);
             } else {
+                //noinspection SuspiciousNameCombination
                 yZoom = xZoom;
                 yShift = 1 - 1/xZoom - xShift;         // axisFreq is reverted
                 xZoom  = spectrogramPlot.axisTime.zoom;
@@ -340,7 +341,7 @@ public class AnalyzerGraphic extends View {
 
     static void setIsBusy(boolean b) { isBusy = b; }
 
-    FPSCounter fpsCounter = new FPSCounter("AnalyzerGraphic");
+    private final FPSCounter fpsCounter = new FPSCounter("AnalyzerGraphic");
 //  long t_old;
 
     @Override
@@ -447,7 +448,7 @@ public class AnalyzerGraphic extends View {
         } else {
             r[0] = spectrogramPlot.axisFreq.vMinInView();
             r[1] = spectrogramPlot.axisFreq.vMaxInView();
-            if (r[0] > r[1]) { double t=r[0]; r[0]=r[1]; r[1]=t; };
+            if (r[0] > r[1]) { double t=r[0]; r[0]=r[1]; r[1]=t; }
             r[2] = spectrogramPlot.dBLowerBound;
             r[3] = spectrogramPlot.dBUpperBound;
             r[4] = spectrogramPlot.axisTime.vMinInView();
@@ -455,7 +456,7 @@ public class AnalyzerGraphic extends View {
 
             r[6] = spectrogramPlot.axisFreq.vLowerBound;
             r[7] = spectrogramPlot.axisFreq.vUpperBound;
-            if (r[6] > r[7]) { double t=r[6]; r[6]=r[7]; r[7]=t; };
+            if (r[6] > r[7]) { double t=r[6]; r[6]=r[7]; r[7]=t; }
             r[8] = AnalyzerGraphic.minDB;
             r[9] = AnalyzerGraphic.maxDB;
             r[10]= spectrogramPlot.axisTime.vLowerBound;
