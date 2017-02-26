@@ -618,7 +618,7 @@ public class AnalyzerGraphic extends View {
     }
 
   /*
-   * Save the cursors, zooms, and current spectrogram/spectrum.
+   * Save freqAxisAlongX, cursors, zooms, and current spectrogram/spectrum.
    * All other properties will be set in onCreate() and onResume().
    * Will be called after onPause() or between onCreat() and on onResume()
    * Ref. https://developer.android.com/guide/topics/ui/settings.html#CustomSaveState
@@ -648,11 +648,8 @@ public class AnalyzerGraphic extends View {
         state.SpamTZ = spectrogramPlot.axisTime.zoom;
         state.SpamTS = spectrogramPlot.axisTime.shift;
 
-//        state.tmpSLen  = savedDBSpectrum.length;
         state.tmpS     = savedDBSpectrum;
 
-//        state.tmpSCLen = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray.length;
-//        state.tmpSC    = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
         state.nFreq    = spectrogramPlot.nFreqPoints;
         state.nTime    = spectrogramPlot.nTimePoints;
         state.iTimePinter = spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer;
@@ -668,6 +665,7 @@ public class AnalyzerGraphic extends View {
             input[2*i+1] = (byte)(tmpSC[i] >> 8);
         }
 
+        // Save spectrumStore.dbShortArray to a file.
         File tmpSCPath = new File(context.getCacheDir(), "spectrogram_short.raw");
         try {
             OutputStream fout = new FileOutputStream(tmpSCPath);
@@ -681,8 +679,6 @@ public class AnalyzerGraphic extends View {
     }
 
     // Will be called after setup(), during AnalyzerActivity.onCreate()?
-    // maybe we could save the whole view in main activity
-
     @Override
     public void onRestoreInstanceState(Parcelable state) {
         if (state instanceof SavedState) {
@@ -707,11 +703,8 @@ public class AnalyzerGraphic extends View {
             spectrogramPlot.axisTime.zoom  = s.SpamTZ;
             spectrogramPlot.axisTime.shift = s.SpamTS;
 
-//            savedDBSpectrum.length = s.tmpSLen;
             savedDBSpectrum = s.tmpS;
 
-            //spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray.length = s.tmpSCLen;
-//            spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = s.tmpSC;
             spectrogramPlot.nFreqPoints = s.nFreq;
             spectrogramPlot.nTimePoints = s.nTime;
             spectrogramPlot.spectrogramBMP.spectrumStore.nFreq = s.nFreq;  // prevent reinitialize of LogFreqSpectrogramBMP
@@ -733,7 +726,7 @@ public class AnalyzerGraphic extends View {
                 spectrogramPlot.spectrogramBMP.spectrumStore.nFreq = 0;
                 spectrogramPlot.spectrogramBMP.spectrumStore.nTime = 0;
                 spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = 0;
-            } else {  // we have data!!
+            } else {  // we have data!
                 short[] tmpSC = new short[input.length/2];
                 for (int i = 0; i < tmpSC.length; i++) {
                     tmpSC[i] = (short)(input[2*i] + (input[2*i+1] << 8));
@@ -766,11 +759,8 @@ public class AnalyzerGraphic extends View {
         float SpamTZ;
         float SpamTS;
 
-        //        int tmpSLen;
         double[] tmpS;
 
-        //        int tmpSCLen;
-//        short[] tmpSC;
         int nFreq;
         int nTime;
         int iTimePinter;
@@ -800,12 +790,6 @@ public class AnalyzerGraphic extends View {
 
             tmpS = in.createDoubleArray();
 
-//            int[] tmpSCInt = in.createIntArray();
-//            tmpSC = new short[tmpSCInt.length * 2];
-//            for (int i = 0; i < tmpSCInt.length; i++) {
-//                tmpSC[2*i  ] = (short)( tmpSCInt[i]      & 0x7fff);
-//                tmpSC[2*i+1] = (short)((tmpSCInt[i]>>16) & 0x7fff);
-//            }
             nFreq       = in.readInt();
             nTime       = in.readInt();
             iTimePinter = in.readInt();
@@ -833,38 +817,9 @@ public class AnalyzerGraphic extends View {
 
             out.writeDoubleArray(tmpS);
 
-//            int[] tmpSCInt = new int[tmpSC.length / 2];  // stupid java
-//            for (int i = 0; i < tmpSCInt.length; i++) {
-//                tmpSCInt[i] = tmpSC[2*i] + (tmpSC[2*i+1] << 16);
-//            }
-            // Consider use compress. Fail: poor compress ratio (961450B to 855965B), transpose do no help
-            // https://developer.android.com/reference/java/util/zip/Deflater.html
-//            out.writeIntArray(tmpSCInt);
             out.writeInt(nFreq);
             out.writeInt(nTime);
             out.writeInt(iTimePinter);
-
-//            // Compress the bytes
-//            byte[] input = new byte[tmpSC.length * 2];
-//            for (int i = 0; i < tmpSC.length; i++) {
-//                input[2*i  ] = (byte)( tmpSC[i]     & 0xff);
-//                input[2*i+1] = (byte)((tmpSC[i]>>8) & 0xff);
-//            }
-
-//            for (int i = 0; i < nFreq+1; i++) {
-//                for (int j = 0; j < nTime; j++) {  // transpose
-//                    input[2 * (i*nTime + j)    ] = (byte) ( tmpSC[j*(nFreq+1) + i]       & 0xff);
-//                    input[2 * (i*nTime + j) + 1] = (byte) ((tmpSC[j*(nFreq+1) + i] >> 8) & 0xff);
-//                }
-//            }
-
-//            byte[] output = new byte[input.length];
-//            Deflater compresser = new Deflater();
-//            compresser.setInput(input);
-//            compresser.finish();
-//            int compressedDataLength = compresser.deflate(output);
-//            compresser.end();
-//            Log.w("writeToParcel()", "size(): " + output.length + " to " + compressedDataLength);
         }
 
         // Standard creator object using an instance of this class

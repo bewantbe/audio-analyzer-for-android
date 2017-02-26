@@ -386,12 +386,14 @@ public class AnalyzerActivity extends Activity
 
   void stickToMeasureMode() {
     isLockViewRange = true;
-    switchMeasureAndScaleMode();
+    switchMeasureAndScaleMode();  // Force set to Measure mode
   }
 
   void stickToMeasureModeCancel() {
     isLockViewRange = false;
-    switchMeasureAndScaleMode();
+    if (isMeasure) {
+      switchMeasureAndScaleMode();  // Force set to ScaleMode
+    }
   }
 
   private boolean isInGraphView(float x, float y) {

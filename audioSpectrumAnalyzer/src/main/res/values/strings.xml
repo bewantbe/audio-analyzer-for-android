@@ -20,10 +20,10 @@
     <!-- Show range dialog -->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="show_range_tv_fL">"Lower Frequency Bound (&gt;=%1$.2f)"</string>
-    <string name="show_range_tv_fH">"And upper Frequency Bound (&lt;=%1$.2f)"</string>
-    <string name="show_range_tv_dBL">"Low dB Bound (&gt;=%1$.2f)"</string>
-    <string name="show_range_tv_dBH">"And upper dB Bound (&lt;=%1$.2f)"</string>
+    <string name="show_range_tv_fL">"Set lower Frequency Bound (&gt;=%1$.2f)"</string>
+    <string name="show_range_tv_fH">"and upper Frequency Bound (&lt;=%1$.2f)"</string>
+    <string name="show_range_tv_dBL">"Set low dB Bound (&gt;=%1$.2f)"</string>
+    <string name="show_range_tv_dBH">"and upper dB Bound (&lt;=%1$.2f)"</string>
     <string name="et_freq_setting_lower_bound">frequency lower bound</string>
     <string name="et_freq_setting_upper_bound">frequency upper bound</string>
     <string name="et_db_setting_lower_bound">dB lower bound</string>
