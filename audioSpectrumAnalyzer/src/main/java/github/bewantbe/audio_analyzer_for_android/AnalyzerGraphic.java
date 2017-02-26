@@ -31,6 +31,13 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Custom view to draw the FFT graph
  */
@@ -645,10 +652,30 @@ public class AnalyzerGraphic extends View {
         state.tmpS     = savedDBSpectrum;
 
 //        state.tmpSCLen = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray.length;
-        state.tmpSC    = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
+//        state.tmpSC    = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
         state.nFreq    = spectrogramPlot.nFreqPoints;
         state.nTime    = spectrogramPlot.nTimePoints;
         state.iTimePinter = spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer;
+
+        final short[] tmpSC    = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
+
+        // Get byte[] representation of short[]
+        // Note no ByteBuffer view of ShortBuffer, see
+        //   http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4489356
+        byte[] input = new byte[tmpSC.length * 2];
+        for (int i = 0; i < tmpSC.length; i++) {
+            input[2*i  ] = (byte)(tmpSC[i] & 0xff);
+            input[2*i+1] = (byte)(tmpSC[i] >> 8);
+        }
+
+        File tmpSCPath = new File(context.getCacheDir(), "spectrogram_short.raw");
+        try {
+            OutputStream fout = new FileOutputStream(tmpSCPath);
+            fout.write(input);
+            fout.close();
+        } catch (IOException e) {
+            Log.w("SavedState:", "writeToParcel(): Fail to save state to file.");
+        }
 
         return state;
     }
@@ -684,13 +711,36 @@ public class AnalyzerGraphic extends View {
             savedDBSpectrum = s.tmpS;
 
             //spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray.length = s.tmpSCLen;
-            spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = s.tmpSC;
+//            spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = s.tmpSC;
             spectrogramPlot.nFreqPoints = s.nFreq;
             spectrogramPlot.nTimePoints = s.nTime;
             spectrogramPlot.spectrogramBMP.spectrumStore.nFreq = s.nFreq;  // prevent reinitialize of LogFreqSpectrogramBMP
             spectrogramPlot.spectrogramBMP.spectrumStore.nTime = s.nTime;
             spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = s.iTimePinter;
-            spectrogramPlot.spectrogramBMP.rebuildLinearBMP();
+
+            byte[] input = new byte[(s.nFreq+1) * s.nTime * 2]; // length of spectrumStore.dbShortArray
+            int bytesRead = -1;
+            File tmpSCPath = new File(context.getCacheDir(), "spectrogram_short.raw");
+            try {
+                InputStream fin = new FileInputStream(tmpSCPath);
+                bytesRead = fin.read(input);
+                fin.close();
+            } catch (IOException e) {
+                Log.w("SavedState:", "writeToParcel(): Fail to save state to file.");
+            }
+
+            if (bytesRead != input.length) {  // fail to get saved spectrogram, have a new start
+                spectrogramPlot.spectrogramBMP.spectrumStore.nFreq = 0;
+                spectrogramPlot.spectrogramBMP.spectrumStore.nTime = 0;
+                spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = 0;
+            } else {  // we have data!!
+                short[] tmpSC = new short[input.length/2];
+                for (int i = 0; i < tmpSC.length; i++) {
+                    tmpSC[i] = (short)(input[2*i] + (input[2*i+1] << 8));
+                }
+                spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = tmpSC;
+                spectrogramPlot.spectrogramBMP.rebuildLinearBMP();
+            }
 
             Log.i(TAG, "onRestoreInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
         } else {
@@ -720,7 +770,7 @@ public class AnalyzerGraphic extends View {
         double[] tmpS;
 
         //        int tmpSCLen;
-        short[] tmpSC;
+//        short[] tmpSC;
         int nFreq;
         int nTime;
         int iTimePinter;
@@ -750,12 +800,12 @@ public class AnalyzerGraphic extends View {
 
             tmpS = in.createDoubleArray();
 
-            int[] tmpSCInt = in.createIntArray();
-            tmpSC = new short[tmpSCInt.length * 2];
-            for (int i = 0; i < tmpSCInt.length; i++) {
-                tmpSC[2*i  ] = (short)( tmpSCInt[i]      & 0x7fff);
-                tmpSC[2*i+1] = (short)((tmpSCInt[i]>>16) & 0x7fff);
-            }
+//            int[] tmpSCInt = in.createIntArray();
+//            tmpSC = new short[tmpSCInt.length * 2];
+//            for (int i = 0; i < tmpSCInt.length; i++) {
+//                tmpSC[2*i  ] = (short)( tmpSCInt[i]      & 0x7fff);
+//                tmpSC[2*i+1] = (short)((tmpSCInt[i]>>16) & 0x7fff);
+//            }
             nFreq       = in.readInt();
             nTime       = in.readInt();
             iTimePinter = in.readInt();
@@ -783,16 +833,38 @@ public class AnalyzerGraphic extends View {
 
             out.writeDoubleArray(tmpS);
 
-            int[] tmpSCInt = new int[tmpSC.length / 2];  // stupid java
-            for (int i = 0; i < tmpSCInt.length; i++) {
-                tmpSCInt[i] = tmpSC[2*i] + (tmpSC[2*i+1] << 16);
-            }
-            // TODO: consider use compress
+//            int[] tmpSCInt = new int[tmpSC.length / 2];  // stupid java
+//            for (int i = 0; i < tmpSCInt.length; i++) {
+//                tmpSCInt[i] = tmpSC[2*i] + (tmpSC[2*i+1] << 16);
+//            }
+            // Consider use compress. Fail: poor compress ratio (961450B to 855965B), transpose do no help
             // https://developer.android.com/reference/java/util/zip/Deflater.html
-            out.writeIntArray(tmpSCInt);
+//            out.writeIntArray(tmpSCInt);
             out.writeInt(nFreq);
             out.writeInt(nTime);
             out.writeInt(iTimePinter);
+
+//            // Compress the bytes
+//            byte[] input = new byte[tmpSC.length * 2];
+//            for (int i = 0; i < tmpSC.length; i++) {
+//                input[2*i  ] = (byte)( tmpSC[i]     & 0xff);
+//                input[2*i+1] = (byte)((tmpSC[i]>>8) & 0xff);
+//            }
+
+//            for (int i = 0; i < nFreq+1; i++) {
+//                for (int j = 0; j < nTime; j++) {  // transpose
+//                    input[2 * (i*nTime + j)    ] = (byte) ( tmpSC[j*(nFreq+1) + i]       & 0xff);
+//                    input[2 * (i*nTime + j) + 1] = (byte) ((tmpSC[j*(nFreq+1) + i] >> 8) & 0xff);
+//                }
+//            }
+
+//            byte[] output = new byte[input.length];
+//            Deflater compresser = new Deflater();
+//            compresser.setInput(input);
+//            compresser.finish();
+//            int compressedDataLength = compresser.deflate(output);
+//            compresser.end();
+//            Log.w("writeToParcel()", "size(): " + output.length + " to " + compressedDataLength);
         }
 
         // Standard creator object using an instance of this class
