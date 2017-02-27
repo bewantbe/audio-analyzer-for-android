@@ -331,9 +331,9 @@ public class AnalyzerGraphic extends View {
         spectrogramPlot.spectrogramBMP.setLogAxisMode(mode);
     }
 
-    void setSpectrogramBMPWidth(int w) {
-        spectrogramPlot.spectrogramBMP.setBmpWidth(w);
-    }
+//    void setSpectrogramBMPWidth(int w) {
+//        spectrogramPlot.spectrogramBMP.setBmpWidth(w);
+//    }
 
     static boolean isBusy() {
         return isBusy;
@@ -708,10 +708,14 @@ public class AnalyzerGraphic extends View {
 
             spectrogramPlot.nFreqPoints = s.nFreq;
             spectrogramPlot.nTimePoints = s.nTime;
-            spectrogramPlot.spectrogramBMP.spectrumStore.nFreq = s.nFreq;  // prevent reinitialize of LogFreqSpectrogramBMP
-            spectrogramPlot.spectrogramBMP.spectrumStore.nTime = s.nTime;
-            spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = s.iTimePinter;
 
+            final SpectrogramPlot.SpectrogramBMP sBMP = spectrogramPlot.spectrogramBMP;
+            final SpectrogramPlot.SpectrumCompressStore sBMPS = sBMP.spectrumStore;
+            sBMPS.nFreq = s.nFreq;  // prevent reinitialize of LogFreqSpectrogramBMP
+            sBMPS.nTime = s.nTime;
+            sBMPS.iTimePointer = s.iTimePinter;
+
+            // Read temporary saved spectrogram
             byte[] input = new byte[(s.nFreq+1) * s.nTime * 2]; // length of spectrumStore.dbShortArray
             int bytesRead = -1;
             File tmpSCPath = new File(context.getCacheDir(), "spectrogram_short.raw");
@@ -724,16 +728,16 @@ public class AnalyzerGraphic extends View {
             }
 
             if (bytesRead != input.length) {  // fail to get saved spectrogram, have a new start
-                spectrogramPlot.spectrogramBMP.spectrumStore.nFreq = 0;
-                spectrogramPlot.spectrogramBMP.spectrumStore.nTime = 0;
-                spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = 0;
+                sBMPS.nFreq = 0;
+                sBMPS.nTime = 0;
+                sBMPS.iTimePointer = 0;
             } else {  // we have data!
                 short[] tmpSC = new short[input.length/2];
                 for (int i = 0; i < tmpSC.length; i++) {
                     tmpSC[i] = (short)(input[2*i] + (input[2*i+1] << 8));
                 }
-                spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = tmpSC;
-                spectrogramPlot.spectrogramBMP.rebuildLinearBMP();
+                sBMPS.dbShortArray = tmpSC;
+                sBMP.rebuildLinearBMP();
             }
 
             Log.i(TAG, "onRestoreInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
