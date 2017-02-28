@@ -67,6 +67,10 @@ public class MyPreferences extends PreferenceActivity {
                 Preference connectionPref = findPreference(key);
                 connectionPref.setSummary(getAudioSourceNameFromId(audioSourceId));
             }
+            if (key == null || key.equals("spectrogramColorMap")) {
+                Preference connectionPref = findPreference(key);
+                connectionPref.setSummary(prefs.getString(key, ""));
+            }
         }
     };
 

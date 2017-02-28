@@ -38,7 +38,7 @@ class SpectrogramPlot {
     private static final String[] axisLabels = {"Hz", "dB", "Sec"};
     boolean showFreqAlongX = false;
 
-    private static final int[] cma = ColorMapArray.hot;
+    private int[] cma = ColorMapArray.hot;
 
     private enum TimeAxisMode {  // java's enum type is inconvenient
         SHIFT(0), OVERWRITE(1);       // 0: moving (shifting) spectrogram, 1: overwriting in loop
@@ -397,6 +397,28 @@ class SpectrogramPlot {
         }
     }
 
+    void setColorMap(String colorMapName) {
+        switch (colorMapName.toLowerCase()) {
+            case "hot_legacy":
+                cma = ColorMapArray.hot_legacy;
+                break;
+            case "hot":
+                cma = ColorMapArray.hot;
+                break;
+            case "jet":
+                cma = ColorMapArray.jet;
+                break;
+            case "gray":
+                cma = ColorMapArray.gray;
+                break;
+            default:
+                Log.i(TAG, "No this color map: " + colorMapName);
+                cma = ColorMapArray.hot;
+        }
+        // Refresh if we have spectrogram data
+        spectrogramBMP.rebuildAllBMP();
+    }
+
     // return value between 0 .. nLevel - 1
     private static int levelFromDB(double d, double lowerBound, double upperBound, int nLevel) {
         if (d >= upperBound) {
@@ -592,6 +614,16 @@ class SpectrogramPlot {
 
         void rebuildLinearBMP() {  // For state restore
             linBmp.rebuild(spectrumStore);
+        }
+
+        void rebuildAllBMP() {
+            if (spectrumStore.dbShortArray.length == 0) return;
+            rebuildLinearBMP();
+            if (logAxisMode == LogAxisPlotMode.REPLOT) {
+                logBmp.rebuild(spectrumStore, logBmp.axis);
+            } else {
+                logSegBmp.rebuild(spectrumStore, axisF);
+            }
         }
 
         void setLogAxisMode(LogAxisPlotMode _mode) {

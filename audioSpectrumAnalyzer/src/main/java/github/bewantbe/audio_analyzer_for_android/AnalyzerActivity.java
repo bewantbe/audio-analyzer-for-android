@@ -344,6 +344,7 @@ public class AnalyzerActivity extends Activity
     analyzerViews.graphView.setShowTimeAxis           (sharedPref.getBoolean("spectrogramTimeAxis", true));
     analyzerViews.graphView.setShowFreqAlongX         (sharedPref.getBoolean("spectrogramShowFreqAlongX", true));
     analyzerViews.graphView.setSmoothRender           (sharedPref.getBoolean("spectrogramSmoothRender", false));
+    analyzerViews.graphView.setColorMap               (sharedPref.getString ("spectrogramColorMap", "Hot"));
     // set spectrogram show range
     analyzerViews.graphView.setSpectrogramDBLowerBound(
             Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))

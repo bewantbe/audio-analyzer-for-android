@@ -335,6 +335,10 @@ public class AnalyzerGraphic extends View {
 //        spectrogramPlot.spectrogramBMP.setBmpWidth(w);
 //    }
 
+    void setColorMap(String colorMapName) {
+        spectrogramPlot.setColorMap(colorMapName);
+    }
+
     static boolean isBusy() {
         return isBusy;
     }
