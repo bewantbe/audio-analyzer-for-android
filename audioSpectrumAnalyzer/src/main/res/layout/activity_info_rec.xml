@@ -9,7 +9,7 @@
     tools:context=".InfoRecActivity" >
 
     <TextView
-        android:id="@+id/textview_info_rec"
+        android:id="@+id/info_rec_tv"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:textSize="16sp"

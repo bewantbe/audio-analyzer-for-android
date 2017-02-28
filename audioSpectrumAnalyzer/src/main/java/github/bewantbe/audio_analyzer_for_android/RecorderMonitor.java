@@ -19,8 +19,8 @@ import android.os.SystemClock;
 import android.util.Log;
 
 class RecorderMonitor {
-  static final String TAG0 = "RecorderMonitor:";
-  private String TAG;
+  private static final String TAG0 = "RecorderMonitor:";
+  private final String TAG;
   private long timeUpdateOld, timeUpdateInterval, timeStarted;  // in ms
   private long lastOverrunTime;
   private long nSamplesRead;
@@ -70,12 +70,12 @@ class RecorderMonitor {
 //        + " sampleRate = " + Math.round(sampleRateReal*100)/100.0);
     // Check if buffer overrun occur
     if (nSamplesFromTime > bufferSampleSize + nSamplesRead) {
-      Log.w(TAG, "SamplingLoop::run(): Buffer Overrun occured !\n"
+      Log.w(TAG, "SamplingLoop::run(): Buffer Overrun occurred !\n"
               + " should read " + nSamplesFromTime + " (" + Math.round(f2*1000)/1000.0 + "s),"
               + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
               + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
               + " sampleRate = " + Math.round(sampleRateReal*100)/100.0
-              + "\n Overrun counter reseted.");
+              + "\n Overrun counter reset.");
       lastOverrunTime = timeNow;
       nSamplesRead = 0;  // start over
     }
@@ -88,7 +88,7 @@ class RecorderMonitor {
                 + " actual read " + nSamplesRead + " (" + Math.round(f1*1000)/1000.0 + "s)\n"
                 + " diff " + (nSamplesFromTime-nSamplesRead) + " (" + Math.round((f2-f1)*1000)/1e3 + "s)"
                 + " sampleRate = " + Math.round(sampleRateReal*100)/100.0
-                + "\n Overrun counter reseted.");
+                + "\n Overrun counter reset.");
         nSamplesRead = 0;
       }
     }

@@ -16,6 +16,7 @@
 package github.bewantbe.audio_analyzer_for_android;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
@@ -32,7 +33,7 @@ import java.util.Iterator;
  */
 
 class AnalyzerUtil {
-    static String TAG = "AnalyzerUtil";
+    private static String TAG = "AnalyzerUtil";
     private static final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
     // Convert frequency to pitch
@@ -115,6 +116,14 @@ class AnalyzerUtil {
         }
     }
 
+    // Thanks http://stackoverflow.com/questions/16319237/cant-put-double-sharedpreferences
+    static SharedPreferences.Editor putDouble(final SharedPreferences.Editor edit, final String key, final double value) {
+        return edit.putLong(key, Double.doubleToRawLongBits(value));
+    }
+    static double getDouble(final SharedPreferences prefs, final String key, final double defaultValue) {
+        return Double.longBitsToDouble(prefs.getLong(key, Double.doubleToLongBits(defaultValue)));
+    }
+
     final int[]    stdSourceId;  // how to make it final?
     final int[]    stdSourceApi;
     final String[] stdSourceName;
@@ -141,7 +150,7 @@ class AnalyzerUtil {
                 try {
                     int id = (int)f.get(null);
                     iList.add(id);
-                    Log.w("Sources:", "" + id);
+                    Log.i("Sources id:", "" + id);
                 } catch (IllegalAccessException e) {}
             }
         }

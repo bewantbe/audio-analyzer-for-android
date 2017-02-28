@@ -35,7 +35,7 @@ import static java.lang.Math.round;
  */
 
 class SpectrumPlot {
-    static final String TAG = "SpectrumPlot:";
+    private static final String TAG = "SpectrumPlot:";
     boolean showLines;
     private Paint linePaint, linePaintLight;
     private Paint cursorPaint;
@@ -127,14 +127,14 @@ class SpectrumPlot {
 
     // The coordinate frame of this function is identical to its view (id=plot).
     private void drawGridLabels(Canvas c) {
-        float textHeigh  = labelPaint.getFontMetrics(null);
+        float textHeight = labelPaint.getFontMetrics(null);
         float widthHz    = labelPaint.measureText("Hz");
         float widthDigit = labelPaint.measureText("0");
         float xPos, yPos;
         int notShowNextLabel = 0;
 
         // draw freq label
-        yPos = textHeigh;
+        yPos = textHeight;
         for(int i = 0; i < fqGridLabel.strings.length; i++) {
             xPos = axisX.pixelFromV((float)fqGridLabel.values[i]);
             // Avoid label overlap:

@@ -60,7 +60,14 @@
             android:key="spectrogramSmoothRender"
             android:summary="Smooth render the spectrogram"
             android:title="Smooth render" />
-        
+
+        <ListPreference
+            android:defaultValue="Hot"
+            android:entries="@array/dbColorMapDescribe"
+            android:entryValues="@array/dbColorMap"
+            android:key="spectrogramColorMap"
+            android:summary="Choose map of dB to color"
+            android:title="Color Map" />
         <ListPreference
             android:defaultValue="-120"
             android:entries="@array/dbRangeArray"

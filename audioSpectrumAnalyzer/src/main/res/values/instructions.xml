@@ -18,7 +18,7 @@ A full-scale sine wave is designated 0 dBFS.
 &lt;br/&gt;
 All the calculation of spectrum and spectrogram are done through FFT with chosen window function, with a 50% data overlapping.
 &lt;br/&gt;
-The peak frequency is found by look for max spectrum point, then correct it by a quadratic interpolation using 3 nearby points. The error is ususlly smaller than one tenth of (sample rate)/(FFT length).
+The peak frequency is found by look for max spectrum point, then correct it by a quadratic interpolation using 3 nearby points. The error is usually smaller than one tenth of (sample rate)/(FFT length).
 &lt;br/&gt;
 This software will drop frames if the required frame rate is too high. e.g. sampling rate 48000 with FFT length 1024 lead to a frame rate 48000 / 1024 * 2 = 93.75 fps, which is far too high for a cell phone.
 &lt;br/&gt;

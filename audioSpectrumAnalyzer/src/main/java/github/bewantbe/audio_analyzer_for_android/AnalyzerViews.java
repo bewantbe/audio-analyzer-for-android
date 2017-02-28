@@ -21,6 +21,7 @@ import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
@@ -45,8 +46,8 @@ import android.widget.Toast;
 
 class AnalyzerViews {
     final String TAG = "AnalyzerViews";
-    private AnalyzerActivity activity;
-    AnalyzerGraphic graphView;
+    private final AnalyzerActivity activity;
+    final AnalyzerGraphic graphView;
 
     private float DPRatio;
     private float listItemTextSize = 20;        // see R.dimen.button_text_fontsize
@@ -55,7 +56,7 @@ class AnalyzerViews {
     private StringBuilder textCur = new StringBuilder("");  // for textCurChar
     private StringBuilder textRMS  = new StringBuilder("");
     private StringBuilder textPeak = new StringBuilder("");
-    private StringBuilder textRec = new StringBuilder("");  // for textCurChar
+    private StringBuilder textRec = new StringBuilder("");
     private char[] textRMSChar;   // for text in R.id.textview_RMS
     private char[] textCurChar;   // for text in R.id.textview_cur
     private char[] textPeakChar;  // for text in R.id.textview_peak
@@ -124,7 +125,7 @@ class AnalyzerViews {
     // Prepare the spectrum and spectrogram plot (from scratch or full reset)
     // Should be called before samplingThread starts.
     void setupView(AnalyzerParameters analyzerParam) {
-        graphView.setupPlot(analyzerParam.sampleRate, analyzerParam.fftLen, analyzerParam.timeDurationPref, analyzerParam.nFFTAverage);
+        graphView.setupPlot(analyzerParam);
     }
 
     // Will be called by SamplingLoop (in another thread)
@@ -196,7 +197,7 @@ class AnalyzerViews {
     void showInstructions() {
         TextView tv = new TextView(activity);
         tv.setMovementMethod(new ScrollingMovementMethod());
-        tv.setText(Html.fromHtml(activity.getString(R.string.instructions_text)));
+        tv.setText(fromHtml(activity.getString(R.string.instructions_text)));
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.instructions_title)
                 .setView(tv)
@@ -207,12 +208,22 @@ class AnalyzerViews {
     void showPermissionExplanation(int resId) {
         TextView tv = new TextView(activity);
         tv.setMovementMethod(new ScrollingMovementMethod());
-        tv.setText(Html.fromHtml(activity.getString(resId)));
+        tv.setText(fromHtml(activity.getString(resId)));
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.permission_explanation_title)
                 .setView(tv)
                 .setNegativeButton(R.string.dismiss, null)
                 .create().show();
+    }
+
+    // Thanks http://stackoverflow.com/questions/37904739/html-fromhtml-deprecated-in-android-n
+    @SuppressWarnings("deprecation")
+    public static android.text.Spanned fromHtml(String source) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Html.fromHtml(source, Html.FROM_HTML_MODE_LEGACY); // or Html.FROM_HTML_MODE_COMPACT
+        } else {
+            return Html.fromHtml(source);
+        }
     }
 
     void enableSaveWavView(boolean bSaveWav) {
@@ -468,7 +479,7 @@ class AnalyzerViews {
     private Handler paddingInvalidateHandler = new Handler();
 
     // Am I need to use runOnUiThread() ?
-    private Runnable paddingInvalidateRunnable = new Runnable() {
+    private final Runnable paddingInvalidateRunnable = new Runnable() {
         @Override
         public void run() {
             if (idPaddingInvalidate) {

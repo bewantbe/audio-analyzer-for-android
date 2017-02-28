@@ -31,7 +31,7 @@ import java.util.Date;
 import java.util.Locale;
 
 class WavWriter {
-  static final String TAG = "WavWriter";
+  private static final String TAG = "WavWriter";
   private File outPath;
   private OutputStream out;
   private byte[] header = new byte[44];
@@ -42,7 +42,7 @@ class WavWriter {
   private int byteRate;            // Average bytes per second
   private int totalDataLen  = 0;   // (file size) - 8
   private int totalAudioLen = 0;   // bytes of audio raw data
-  private int framesWrited = 0;
+  private int framesWritten = 0;
 
   WavWriter(int sampleRate) {
     byteRate = sampleRate*RECORDER_BPP/8*channels;
@@ -93,7 +93,7 @@ class WavWriter {
     header[43] = (byte) ((totalAudioLen >> 24) & 0xff);
   }
   
-  static final int version = android.os.Build.VERSION.SDK_INT;
+  private static final int version = android.os.Build.VERSION.SDK_INT;
   
   @SuppressLint("NewApi")
   @SuppressWarnings("deprecation")
@@ -149,7 +149,7 @@ class WavWriter {
     // Modify totalDataLen and totalAudioLen to match data
     RandomAccessFile raf;
     try {
-      totalAudioLen = framesWrited * RECORDER_BPP / 8 * channels;
+      totalAudioLen = framesWritten * RECORDER_BPP / 8 * channels;
       totalDataLen = header.length + totalAudioLen - 8;
       raf = new RandomAccessFile(outPath, "rw");
       raf.seek(4);
@@ -183,7 +183,7 @@ class WavWriter {
       byteBuffer[2*i  ] = (byte)(ss[i] & 0xff);
       byteBuffer[2*i+1] = (byte)((ss[i]>>8) & 0xff);
     }
-    framesWrited += numOfReadShort;
+    framesWritten += numOfReadShort;
     try {
       out.write(byteBuffer, 0, numOfReadShort*2);
       // if use out.write(byte), then a lot of GC will generated
@@ -194,7 +194,7 @@ class WavWriter {
   }
   
   double secondsWritten() {
-    return (double)framesWrited/(byteRate*8/RECORDER_BPP/channels);
+    return (double) framesWritten /(byteRate*8/RECORDER_BPP/channels);
   }
   
   /* Checks if external storage is available for read and write */

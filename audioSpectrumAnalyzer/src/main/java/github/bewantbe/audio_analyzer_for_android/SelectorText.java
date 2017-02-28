@@ -36,7 +36,7 @@ import android.widget.TextView;
  */
 
 public class SelectorText extends TextView {
-  static float DPRatio;
+  private static float DPRatio;
   private static final int ANIMATION_DELAY = 100;
   private String[] values;
   private Paint paint, bg;

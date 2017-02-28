@@ -15,14 +15,18 @@
 
 package github.bewantbe.audio_analyzer_for_android;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -36,14 +40,14 @@ import java.text.DecimalFormat;
  */
 
 class RangeViewDialogC {
-    static final String TAG = "RangeViewDialogC:";
+    private static final String TAG = "RangeViewDialogC:";
     private AlertDialog rangeViewDialog = null;
     private View rangeViewView;
 
-    private Context ct;
-    private AnalyzerGraphic graphView;
+    private final AnalyzerActivity ct;
+    private final AnalyzerGraphic graphView;
 
-    RangeViewDialogC(Context _ct, AnalyzerGraphic _graphView) {
+    RangeViewDialogC(AnalyzerActivity _ct, AnalyzerGraphic _graphView) {
         ct = _ct;
         graphView = _graphView;
         buildDialog(ct);
@@ -62,19 +66,37 @@ class RangeViewDialogC {
 
         @Override
         public void onTextChanged(CharSequence s, int start, int before, int count) {
-            mEditText.setTag(true);
+            mEditText.setTag(true);  // flag that indicate range been changed
         }
 
         @Override
         public void afterTextChanged(Editable editable) {}
     }
 
-    void ShowRangeViewDialog() {
+    private void SetRangeView(boolean loadSaved) {
         if (rangeViewDialog == null) {
             Log.d(TAG, "ShowRangeViewDialog(): rangeViewDialog is not prepared.");
             return;
         }
         double[] vals = graphView.getViewPhysicalRange();
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
+        boolean isLock = sharedPref.getBoolean("view_range_lock", false);
+        // If locked, load the saved value
+        if (isLock || loadSaved) {
+            double[] rr = new double[AnalyzerGraphic.VIEW_RANGE_DATA_LENGTH];
+            for (int i = 0; i < rr.length; i++) {
+                rr[i] = AnalyzerUtil.getDouble(sharedPref, "view_range_rr_" + i, 0.0 / 0.0);
+                if (Double.isNaN(rr[i])) {  // not properly initialized
+                    Log.w(TAG, "LoadPreferences(): rr is not properly initialized");
+                    rr = null;
+                    break;
+                }
+            }
+            if (rr != null)
+                System.arraycopy(rr, 0, vals, 0, rr.length);
+        }
+
         DecimalFormat df = new DecimalFormat("#.##");
         ((EditText) rangeViewView.findViewById(R.id.et_freq_setting_lower_bound))
                 .setText(df.format(vals[0]));
@@ -93,19 +115,35 @@ class RangeViewDialogC {
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_dBH))
                 .setText(ct.getString(R.string.show_range_tv_dBH,vals[9]));
 
+        ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
+    }
+
+    void ShowRangeViewDialog() {
+        SetRangeView(false);
+
+        // Listener for test if a field is modified
         int[] resList = {R.id.et_freq_setting_lower_bound, R.id.et_freq_setting_upper_bound,
                 R.id.et_db_setting_lower_bound,   R.id.et_db_setting_upper_bound};
         for (int id : resList) {
             EditText et = (EditText) rangeViewView.findViewById(id);
             et.setTag(false);                                     // false = no modified
-            et.addTextChangedListener(new MyTextWatcher(et));
+            et.addTextChangedListener(new MyTextWatcher(et));     // Am I need to remove previous Listener first?
         }
+
         rangeViewDialog.show();
     }
 
+    @SuppressLint("InflateParams")
     private void buildDialog(Context context) {
         LayoutInflater inflater = LayoutInflater.from(context);
-        rangeViewView = inflater.inflate(R.layout.dialog_view_range, null);
+        rangeViewView = inflater.inflate(R.layout.dialog_view_range, null);  // null because there is no parent. https://possiblemobile.com/2013/05/layout-inflation-as-intended/
+        rangeViewView.findViewById(R.id.show_range_button_load).setOnClickListener(
+            new View.OnClickListener() {
+                public void onClick(View v) {
+                    SetRangeView(true);
+                }
+            }
+        );
         AlertDialog.Builder freqDialogBuilder = new AlertDialog.Builder(context);
         freqDialogBuilder
                 .setView(rangeViewView)
@@ -113,7 +151,7 @@ class RangeViewDialogC {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
                         double[] rangeDefault = graphView.getViewPhysicalRange();
-                        double[] rr = new double[6];
+                        double[] rr = new double[rangeDefault.length / 2];
                         int[] resList = {R.id.et_freq_setting_lower_bound, R.id.et_freq_setting_upper_bound,
                                 R.id.et_db_setting_lower_bound,   R.id.et_db_setting_upper_bound};
                         for (int i = 0; i < resList.length; i++) {
@@ -125,10 +163,19 @@ class RangeViewDialogC {
                                 rr[i] = AnalyzerUtil.parseDouble(et.getText().toString());
                             } else {
                                 rr[i] = rangeDefault[i];
-                                Log.v(TAG, "  EditText[" + i + "] not change.");
+                                Log.v(TAG, "  EditText[" + i + "] not change. rr[i] = " + rr[i]);
                             }
                         }
-                        graphView.setViewRange(rr, rangeDefault);
+                        rr = graphView.setViewRange(rr, rangeDefault);
+                        // Save setting to preference, after sanitized.
+                        boolean isLock = ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).isChecked();
+                        SaveViewRange(rr, isLock);
+                        if (isLock) {
+                            ct.stickToMeasureMode();
+                            ct.viewRangeArray = rr;
+                        } else {
+                            ct.stickToMeasureModeCancel();
+                        }
                     }
                 })
                 .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -139,5 +186,15 @@ class RangeViewDialogC {
 //    freqDialogBuilder
 //            .setTitle("dialog_title");
         rangeViewDialog = freqDialogBuilder.create();
+    }
+
+    private void SaveViewRange(double[] rr, boolean isLock) {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(ct);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        for (int i = 0; i < rr.length; i++) {
+            AnalyzerUtil.putDouble(editor, "view_range_rr_" + i, rr[i]);  // no editor.putDouble ? kidding me?
+        }
+        editor.putBoolean("view_range_lock", isLock);
+        editor.apply();
     }
 }

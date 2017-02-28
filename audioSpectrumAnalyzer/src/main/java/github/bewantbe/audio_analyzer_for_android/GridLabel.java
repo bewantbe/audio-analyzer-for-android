@@ -30,7 +30,7 @@ import static java.lang.Math.sqrt;
  */
 
 class GridLabel {
-    final static String TAG = "GridLabel:";
+    private final static String TAG = "GridLabel:";
 
     // Never null!
     double[] values = new double[0];  // TODO: use a better name?

@@ -26,7 +26,7 @@ import static java.lang.Math.log;
  */
 
 class ScreenPhysicalMapping {
-    final static String TAG = "ScreenPhysicalMapping";
+    private final static String TAG = "ScreenPhysicalMapping";
 
     enum Type {  // java's enum type is inconvenient
         LINEAR(0), LINEAR_ON(1), LOG(2);
@@ -73,16 +73,19 @@ class ScreenPhysicalMapping {
 
     // set zoom and shift from physical value bounds
     void setZoomShiftFromV(float vLower, float vHigher) {
-        if (vLower == vHigher || nCanvasPixel <= 0) {
+        if (vLower == vHigher) {
             return;  // Or throw an exception?
         }
+        float nCanvasPixelSave = nCanvasPixel;
+        nCanvasPixel = 1;                       // This function do not depends on nCanvasPixel
         float p1 = pixelNoZoomFromV(vLower);
         float p2 = pixelNoZoomFromV(vHigher);
         zoom = nCanvasPixel / (p2 - p1);
         shift = p1 / nCanvasPixel;
+        nCanvasPixel = nCanvasPixelSave;
     }
 
-    //    | lower bound  ...  higher bound |  physcial unit
+    //    | lower bound  ...  higher bound |  physical unit
     //    | 0            ...             1 |  "unit 1" (Mapping can be linear or logarithmic)
 
     // In LINEAR mode (default):
@@ -161,7 +164,7 @@ class ScreenPhysicalMapping {
         return pixelFromV(v, 1, 0);
     }
 
-    float diffVBounds() { return vUpperBound - vLowerBound; };
+    float diffVBounds() { return vUpperBound - vLowerBound; }
 
     void reverseBounds() {
 //        float vL = vMinInView();
@@ -201,8 +204,8 @@ class ScreenPhysicalMapping {
             if (vL  < lower_bound_ref) vL = lower_bound_ref;
             if (vH  < lower_bound_ref) vH = lower_bound_ref;
         } else {
-            if (vL  < lower_bound_ref) vL = 0;
-            if (vH  < lower_bound_ref) vH = 0;
+            if (vL  <= lower_bound_ref) vL = 0;
+            if (vH  <= lower_bound_ref) vH = 0;
         }
         setZoomShiftFromV(vL, vH);
     }

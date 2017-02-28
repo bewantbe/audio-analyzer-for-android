@@ -31,17 +31,36 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * Custom view to draw the FFT graph
  */
 
 public class AnalyzerGraphic extends View {
     private final String TAG = "AnalyzerGraphic:";
+    private Context context;
     private float xZoom, yZoom;     // horizontal and vertical scaling
     private float xShift, yShift;   // horizontal and vertical translation, in unit 1 unit
-    private double[] savedDBSpectrum = new double[0];
     static final float minDB = -144f;    // hard lower bound for dB
     static final float maxDB = 12f;      // hard upper bound for dB
+
+    private int canvasWidth, canvasHeight;   // size of my canvas
+    private int[] myLocation = {0, 0}; // window location on screen
+    private volatile static boolean isBusy = false;
+    private float freq_lower_bound_for_log = 0f;
+    private double[] savedDBSpectrum = new double[0];
+    static final int VIEW_RANGE_DATA_LENGTH = 6;
+
+    SpectrumPlot    spectrumPlot;
+    SpectrogramPlot spectrogramPlot;
+
+    private PlotMode showMode = PlotMode.SPECTRUM;
 
     enum PlotMode {  // java's enum type is inconvenient
         SPECTRUM(0), SPECTROGRAM(1);
@@ -50,18 +69,6 @@ public class AnalyzerGraphic extends View {
         PlotMode(int value) { this.value = value; }
         public int getValue() { return value; }
     }
-
-    private PlotMode showMode = PlotMode.SPECTRUM;                      // 0: Spectrum, 1:Spectrogram
-
-    private int canvasWidth, canvasHeight;   // size of my canvas
-    private int[] myLocation = {0, 0}; // window location on screen
-    private volatile static boolean isBusy = false;
-    private float freq_lower_bound_for_log = 0f;
-
-    SpectrumPlot    spectrumPlot;
-    SpectrogramPlot spectrogramPlot;
-
-    Context context;
 
     public AnalyzerGraphic(Context context, AttributeSet attrs, int defStyle) {
         // https://developer.android.com/training/custom-views/create-view.html
@@ -81,7 +88,7 @@ public class AnalyzerGraphic extends View {
 
     private void setup(Context _context) {
         context = _context;
-        Log.v(TAG, "setup():");
+        Log.i(TAG, "in setup()");
 
         xZoom  = 1f;
         xShift = 0f;
@@ -103,10 +110,13 @@ public class AnalyzerGraphic extends View {
         spectrumPlot.axisY.vLowerBound = Float.parseFloat(res.getString(R.string.max_DB_range));
     }
 
-    // Call this when settings changed.
-    void setupPlot(int sampleRate, int fftLen, double timeDurationE, int nAve) {
-        freq_lower_bound_for_log = (float)sampleRate/fftLen;
+    void setupAxes(AnalyzerParameters analyzerParam) {
+        int sampleRate       = analyzerParam.sampleRate;
+        int fftLen           = analyzerParam.fftLen;
+        int nAve             = analyzerParam.nFFTAverage;
+        double timeDurationE = analyzerParam.spectrogramDuration;
 
+        freq_lower_bound_for_log = (float)sampleRate/fftLen;
         float freq_lower_bound_local = 0;
         if (spectrumPlot.axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
             freq_lower_bound_local = freq_lower_bound_for_log;
@@ -127,7 +137,12 @@ public class AnalyzerGraphic extends View {
             axisBounds = new RectF(0.0f, sampleRate/2.0f, (float)timeDurationE * nAve, freq_lower_bound_local);
         }
         spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
-        spectrogramPlot.setupSpectrogram(sampleRate, fftLen, timeDurationE, nAve);
+    }
+
+    // Call this when settings changed.
+    void setupPlot(AnalyzerParameters analyzerParam) {
+        setupAxes(analyzerParam);
+        spectrogramPlot.setupSpectrogram(analyzerParam);
     }
 
     void setAxisModeLinear(boolean b) {
@@ -173,10 +188,10 @@ public class AnalyzerGraphic extends View {
 
     // Note: Assume setupPlot() was called once.
     public void switch2Spectrum() {
-        Log.v(TAG, "switch2Spectrum()");
         if (showMode == PlotMode.SPECTRUM) {
             return;
         }
+        Log.v(TAG, "switch2Spectrum()");
         // execute when switch from Spectrogram mode to Spectrum mode
         showMode = PlotMode.SPECTRUM;
         xZoom  = spectrogramPlot.axisFreq.zoom;
@@ -193,12 +208,14 @@ public class AnalyzerGraphic extends View {
     // Note: Assume setupPlot() was called once.
     public void switch2Spectrogram() {
         if (showMode == PlotMode.SPECTRUM && canvasHeight > 0) { // canvasHeight==0 means the program is just start
+            Log.v(TAG, "switch2Spectrogram()");
             if (spectrogramPlot.showFreqAlongX) {
                 // no need to change x scaling
                 yZoom  = spectrogramPlot.axisTime.zoom;
                 yShift = spectrogramPlot.axisTime.shift;
                 spectrogramPlot.axisFreq.setZoomShift(xZoom, xShift);
             } else {
+                //noinspection SuspiciousNameCombination
                 yZoom = xZoom;
                 yShift = 1 - 1/xZoom - xShift;         // axisFreq is reverted
                 xZoom  = spectrogramPlot.axisTime.zoom;
@@ -210,23 +227,35 @@ public class AnalyzerGraphic extends View {
         showMode = PlotMode.SPECTROGRAM;
     }
 
-    void setViewRange(double[] ranges, double[] rangesDefault) {
+    double[] setViewRange(double[] _ranges, double[] rangesDefault) {
         // See AnalyzerActivity::getViewPhysicalRange() for ranges[]
-
-        // Sanity check
-        if (ranges.length != 6 || rangesDefault.length != 12) {
+        if (_ranges.length < VIEW_RANGE_DATA_LENGTH) {
             Log.i(TAG, "setViewRange(): invalid input.");
-            return;
+            return null;
         }
-        for (int i = 0; i < 6; i+=2) {
-            if (ranges[i] == ranges[i+1] || Double.isNaN(ranges[i]) || Double.isNaN(ranges[i+1])) {  // invalid input value
-                ranges[i  ] = rangesDefault[i];
-                ranges[i+1] = rangesDefault[i+1];
+
+        // do not modify input parameter
+        double[] ranges = new double[VIEW_RANGE_DATA_LENGTH];
+        System.arraycopy(_ranges, 0, ranges, 0, VIEW_RANGE_DATA_LENGTH);
+
+        if (rangesDefault != null) {
+            // Sanity check
+            if (rangesDefault.length != 2 * VIEW_RANGE_DATA_LENGTH) {
+                Log.i(TAG, "setViewRange(): invalid input.");
+                return null;
             }
-            if (ranges[i  ] < rangesDefault[i+6]) ranges[i  ] = rangesDefault[i+6];  // lower  than lower bound
-            if (ranges[i+1] > rangesDefault[i+7]) ranges[i+1] = rangesDefault[i+7];  // higher than upper bound
-            if (ranges[i] > ranges[i+1]) {                     // order reversed
-                double t = ranges[i]; ranges[i] = ranges[i+1]; ranges[i+1] = t;
+            for (int i = 0; i < 6; i += 2) {
+                if (ranges[i  ] > ranges[i+1]) {                     // order reversed
+                    double t = ranges[i]; ranges[i] = ranges[i+1]; ranges[i+1] = t;
+                }
+                if (ranges[i  ] < rangesDefault[i+6]) ranges[i  ] = rangesDefault[i+6];  // lower  than lower bound
+                if (ranges[i+1] < rangesDefault[i+6]) ranges[i+1] = rangesDefault[i+7];  // all lower  than lower bound?
+                if (ranges[i  ] > rangesDefault[i+7]) ranges[i  ] = rangesDefault[i+6];  // all higher than upper bound?
+                if (ranges[i+1] > rangesDefault[i+7]) ranges[i+1] = rangesDefault[i+7];  // higher than upper bound
+                if (ranges[i    ] == ranges[i + 1] || Double.isNaN(ranges[i]) || Double.isNaN(ranges[i + 1])) {  // invalid input value
+                    ranges[i    ] = rangesDefault[i];
+                    ranges[i + 1] = rangesDefault[i + 1];
+                }
             }
         }
 
@@ -262,6 +291,8 @@ public class AnalyzerGraphic extends View {
                 xShift = spectrogramPlot.axisTime.shift;
             }
         }
+
+        return ranges;
     }
 
     private void updateAxisZoomShift() {
@@ -300,13 +331,21 @@ public class AnalyzerGraphic extends View {
         spectrogramPlot.spectrogramBMP.setLogAxisMode(mode);
     }
 
+//    void setSpectrogramBMPWidth(int w) {
+//        spectrogramPlot.spectrogramBMP.setBmpWidth(w);
+//    }
+
+    void setColorMap(String colorMapName) {
+        spectrogramPlot.setColorMap(colorMapName);
+    }
+
     static boolean isBusy() {
         return isBusy;
     }
 
     static void setIsBusy(boolean b) { isBusy = b; }
 
-    FPSCounter fpsCounter = new FPSCounter("AnalyzerGraphic");
+    private final FPSCounter fpsCounter = new FPSCounter("AnalyzerGraphic");
 //  long t_old;
 
     @Override
@@ -390,6 +429,44 @@ public class AnalyzerGraphic extends View {
     public void hideCursor() {
         spectrumPlot.hideCursor();
         spectrogramPlot.hideCursor();
+    }
+
+    double[] getViewPhysicalRange() {
+        double[] r = new double[12];
+        if (getShowMode() == AnalyzerGraphic.PlotMode.SPECTRUM) {
+            // fL, fU, dBL dBU, time L, time U
+            r[0] = spectrumPlot.axisX.vMinInView();
+            r[1] = spectrumPlot.axisX.vMaxInView();
+            r[2] = spectrumPlot.axisY.vMaxInView(); // reversed
+            r[3] = spectrumPlot.axisY.vMinInView();
+            r[4] = 0;
+            r[5] = 0;
+
+            // Limits of fL, fU, dBL dBU, time L, time U
+            r[6] = spectrumPlot.axisX.vLowerBound;
+            r[7] = spectrumPlot.axisX.vUpperBound;
+            r[8] = AnalyzerGraphic.minDB;
+            r[9] = AnalyzerGraphic.maxDB;
+            r[10]= 0;
+            r[11]= 0;
+        } else {
+            r[0] = spectrogramPlot.axisFreq.vMinInView();
+            r[1] = spectrogramPlot.axisFreq.vMaxInView();
+            if (r[0] > r[1]) { double t=r[0]; r[0]=r[1]; r[1]=t; }
+            r[2] = spectrogramPlot.dBLowerBound;
+            r[3] = spectrogramPlot.dBUpperBound;
+            r[4] = spectrogramPlot.axisTime.vMinInView();
+            r[5] = spectrogramPlot.axisTime.vMaxInView();
+
+            r[6] = spectrogramPlot.axisFreq.vLowerBound;
+            r[7] = spectrogramPlot.axisFreq.vUpperBound;
+            if (r[6] > r[7]) { double t=r[6]; r[6]=r[7]; r[7]=t; }
+            r[8] = AnalyzerGraphic.minDB;
+            r[9] = AnalyzerGraphic.maxDB;
+            r[10]= spectrogramPlot.axisTime.vLowerBound;
+            r[11]= spectrogramPlot.axisTime.vUpperBound;
+        }
+        return r;
     }
 
     public float getXZoom() {
@@ -527,6 +604,10 @@ public class AnalyzerGraphic extends View {
         this.readyCallback = ready;
     }
 
+    public interface Ready {
+        void ready();
+    }
+
     @Override
     protected void onSizeChanged (int w, int h, int oldw, int oldh) {
         Log.i(TAG, "onSizeChanged(): canvas (" + oldw + "," + oldh + ") -> (" + w + "," + h + ")");
@@ -542,66 +623,126 @@ public class AnalyzerGraphic extends View {
     }
 
   /*
-   * Save the labels, cursors, and bounds
-   * TODO: need to check what need to save
+   * Save freqAxisAlongX, cursors, zooms, and current spectrogram/spectrum.
+   * All other properties will be set in onCreate() and onResume().
+   * Will be called after onPause() or between onCreat() and on onResume()
+   * Ref. https://developer.android.com/guide/topics/ui/settings.html#CustomSaveState
    */
 
     @Override
     protected Parcelable onSaveInstanceState() {
-        Parcelable parentState = super.onSaveInstanceState();
-        State state = new State(parentState);
-        state.cx  = spectrumPlot.cursorFreq;
-        state.cy  = spectrumPlot.cursorDB;
-        state.xZ  = xZoom;
-        state.yZ  = yZoom;
-        state.OyZ = spectrumPlot.axisY.zoom;
-        state.xS  = xShift;
-        state.yS  = yShift;
-        state.OyS = spectrumPlot.axisY.shift;
-        state.bounds = new RectF(spectrumPlot.axisX.vLowerBound, spectrumPlot.axisY.vLowerBound,
-                                 spectrumPlot.axisX.vUpperBound, spectrumPlot.axisY.vUpperBound);
-
-        state.nfq  = savedDBSpectrum.length;
-        state.tmpS = savedDBSpectrum;
-
-        state.nsc   = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray.length;
-        state.nFP   = spectrogramPlot.nFreqPoints;
-        state.nSCP  = spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer;
-        state.tmpSC = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
         Log.i(TAG, "onSaveInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
+        Parcelable parentState = super.onSaveInstanceState();
+        SavedState state = new SavedState(parentState);
+
+        state.freqAxisAlongX = spectrogramPlot.showFreqAlongX ? 1 : 0;
+
+        state.cFreqSpum  = spectrumPlot.cursorFreq;
+        state.cFreqSpam  = spectrogramPlot.cursorFreq;
+        state.cDb  = spectrumPlot.cursorDB;
+        state.xZ  = xZoom;
+        state.xS  = xShift;
+        state.yZ  = yZoom;
+        state.yS  = yShift;
+        state.SpumXZ = spectrumPlot.axisX.zoom;
+        state.SpumXS = spectrumPlot.axisX.shift;
+        state.SpumYZ = spectrumPlot.axisY.zoom;
+        state.SpumYS = spectrumPlot.axisY.shift;
+        state.SpamFZ = spectrogramPlot.axisFreq.zoom;
+        state.SpamFS = spectrogramPlot.axisFreq.shift;
+        state.SpamTZ = spectrogramPlot.axisTime.zoom;
+        state.SpamTS = spectrogramPlot.axisTime.shift;
+
+        state.tmpS     = savedDBSpectrum;
+
+        state.nFreq    = spectrogramPlot.nFreqPoints;
+        state.nTime    = spectrogramPlot.nTimePoints;
+        state.iTimePinter = spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer;
+
+        final short[] tmpSC    = spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray;
+
+        // Get byte[] representation of short[]
+        // Note no ByteBuffer view of ShortBuffer, see
+        //   http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4489356
+        byte[] input = new byte[tmpSC.length * 2];
+        for (int i = 0; i < tmpSC.length; i++) {
+            input[2*i  ] = (byte)(tmpSC[i] & 0xff);
+            input[2*i+1] = (byte)(tmpSC[i] >> 8);
+        }
+
+        // Save spectrumStore.dbShortArray to a file.
+        File tmpSCPath = new File(context.getCacheDir(), "spectrogram_short.raw");
+        try {
+            OutputStream fout = new FileOutputStream(tmpSCPath);
+            fout.write(input);
+            fout.close();
+        } catch (IOException e) {
+            Log.w("SavedState:", "writeToParcel(): Fail to save state to file.");
+        }
+
         return state;
     }
 
-    // maybe we could save the whole view in main activity
-
+    // Will be called after setup(), during AnalyzerActivity.onCreate()?
     @Override
     public void onRestoreInstanceState(Parcelable state) {
-        if (state instanceof State) {
-            State s = (State) state;
+        if (state instanceof SavedState) {
+            SavedState s = (SavedState) state;
             super.onRestoreInstanceState(s.getSuperState());
-            this.spectrumPlot.cursorFreq = s.cx;
-            this.spectrumPlot.cursorDB = s.cy;
-            this.xZoom = s.xZ;
-            this.yZoom = s.yZ;
-            this.spectrumPlot.axisY.zoom = s.OyZ;
-            this.xShift = s.xS;
-            this.yShift = s.yS;
-            this.spectrumPlot.axisY.shift = s.OyS;
-            RectF sb = s.bounds;
-            spectrumPlot.axisX.vLowerBound = sb.left;
-            spectrumPlot.axisY.vLowerBound = sb.top;
-            spectrumPlot.axisX.vUpperBound = sb.right;
-            spectrumPlot.axisY.vUpperBound = sb.bottom;
 
-            this.savedDBSpectrum = s.tmpS;
+            spectrogramPlot.showFreqAlongX = s.freqAxisAlongX == 1;
 
-            this.spectrogramPlot.nFreqPoints = s.nFP;
-            this.spectrogramPlot.spectrogramBMP.spectrumStore.iTimePointer = s.nSCP;
-            this.spectrogramPlot.spectrogramBMP.spectrumStore.dbShortArray = s.tmpSC;
-//            this.spectrogramPlot.spectrogramColorsShifting = new int[this.spectrogramPlot.spectrogramColors.length];
+            spectrumPlot.cursorFreq    = s.cFreqSpum;
+            spectrogramPlot.cursorFreq = s.cFreqSpam;
+            spectrumPlot.cursorDB      = s.cDb;
+            xZoom  = s.xZ;
+            xShift = s.xS;
+            yZoom  = s.yZ;
+            yShift = s.yS;
+            spectrumPlot.axisX.zoom  = s.SpumXZ;
+            spectrumPlot.axisX.shift = s.SpumXS;
+            spectrumPlot.axisY.zoom  = s.SpumYZ;
+            spectrumPlot.axisY.shift = s.SpumYS;
+            spectrogramPlot.axisFreq.zoom  = s.SpamFZ;
+            spectrogramPlot.axisFreq.shift = s.SpamFS;
+            spectrogramPlot.axisTime.zoom  = s.SpamTZ;
+            spectrogramPlot.axisTime.shift = s.SpamTS;
 
-            // Will constructor of this class been called?
-            // spectrumPlot == null || spectrumPlot.axisX == null is always false
+            savedDBSpectrum = s.tmpS;
+
+            spectrogramPlot.nFreqPoints = s.nFreq;
+            spectrogramPlot.nTimePoints = s.nTime;
+
+            final SpectrogramPlot.SpectrogramBMP sBMP = spectrogramPlot.spectrogramBMP;
+            final SpectrogramPlot.SpectrumCompressStore sBMPS = sBMP.spectrumStore;
+            sBMPS.nFreq = s.nFreq;  // prevent reinitialize of LogFreqSpectrogramBMP
+            sBMPS.nTime = s.nTime;
+            sBMPS.iTimePointer = s.iTimePinter;
+
+            // Read temporary saved spectrogram
+            byte[] input = new byte[(s.nFreq+1) * s.nTime * 2]; // length of spectrumStore.dbShortArray
+            int bytesRead = -1;
+            File tmpSCPath = new File(context.getCacheDir(), "spectrogram_short.raw");
+            try {
+                InputStream fin = new FileInputStream(tmpSCPath);
+                bytesRead = fin.read(input);
+                fin.close();
+            } catch (IOException e) {
+                Log.w("SavedState:", "writeToParcel(): Fail to save state to file.");
+            }
+
+            if (bytesRead != input.length) {  // fail to get saved spectrogram, have a new start
+                sBMPS.nFreq = 0;
+                sBMPS.nTime = 0;
+                sBMPS.iTimePointer = 0;
+            } else {  // we have data!
+                short[] tmpSC = new short[input.length/2];
+                for (int i = 0; i < tmpSC.length; i++) {
+                    tmpSC[i] = (short)(input[2*i] + (input[2*i+1] << 8));
+                }
+                sBMPS.dbShortArray = tmpSC;
+                sBMP.rebuildLinearBMP();
+            }
 
             Log.i(TAG, "onRestoreInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
         } else {
@@ -609,119 +750,98 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    public interface Ready {
-        void ready();
-    }
+    private static class SavedState extends BaseSavedState {
+        int freqAxisAlongX;
+        float cFreqSpum;
+        float cFreqSpam;
+        float cDb;
+        float xZ;
+        float xS;
+        float yZ;
+        float yS;
+        float SpumXZ;
+        float SpumXS;
+        float SpumYZ;
+        float SpumYS;
+        float SpamFZ;
+        float SpamFS;
+        float SpamTZ;
+        float SpamTS;
 
-    public static class State extends BaseSavedState {
-        float cx, cy;
-        float xZ, yZ, OyZ;
-        float xS, yS, OyS;
-        RectF bounds;
-        int nfq;
         double[] tmpS;
-        int nsc;  // size of tmpSC
-        int nFP;
-        int nSCP;
-        short[] tmpSC;
 
-        State(Parcelable state) {
+        int nFreq;
+        int nTime;
+        int iTimePinter;
+
+        SavedState(Parcelable state) {
             super(state);
+        }
+
+        private SavedState(Parcel in) {
+            super(in);
+            freqAxisAlongX = in.readInt();
+            cFreqSpum  = in.readFloat();
+            cFreqSpam  = in.readFloat();
+            cDb  = in.readFloat();
+            xZ   = in.readFloat();
+            xS   = in.readFloat();
+            yZ   = in.readFloat();
+            yS   = in.readFloat();
+            SpumXZ = in.readFloat();
+            SpumXS = in.readFloat();
+            SpumYZ = in.readFloat();
+            SpumYS = in.readFloat();
+            SpamFZ = in.readFloat();
+            SpamFS = in.readFloat();
+            SpamTZ = in.readFloat();
+            SpamTS = in.readFloat();
+
+            tmpS = in.createDoubleArray();
+
+            nFreq       = in.readInt();
+            nTime       = in.readInt();
+            iTimePinter = in.readInt();
         }
 
         @Override
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
-            out.writeFloat(cx);
-            out.writeFloat(cy);
+            out.writeInt(freqAxisAlongX);
+            out.writeFloat(cFreqSpum);
+            out.writeFloat(cFreqSpam);
+            out.writeFloat(cDb);
             out.writeFloat(xZ);
-            out.writeFloat(yZ);
-            out.writeFloat(OyZ);
             out.writeFloat(xS);
+            out.writeFloat(yZ);
             out.writeFloat(yS);
-            out.writeFloat(OyS);
-            bounds.writeToParcel(out, flags);
+            out.writeFloat(SpumXZ);
+            out.writeFloat(SpumXS);
+            out.writeFloat(SpumYZ);
+            out.writeFloat(SpumYS);
+            out.writeFloat(SpamFZ);
+            out.writeFloat(SpamFS);
+            out.writeFloat(SpamTZ);
+            out.writeFloat(SpamTS);
 
-            out.writeInt(nfq);
             out.writeDoubleArray(tmpS);
 
-            out.writeInt(nsc);
-            out.writeInt(nFP);
-            out.writeInt(nSCP);
-//            out.writeIntArray(tmpSC);  // TODO: consider use compress
-            // https://developer.android.com/reference/java/util/zip/Deflater.html
+            out.writeInt(nFreq);
+            out.writeInt(nTime);
+            out.writeInt(iTimePinter);
         }
 
-        public static final Parcelable.Creator<State> CREATOR = new Parcelable.Creator<State>() {
+        // Standard creator object using an instance of this class
+        public static final Parcelable.Creator<SavedState> CREATOR = new Parcelable.Creator<SavedState>() {
             @Override
-            public State createFromParcel(Parcel in) {
-                return new State(in);
+            public SavedState createFromParcel(Parcel in) {
+                return new SavedState(in);
             }
 
             @Override
-            public State[] newArray(int size) {
-                return new State[size];
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
             }
         };
-
-        private State(Parcel in) {
-            super(in);
-            cx  = in.readFloat();
-            cy  = in.readFloat();
-            xZ  = in.readFloat();
-            yZ  = in.readFloat();
-            OyZ = in.readFloat();
-            xS  = in.readFloat();
-            yS  = in.readFloat();
-            OyS = in.readFloat();
-            bounds = RectF.CREATOR.createFromParcel(in);
-
-            nfq = in.readInt();
-            tmpS = new double[nfq];
-            in.readDoubleArray(tmpS);
-
-            nsc = in.readInt();
-            nFP = in.readInt();
-            nSCP = in.readInt();
-            tmpSC = new short[nsc];
-            //in.readIntArray(tmpSC);  // java has no readShortArray()......damn
-        }
-    }
-
-    double[] getViewPhysicalRange() {
-        double[] r = new double[12];
-        if (getShowMode() == AnalyzerGraphic.PlotMode.SPECTRUM) {
-            // fL, fU, dBL dBU, time L, time U
-            r[0] = spectrumPlot.axisX.vMinInView();
-            r[1] = spectrumPlot.axisX.vMaxInView();
-            r[2] = spectrumPlot.axisY.vMaxInView(); // reversed
-            r[3] = spectrumPlot.axisY.vMinInView();
-            r[4] = 0;
-            r[5] = 0;
-
-            r[6] = spectrumPlot.axisX.vLowerBound;
-            r[7] = spectrumPlot.axisX.vUpperBound;
-            r[8] = AnalyzerGraphic.minDB;
-            r[9] = AnalyzerGraphic.maxDB;
-            r[10]= 0;
-            r[11]= 0;
-        } else {
-            r[0] = spectrogramPlot.axisFreq.vMinInView();
-            r[1] = spectrogramPlot.axisFreq.vMaxInView();
-            if (r[0] > r[1]) { double t=r[0]; r[0]=r[1]; r[1]=t; };
-            r[2] = spectrogramPlot.dBLowerBound;
-            r[3] = spectrogramPlot.dBUpperBound;
-            r[4] = spectrogramPlot.axisTime.vMinInView();
-            r[5] = spectrogramPlot.axisTime.vMaxInView();
-
-            r[6] = spectrogramPlot.axisFreq.vLowerBound;
-            r[7] = spectrogramPlot.axisFreq.vUpperBound;
-            if (r[6] > r[7]) { double t=r[6]; r[6]=r[7]; r[7]=t; };
-            r[8] = AnalyzerGraphic.minDB;
-            r[9] = AnalyzerGraphic.maxDB;
-            r[10]= spectrogramPlot.axisTime.vLowerBound;
-            r[11]= spectrogramPlot.axisTime.vUpperBound;
-        }
-        return r;
     }
 }

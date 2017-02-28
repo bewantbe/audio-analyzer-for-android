@@ -22,13 +22,14 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.util.Log;
 
-// I'm using an old cell phone -- API level 9 (android 2.3.6)
+// I was using an old cell phone -- API level 9 (android 2.3.6),
+// so here use PreferenceActivity instead of PreferenceFragment.
 // http://developer.android.com/guide/topics/ui/settings.html
 @SuppressWarnings("deprecation")
 public class MyPreferences extends PreferenceActivity {
-    static final String TAG = "MyPreference";
-    static String[] as;
-    static int[] asid;
+    private static final String TAG = "MyPreference";
+    private static String[] as;
+    private static int[] asid;
     private static String getAudioSourceNameFromId(int id) {
         for (int i = 0; i < as.length; i++) {
             if (asid[i] == id) {
@@ -52,7 +53,7 @@ public class MyPreferences extends PreferenceActivity {
         // the system saves the changes to a default SharedPreferences file
     }
 
-    SharedPreferences.OnSharedPreferenceChangeListener prefListener =
+    private SharedPreferences.OnSharedPreferenceChangeListener prefListener =
         new SharedPreferences.OnSharedPreferenceChangeListener() {
         public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
             Log.i(TAG, key + "=" + prefs);
@@ -65,6 +66,10 @@ public class MyPreferences extends PreferenceActivity {
                 int audioSourceId = Integer.parseInt(asi);
                 Preference connectionPref = findPreference(key);
                 connectionPref.setSummary(getAudioSourceNameFromId(audioSourceId));
+            }
+            if (key == null || key.equals("spectrogramColorMap")) {
+                Preference connectionPref = findPreference(key);
+                connectionPref.setSummary(prefs.getString(key, ""));
             }
         }
     };

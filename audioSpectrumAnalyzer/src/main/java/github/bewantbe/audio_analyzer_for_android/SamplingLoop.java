@@ -39,7 +39,7 @@ class SamplingLoop extends Thread {
     private SineGenerator sineGen2;
     private double[] spectrumDBcopy;   // XXX, transfers data from SamplingLoop to AnalyzerGraphic
 
-    private AnalyzerActivity activity;
+    private final AnalyzerActivity activity;
 
     volatile double wavSecRemain;
     volatile double wavSec = 0;
@@ -129,8 +129,10 @@ class SamplingLoop extends Thread {
 
         long tStart = SystemClock.uptimeMillis();
         try {
-            activity.graphInit.join();
-        } catch (InterruptedException e) { }
+            activity.graphInit.join();  // TODO: Seems not working as intended....
+        } catch (InterruptedException e) {
+            Log.w(TAG, "run(): activity.graphInit.join() failed.");
+        }
         long tEnd = SystemClock.uptimeMillis();
         if (tEnd - tStart < 500) {
             Log.i(TAG, "wait more.." + (500 - (tEnd - tStart)) + " ms");

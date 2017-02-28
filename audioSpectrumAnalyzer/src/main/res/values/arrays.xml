@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string-array name="dbColorMapDescribe">
+        <item>Hot</item>
+        <item>Jet</item>
+        <item>Gray</item>
+    </string-array>
+    <string-array name="dbColorMap">
+        <item>hot</item>
+        <item>jet</item>
+        <item>gray</item>
+    </string-array>
     <string-array name="dbRangeArray">
         <item>-30</item>
         <item>-60</item>
