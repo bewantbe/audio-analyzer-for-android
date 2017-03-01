@@ -57,5 +57,6 @@
     <string name="rec_tester_col3_error4">"fail to initialize"</string>
     <string name="rec_tester_col3_hint1">"(source alter: %1$s)"></string>
     <string name="rec_tester_col3_end">".\n"</string>
+    <string name="True">true</string>
 
 </resources>
