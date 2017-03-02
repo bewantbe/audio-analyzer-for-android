@@ -4,7 +4,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.0-rc1'
+        classpath 'com.android.tools.build:gradle:2.2.3' //Version must be 2.2.3 for max performance
     }
 }
 
