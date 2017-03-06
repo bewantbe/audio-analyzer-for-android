@@ -746,6 +746,7 @@ public class AnalyzerGraphic extends View {
 
             Log.i(TAG, "onRestoreInstanceState(): xShift = " + xShift + "  xZoom = " + xZoom + "  yShift = " + yShift + "  yZoom = " + yZoom);
         } else {
+            Log.i(TAG, "onRestoreInstanceState(): not SavedState?!");
             super.onRestoreInstanceState(state);
         }
     }

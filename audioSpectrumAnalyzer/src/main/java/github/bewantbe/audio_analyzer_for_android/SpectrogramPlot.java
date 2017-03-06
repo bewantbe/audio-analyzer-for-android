@@ -35,7 +35,6 @@ import static java.lang.Math.pow;
 
 class SpectrogramPlot {
     private static final String TAG = "SpectrogramPlot:";
-    private static final String[] axisLabels = {"Hz", "dB", "Sec"};
     boolean showFreqAlongX = false;
 
     private int[] cma = ColorMapArray.hot;
@@ -51,10 +50,10 @@ class SpectrogramPlot {
     private TimeAxisMode showModeSpectrogram = TimeAxisMode.OVERWRITE;
     private boolean bShowTimeAxis = true;
 
-    private double timeWatch = 4.0;
+    private double timeWatch = 4.0;  // TODO: a bit duplicated, use axisTime
     private volatile int timeMultiplier = 1;  // should be accorded with nFFTAverage in AnalyzerActivity
-    int nFreqPoints;
-    int nTimePoints;
+    int nFreqPoints;  // TODO: a bit duplicated, use BMP.nFreq
+    int nTimePoints;  // TODO: a bit duplicated, use BMP.nTime
     double timeInc;
 
     private Matrix matrixSpectrogram = new Matrix();
@@ -190,105 +189,20 @@ class SpectrogramPlot {
                  "\n  sampleRate    = " + sampleRate +
                  "\n  fftLen        = " + fftLen +
                  "\n  timeDurationE = " + timeDurationE + " * " + nAve + "  (" + nTimePoints + " points)" +
-                 "\n  BMP size  freq= " + axisFreq.nCanvasPixel + " time=" + axisTime.nCanvasPixel);
-    }
-
-    // Draw axis, start from (labelBeginX, labelBeginY) in the canvas coordinate
-    // drawOnXAxis == true : draw on X axis, otherwise Y axis
-    private void drawAxis(Canvas c, float labelBeginX, float labelBeginY, boolean drawOnXAxis,
-                          GridLabel.Type scale_mode) {
-        int scale_mode_id = scale_mode.getValue();
-        float canvasMin;
-        float canvasMax;
-        if (drawOnXAxis) {
-            canvasMin = labelBeginX;
-            canvasMax = canvasWidth;
-        } else {
-            canvasMin = 0;
-            canvasMax = labelBeginY;
-        }
-        ScreenPhysicalMapping axis = axisFreq;
-        if (scale_mode == GridLabel.Type.TIME) {
-            axis = axisTime;
-        }
-        GridLabel[] gridLabelArray = {fqGridLabel, null, tmGridLabel};
-//        Log.i(TAG, "drawAxis():  axis.vMinInView()" + axis.vMinInView() + "  axis.vMaxInView() = " + axis.vMaxInView());
-        gridLabelArray[scale_mode_id].updateGridLabels(axis.vMinInView(), axis.vMaxInView());
-//        Log.i(TAG, "   updateGridLabels()  ... done");
-        String axisLabel = axisLabels[scale_mode_id];
-
-        double[][] gridPoints = {gridLabelArray[scale_mode_id].values, gridLabelArray[scale_mode_id].ticks};
-        StringBuilder[] gridPointsStr = gridLabelArray[scale_mode_id].strings;
-        char[][]        gridPointsSt  = gridLabelArray[scale_mode_id].chars;
-
-        // plot axis mark
-        float posAlongAxis;
-        float textHeight = labelPaint.getFontMetrics(null);
-        float labelLargeLen = 0.5f * textHeight;
-        float labelSmallLen = 0.6f*labelLargeLen;
-        for(int i = 0; i < gridPoints[1].length; i++) {
-            //posAlongAxis =((float)gridPoints[1][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-            posAlongAxis = canvasMin + axis.pixelFromV((float)gridPoints[1][i]);
-            if (drawOnXAxis) {
-                c.drawLine(posAlongAxis, labelBeginY, posAlongAxis, labelBeginY+labelSmallLen, gridPaint);
-            } else {
-                c.drawLine(labelBeginX-labelSmallLen, posAlongAxis, labelBeginX, posAlongAxis, gridPaint);
-            }
-        }
-        for(int i = 0; i < gridPoints[0].length; i++) {
-//            posAlongAxis = ((float)gridPoints[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-            posAlongAxis = canvasMin + axis.pixelFromV((float)gridPoints[0][i]);
-            if (drawOnXAxis) {
-                c.drawLine(posAlongAxis, labelBeginY, posAlongAxis, labelBeginY+labelLargeLen, rulerBrightPaint);
-            } else {
-                c.drawLine(labelBeginX-labelLargeLen, posAlongAxis, labelBeginX, posAlongAxis, rulerBrightPaint);
-            }
-        }
-        if (drawOnXAxis) {
-            c.drawLine(canvasMin, labelBeginY, canvasMax, labelBeginY, labelPaint);
-        } else {
-            c.drawLine(labelBeginX, canvasMin, labelBeginX, canvasMax, labelPaint);
-        }
-
-        // plot labels
-        float widthDigit = labelPaint.measureText("0");
-        float posOffAxis = labelBeginY + 0.3f*labelLargeLen + textHeight;
-        for(int i = 0; i < gridPointsStr.length; i++) {
-            //posAlongAxis = ((float)gridPoints[0][i] - axisMin) / (axisMax-axisMin) * (canvasMax - canvasMin) + canvasMin;
-            posAlongAxis = canvasMin + axis.pixelFromV((float)gridPoints[0][i]);
-            if (drawOnXAxis) {
-                if (posAlongAxis + widthDigit * gridPointsStr[i].length() > canvasWidth - (axisLabel.length() + .3f)*widthDigit) {
-                    continue;
-                }
-                c.drawText(gridPointsSt[i], 0, gridPointsStr[i].length(), posAlongAxis, posOffAxis, labelPaint);
-            } else {
-//                Log.i(TAG, "posAlongAxis = " + posAlongAxis + "  canvasMax+textHeight = " + (canvasMax+textHeight) +
-//                           "  diff = " + (canvasMax + textHeight - (posAlongAxis - 0.5f*textHeight)));
-                if (posAlongAxis - 1.0f*textHeight < canvasMin + textHeight) {
-                    continue;
-                }
-                c.drawText(gridPointsSt[i], 0, gridPointsStr[i].length(),
-                        labelBeginX - widthDigit * gridPointsStr[i].length() - 0.5f * labelLargeLen, posAlongAxis, labelPaint);
-            }
-        }
-        if (drawOnXAxis) {
-            c.drawText(axisLabel, canvasWidth - (axisLabel.length() +.3f)*widthDigit, posOffAxis, labelPaint);
-        } else {
-            c.drawText(axisLabel, labelBeginX - widthDigit * axisLabel.length() - 0.5f * labelLargeLen, canvasMin+textHeight, labelPaint);
-        }
+                 "\n  canvas size freq= " + axisFreq.nCanvasPixel + " time=" + axisTime.nCanvasPixel);
     }
 
     // Draw time axis for spectrogram
     // Working in the original canvas frame
     private void drawTimeAxis(Canvas c, float labelBeginX, float labelBeginY, boolean drawOnXAxis) {
-//            Log.i(TAG, "drawTimeAxis(): max=" + getTimeMax() + "  min=" + getTimeMin());
-//        drawAxis(c, labelBeginX, labelBeginY, nt, drawOnXAxis,
-//                getTimeMax(), getTimeMin(), GridLabel.Type.TIME);
-
-        if (showFreqAlongX) {
-            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.TIME);
+        if (drawOnXAxis) {
+            AxisTickLabels.draw(c, axisTime, tmGridLabel,
+                    labelBeginX, labelBeginY, 0, 1,
+                    labelPaint, gridPaint, rulerBrightPaint);
         } else {
-            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.TIME);
+            AxisTickLabels.draw(c, axisTime, tmGridLabel,
+                    labelBeginX, 0, 1, -1,
+                    labelPaint, gridPaint, rulerBrightPaint);
         }
     }
 
@@ -296,10 +210,14 @@ class SpectrogramPlot {
     // Working in the original canvas frame
     // nx: number of grid lines on average
     private void drawFreqAxis(Canvas c, float labelBeginX, float labelBeginY, boolean drawOnXAxis) {
-        if (showFreqAlongX) {
-            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.FREQ);
+        if (drawOnXAxis) {
+            AxisTickLabels.draw(c, axisFreq, fqGridLabel,
+                    labelBeginX, labelBeginY, 0, 1,
+                    labelPaint, gridPaint, rulerBrightPaint);
         } else {
-            drawAxis(c, labelBeginX, labelBeginY, drawOnXAxis, GridLabel.Type.FREQ);
+            AxisTickLabels.draw(c, axisFreq, fqGridLabel,
+                    labelBeginX, 0, 1, -1,
+                    labelPaint, gridPaint, rulerBrightPaint);
         }
     }
 
@@ -512,6 +430,8 @@ class SpectrogramPlot {
         }
         fqGridLabel.setDensity(axisFreq.nCanvasPixel * gridDensity / DPRatio);
         tmGridLabel.setDensity(axisTime.nCanvasPixel * gridDensity / DPRatio);
+        fqGridLabel.updateGridLabels(axisFreq.vMinInView(), axisFreq.vMaxInView());
+        tmGridLabel.updateGridLabels(axisTime.vMinInView(), axisTime.vMaxInView());
 
         // show Spectrogram
         float halfFreqResolutionShift;  // move the color patch to match the center frequency
@@ -553,7 +473,9 @@ class SpectrogramPlot {
         }
         spectrogramBMP.draw(c, axisFreq.mapType);
         c.restore();
+
         drawFreqCursor(c);
+
         if (showFreqAlongX) {
             c.drawRect(0, labelBeginY, canvasWidth, canvasHeight, backgroundPaint);
             drawFreqAxis(c, labelBeginX, labelBeginY, showFreqAlongX);

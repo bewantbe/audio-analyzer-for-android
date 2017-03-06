@@ -125,66 +125,6 @@ class SpectrumPlot {
         }
     }
 
-    // The coordinate frame of this function is identical to its view (id=plot).
-    private void drawGridLabels(Canvas c) {
-        float textHeight = labelPaint.getFontMetrics(null);
-        float widthHz    = labelPaint.measureText("Hz");
-        float widthDigit = labelPaint.measureText("0");
-        float xPos, yPos;
-        int notShowNextLabel = 0;
-
-        // draw freq label
-        yPos = textHeight;
-        for(int i = 0; i < fqGridLabel.strings.length; i++) {
-            xPos = axisX.pixelFromV((float)fqGridLabel.values[i]);
-            // Avoid label overlap:
-            // (1) No overlap to "Hz";
-            // (2) If no (1), no overlap to label 1, 10, 100, 1000, 10000, 1k, 10k;
-            // (3) If no (1) and (2), no overlap to previous label.
-            float thisDigitWidth = widthDigit*fqGridLabel.strings[i].length() + 0.3f*widthDigit;
-            if (xPos + thisDigitWidth + 1.3f*widthHz > canvasWidth) {
-                continue;
-            }
-            if (notShowNextLabel > 0) {
-                notShowNextLabel--;
-                continue;
-            }
-            int j = i+1;
-            while (j < fqGridLabel.strings.length &&
-                   xPos + thisDigitWidth > axisX.pixelFromV((float)fqGridLabel.values[j])) {
-                // label i shadows label j (case (3))
-                notShowNextLabel++;
-                if (isAlmostInteger((float)log10(fqGridLabel.values[j]))) {
-                    // do not show this label (case (2))
-                    if (axisX.pixelFromV((float)fqGridLabel.values[j]) +
-                            widthDigit*fqGridLabel.strings[j].length() + 0.3f*widthDigit
-                            + 1.3f*widthHz <= canvasWidth) {
-                        notShowNextLabel = -1;
-                        break;
-                    }
-                }
-                j++;
-            }
-            if (notShowNextLabel == -1) {
-                notShowNextLabel = j - i - 1;  // show the label in case (2)
-                continue;
-            }
-            c.drawText(fqGridLabel.chars[i], 0, fqGridLabel.strings[i].length(), xPos, yPos, labelPaint);
-        }
-        c.drawLine(0, 0, canvasWidth, 0, labelPaint);
-        c.drawText("Hz", canvasWidth - 1.3f*widthHz, yPos, labelPaint);
-
-        // draw dB label
-        xPos = 0.4f*widthHz;
-        for(int i = 0; i < dbGridLabel.strings.length; i++) {
-            yPos = axisY.pixelFromV((float)dbGridLabel.values[i]);
-            if (yPos + 1.3f*widthHz > canvasHeight) continue;
-            c.drawText(dbGridLabel.chars[i], 0, dbGridLabel.strings[i].length(), xPos, yPos, labelPaint);
-        }
-        c.drawLine(0, 0, 0, canvasHeight, labelPaint);
-        c.drawText("dB", xPos, canvasHeight - 0.4f*widthHz, labelPaint);
-    }
-
     private void drawGridLines(Canvas c) {
         for(int i = 0; i < fqGridLabel.values.length; i++) {
             float xPos = axisX.pixelFromV((float)fqGridLabel.values[i]);
@@ -193,17 +133,6 @@ class SpectrumPlot {
         for(int i = 0; i < dbGridLabel.values.length; i++) {
             float yPos = axisY.pixelFromV((float)dbGridLabel.values[i]);
             c.drawLine(0, yPos, canvasWidth, yPos, gridPaint);
-        }
-    }
-
-    private void drawGridTicks(Canvas c) {
-        for(int i = 0; i < fqGridLabel.ticks.length; i++) {
-            float xPos = axisX.pixelFromV((float)fqGridLabel.ticks[i]);
-            c.drawLine(xPos, 0, xPos, 0.02f * canvasHeight, gridPaint);
-        }
-        for(int i = 0; i < dbGridLabel.ticks.length; i++) {
-            float yPos = axisY.pixelFromV((float)dbGridLabel.ticks[i]);
-            c.drawLine(0, yPos, 0.02f * canvasWidth, yPos, gridPaint);
         }
     }
 
@@ -377,7 +306,11 @@ class SpectrumPlot {
         drawGridLines(c);
         drawSpectrumOnCanvas(c, savedDBSpectrum);
         drawCursor(c);
-        drawGridTicks(c);
-        drawGridLabels(c);
+        AxisTickLabels.draw(c, axisX, fqGridLabel,
+                0f, 0f, 0, 1,
+                labelPaint, gridPaint, gridPaint);
+        AxisTickLabels.draw(c, axisY, dbGridLabel,
+                0f, 0f, 1, 1,
+                labelPaint, gridPaint, gridPaint);
     }
 }

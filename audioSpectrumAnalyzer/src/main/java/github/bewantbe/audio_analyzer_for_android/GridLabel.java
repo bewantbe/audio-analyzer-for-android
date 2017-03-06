@@ -17,12 +17,14 @@ package github.bewantbe.audio_analyzer_for_android;
 
 import android.util.Log;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.ceil;
 import static java.lang.Math.exp;
 import static java.lang.Math.floor;
 import static java.lang.Math.log;
 import static java.lang.Math.log10;
 import static java.lang.Math.pow;
+import static java.lang.Math.round;
 import static java.lang.Math.sqrt;
 
 /**
@@ -51,6 +53,8 @@ class GridLabel {
         gridType = _gridType;
         gridDensity = _gridDensity;
     }
+
+    Type getGridType() { return gridType; }
 
     void setGridType(GridLabel.Type gt) { gridType = gt; }
     void setDensity(float _gridDensity) { gridDensity = _gridDensity; }
@@ -327,5 +331,20 @@ class GridLabel {
                 strings[i].getChars(0, strings[i].length(), chars[i], 0);
             }
         }
+    }
+
+    private static boolean isAlmostInteger(float x) {
+        // return x % 1 == 0;
+        float i = round(x);
+        if (i == 0) {
+            return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
+        } else {
+            return abs(x - i) / i < 1.2e-7;
+        }
+    }
+
+    boolean isImportantLabel(int j) {
+        // For freq, time
+        return isAlmostInteger((float)log10(values[j]));
     }
 }
