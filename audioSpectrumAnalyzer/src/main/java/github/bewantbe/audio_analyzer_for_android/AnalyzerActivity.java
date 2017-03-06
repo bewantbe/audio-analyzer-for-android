@@ -348,7 +348,7 @@ public class AnalyzerActivity extends Activity
     analyzerViews.graphView.setColorMap               (sharedPref.getString ("spectrogramColorMap", "Hot"));
     // set spectrogram show range
     analyzerViews.graphView.setSpectrogramDBLowerBound(
-            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))
+            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.spectrogramBMP.dBLowerBound)))
     );
     analyzerViews.graphView.setLogAxisMode(
             sharedPref.getBoolean("spectrogramLogPlotMethod", true)

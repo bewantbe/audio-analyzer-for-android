@@ -324,9 +324,9 @@ public class AnalyzerGraphic extends View {
     }
 
     void setLogAxisMode(boolean b) {
-        SpectrogramPlot.LogAxisPlotMode mode = SpectrogramPlot.LogAxisPlotMode.REPLOT;
+        SpectrogramBMP.LogAxisPlotMode mode = SpectrogramBMP.LogAxisPlotMode.REPLOT;
         if (!b) {
-            mode = SpectrogramPlot.LogAxisPlotMode.SEGMENT;
+            mode = SpectrogramBMP.LogAxisPlotMode.SEGMENT;
         }
         spectrogramPlot.spectrogramBMP.setLogAxisMode(mode);
     }
@@ -380,7 +380,7 @@ public class AnalyzerGraphic extends View {
     }
 
     void setSpectrogramDBLowerBound(float b) {
-        spectrogramPlot.dBLowerBound = b;
+        spectrogramPlot.setSpectrogramDBLowerBound(b);
     }
 
     public void setShowLines(boolean b) {
@@ -453,8 +453,8 @@ public class AnalyzerGraphic extends View {
             r[0] = spectrogramPlot.axisFreq.vMinInView();
             r[1] = spectrogramPlot.axisFreq.vMaxInView();
             if (r[0] > r[1]) { double t=r[0]; r[0]=r[1]; r[1]=t; }
-            r[2] = spectrogramPlot.dBLowerBound;
-            r[3] = spectrogramPlot.dBUpperBound;
+            r[2] = spectrogramPlot.spectrogramBMP.dBLowerBound;
+            r[3] = spectrogramPlot.spectrogramBMP.dBUpperBound;
             r[4] = spectrogramPlot.axisTime.vMinInView();
             r[5] = spectrogramPlot.axisTime.vMaxInView();
 
@@ -604,7 +604,7 @@ public class AnalyzerGraphic extends View {
         this.readyCallback = ready;
     }
 
-    public interface Ready {
+    interface Ready {
         void ready();
     }
 
@@ -713,8 +713,8 @@ public class AnalyzerGraphic extends View {
             spectrogramPlot.nFreqPoints = s.nFreq;
             spectrogramPlot.nTimePoints = s.nTime;
 
-            final SpectrogramPlot.SpectrogramBMP sBMP = spectrogramPlot.spectrogramBMP;
-            final SpectrogramPlot.SpectrumCompressStore sBMPS = sBMP.spectrumStore;
+            final SpectrogramBMP sBMP = spectrogramPlot.spectrogramBMP;
+            final SpectrogramBMP.SpectrumCompressStore sBMPS = sBMP.spectrumStore;
             sBMPS.nFreq = s.nFreq;  // prevent reinitialize of LogFreqSpectrogramBMP
             sBMPS.nTime = s.nTime;
             sBMPS.iTimePointer = s.iTimePinter;
