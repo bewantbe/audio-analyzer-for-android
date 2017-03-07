@@ -4,7 +4,11 @@ buildscript {
         jcenter()
     }
     dependencies {
+<<<<<<< HEAD
         classpath 'com.android.tools.build:gradle:2.2.3' //Version must be 2.2.3 for max performance
+=======
+        classpath 'com.android.tools.build:gradle:2.2.3'
+>>>>>>> refs/remotes/bewantbe/master
     }
 }
 
