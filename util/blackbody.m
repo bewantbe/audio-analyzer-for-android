@@ -1,13 +1,13 @@
 % GNU Octave script
 warning ("off", "Octave:broadcast");
 
-% CODATA 2014
+% Physical constants, from CODATA 2014
 c  = 299792458;
 h  = 6.626070040e-34;  % Planck constant
 kB = 1.38064852e-23;   % Boltzmann constant
 c1 = 2 * h * c * c;
 c2 = h * c / kB;
-PlanksLaw = @(T, lambda) c1 ./ lambda.^5 ./ (exp(c2 ./ lambda ./ T) - 1);
+PlanksLaw = @(T, lambda) c1 ./ lambda .^ 5 ./ (exp(c2 ./ lambda ./ T) - 1);
 
 T0 = 300;
 T1 = 12000;
@@ -16,21 +16,25 @@ n_div = 256;
 cmf = load('ciexyzjv.csv');
 %T_s = fliplr(1 ./ linspace(1/T1, 1/T0, n_div));
 %T_s = linspace(T0, T1, n_div);
-T_s = linspace(sqrt(T0), sqrt(T1), n_div).^2;
+e_T = 4;
+T_s = linspace(T0^(1/e_T), T1^(1/e_T), n_div).^e_T;
 rgb = zeros(length(T_s), 3);
 for id_T = 1:length(T_s)
   rgb(id_T, :) = cmf(:, 2:4)' * PlanksLaw(T_s(id_T), cmf(:, 1)*1e-9);
 end
-rgb ./= rgb(:, 2);
-rgb .*= 1 - atan(1 ./ (T_s' / 2000) .^ 2) / pi * 2;  % light adjust
-rgb *= 0.7;
+rgb ./= rgb(:, 2);  % more uniform lighting
+rgb .*= 1 - atan(1 ./ ((T_s-T0+1)' / 2000) .^ 1.5) / pi * 2;  % light adjust
+rgb *= 0.8;         % factor to make RGB brighter
 
 sRGB_M = [
  3.2406 -1.5372 -0.4986
 -0.9689  1.8758  0.0415
  0.0557 -0.2040  1.0570];
 
-rgb = rgb * sRGB_M';
+CSRGB = @(c) (12.92*c).*(c<=0.0031308) + (1.055*c.^(1/2.4)-0.055) .* (1-(c<=0.0031308));
+
+rgb = rgb * sRGB_M';  % CIE XYZ to sRGB RGB (linear)
+rgb = CSRGB(rgb);
 
 rgb(rgb>1) = 1;
 rgb(rgb<0) = 0;
@@ -38,6 +42,7 @@ rgb(rgb<0) = 0;
 figure(1);
 subplot(2,1,1);
 rgbplot(rgb, 'profile');
+xlim([0 length(rgb)]);
 subplot(2,1,2);
 rgbplot(rgb, 'composite');
 
@@ -47,12 +52,17 @@ figure(2);
 plot(1:length(T_s), invCSRGB(rgb) * [0.2126 0.7152 0.0722]');
 title('Relative luminance');
 
+c = rgb;
+v=int32(floor(flipud(c)*255.99)*[0x10000 0x100 1]');
+s=reshape(sprintf('0x%06x, ', v), 10*8, [])(1:end-1,:)';  s(end)=' '
+
 
 cm_ex1 = hot(256);
 
 figure(9);
 subplot(2,1,1);
 rgbplot(cm_ex1, 'profile');
+xlim([0 length(cm_ex1)]);
 subplot(2,1,2);
 rgbplot(cm_ex1, 'composite');
 title('hot');

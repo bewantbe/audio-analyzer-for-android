@@ -3,12 +3,14 @@
 
     <string-array name="dbColorMapDescribe">
         <item>Hot</item>
+        <item>Black-body radiation</item>
         <item>Jet</item>
         <item>Gray</item>
         <item>Rainbow with weaken red</item>
     </string-array>
     <string-array name="dbColorMap">
         <item>hot</item>
+        <item>blackbody_v1</item>
         <item>jet</item>
         <item>gray</item>
         <item>rainbow_weak_red</item>
