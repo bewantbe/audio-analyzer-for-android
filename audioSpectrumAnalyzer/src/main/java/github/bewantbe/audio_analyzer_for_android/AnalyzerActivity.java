@@ -307,9 +307,10 @@ public class AnalyzerActivity extends Activity
       st.nextValue();
     }
 
-    Log.i(TAG, "loadPreferenceForView(): sampleRate  = " + analyzerParam.sampleRate);
-    Log.i(TAG, "loadPreferenceForView(): fftLen      = " + analyzerParam.fftLen);
-    Log.i(TAG, "loadPreferenceForView(): nFFTAverage = " + analyzerParam.nFFTAverage);
+    Log.i(TAG, "loadPreferenceForView():"+
+            "\n  sampleRate  = " + analyzerParam.sampleRate +
+            "\n  fftLen      = " + analyzerParam.fftLen +
+            "\n  nFFTAverage = " + analyzerParam.nFFTAverage);
     ((Button) findViewById(R.id.button_sample_rate)).setText(Integer.toString(analyzerParam.sampleRate));
     ((Button) findViewById(R.id.button_fftlen     )).setText(Integer.toString(analyzerParam.fftLen));
     ((Button) findViewById(R.id.button_average    )).setText(Integer.toString(analyzerParam.nFFTAverage));
@@ -347,7 +348,7 @@ public class AnalyzerActivity extends Activity
     analyzerViews.graphView.setColorMap               (sharedPref.getString ("spectrogramColorMap", "Hot"));
     // set spectrogram show range
     analyzerViews.graphView.setSpectrogramDBLowerBound(
-            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.dBLowerBound)))
+            Float.parseFloat(sharedPref.getString("spectrogramRange", Double.toString(analyzerViews.graphView.spectrogramPlot.spectrogramBMP.dBLowerBound)))
     );
     analyzerViews.graphView.setLogAxisMode(
             sharedPref.getBoolean("spectrogramLogPlotMethod", true)

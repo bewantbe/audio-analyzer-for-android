@@ -5,11 +5,13 @@
         <item>Hot</item>
         <item>Jet</item>
         <item>Gray</item>
+        <item>Rainbow with weaken red</item>
     </string-array>
     <string-array name="dbColorMap">
         <item>hot</item>
         <item>jet</item>
         <item>gray</item>
+        <item>rainbow_weak_red</item>
     </string-array>
     <string-array name="dbRangeArray">
         <item>-30</item>
