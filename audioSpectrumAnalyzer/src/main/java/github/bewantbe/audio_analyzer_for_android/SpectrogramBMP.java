@@ -123,29 +123,7 @@ class SpectrogramBMP {
     }
 
     void setColorMap(String colorMapName) {
-        switch (colorMapName.toLowerCase()) {
-            case "hot_legacy":
-                cma = ColorMapArray.hot_legacy;
-                break;
-            case "hot":
-                cma = ColorMapArray.hot;
-                break;
-            case "jet":
-                cma = ColorMapArray.jet;
-                break;
-            case "gray":
-                cma = ColorMapArray.gray;
-                break;
-            case "rainbow_weak_red":
-                cma = ColorMapArray.rainbow_weak_red;
-                break;
-            case "blackbody_v1":
-                cma = ColorMapArray.blackbody_v1;
-                break;
-            default:
-                Log.i(TAG, "No this color map: " + colorMapName);
-                cma = ColorMapArray.hot;
-        }
+        cma = ColorMapArray.selectColorMap(colorMapName);
         // Refresh if we have spectrogram data
         rebuildAllBMP();
     }
