@@ -16,8 +16,10 @@
 package github.bewantbe.audio_analyzer_for_android;
 
 import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.io.File;
@@ -30,6 +32,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+@RequiresApi(api = Build.VERSION_CODES.DONUT)
 class WavWriter {
   private static final String TAG = "WavWriter";
   private File outPath;
