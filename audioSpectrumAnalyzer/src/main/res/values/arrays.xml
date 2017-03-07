@@ -5,15 +5,25 @@
         <item>Hot</item>
         <item>Black-body radiation</item>
         <item>Jet</item>
+        <item>Parula (Matlab)</item>
         <item>Gray</item>
         <item>Rainbow with weaken red</item>
+        <item>magma (Matplotlib)</item>
+        <item>inferno (Matplotlib)</item>
+        <item>plasma (Matplotlib)</item>
+        <item>viridis (Matplotlib)</item>
     </string-array>
     <string-array name="dbColorMap">
         <item>hot</item>
         <item>blackbody_v1</item>
         <item>jet</item>
+        <item>parula</item>
         <item>gray</item>
         <item>rainbow_weak_red</item>
+        <item>magma</item>
+        <item>inferno</item>
+        <item>plasma</item>
+        <item>viridis</item>
     </string-array>
     <string-array name="dbRangeArray">
         <item>-30</item>

@@ -9,10 +9,12 @@ c1 = 2 * h * c * c;
 c2 = h * c / kB;
 PlanksLaw = @(T, lambda) c1 ./ lambda .^ 5 ./ (exp(c2 ./ lambda ./ T) - 1);
 
+% Temperature range
 T0 = 300;
 T1 = 12000;
 n_div = 256;
 
+% Calculate CIE XYZ of the blackbody spectrum
 cmf = load('ciexyzjv.csv');
 %T_s = fliplr(1 ./ linspace(1/T1, 1/T0, n_div));
 %T_s = linspace(T0, T1, n_div);
@@ -26,6 +28,7 @@ rgb ./= rgb(:, 2);  % more uniform lighting
 rgb .*= 1 - atan(1 ./ ((T_s-T0+1)' / 2000) .^ 1.5) / pi * 2;  % light adjust
 rgb *= 0.8;         % factor to make RGB brighter
 
+% Convert to sRGB
 sRGB_M = [
  3.2406 -1.5372 -0.4986
 -0.9689  1.8758  0.0415
