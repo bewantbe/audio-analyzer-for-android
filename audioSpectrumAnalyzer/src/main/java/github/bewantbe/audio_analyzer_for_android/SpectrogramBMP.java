@@ -136,6 +136,9 @@ class SpectrogramBMP {
             case "gray":
                 cma = ColorMapArray.gray;
                 break;
+            case "rainbow_weak_red":
+                cma = ColorMapArray.rainbow_weak_red;
+                break;
             default:
                 Log.i(TAG, "No this color map: " + colorMapName);
                 cma = ColorMapArray.hot;
