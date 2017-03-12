@@ -24,9 +24,10 @@ class SpectrogramBMP {
     private LogFreqSpectrogramBMP logBmp = new LogFreqSpectrogramBMP();
     private LogSegFreqSpectrogramBMP logSegBmp = new LogSegFreqSpectrogramBMP();
 
-    final int bmpWidthDefault = 1000;
-    final int bmpWidthMax = 2000;
+    private int bmpWidthDefault = 1000;
+    private int bmpWidthMax = 2000;
     private int bmpWidth = bmpWidthDefault;
+    private boolean bNeedRebuildLogBmp = false;
 
     enum LogAxisPlotMode { REPLOT, SEGMENT }
     LogAxisPlotMode logAxisMode = LogAxisPlotMode.REPLOT;
@@ -62,6 +63,7 @@ class SpectrogramBMP {
         rebuildLinearBMP();
         if (logAxisMode == LogAxisPlotMode.REPLOT) {
             logBmp.rebuild(spectrumStore, logBmp.axis);
+            bNeedRebuildLogBmp = false;
         } else {
             logSegBmp.rebuild(spectrumStore, axisF);
         }
@@ -75,6 +77,7 @@ class SpectrogramBMP {
                 logSegBmp = new LogSegFreqSpectrogramBMP();  // Release
                 logBmp.init(nFreq, nTime, axisF, bmpWidth);
                 logBmp.rebuild(spectrumStore, logBmp.axis);
+                bNeedRebuildLogBmp = false;
             } else {
                 int nFreq = logBmp.nFreq;
                 int nTime = logBmp.nTime;
@@ -100,12 +103,9 @@ class SpectrogramBMP {
         if (logAxisMode == LogAxisPlotMode.REPLOT) {
             synchronized (this) {
                 int bmpWidthNew = calBmpWidth(_axisFreq);
-                boolean needRebuild = bmpWidth != bmpWidthNew;
+                bNeedRebuildLogBmp |= bmpWidth != bmpWidthNew;
                 bmpWidth = bmpWidthNew;
                 logBmp.init(logBmp.nFreq, logBmp.nTime, _axisFreq, bmpWidth);
-                if (needRebuild) {
-                    logBmp.rebuild(spectrumStore, _axisFreq);
-                }
             }
         } else {
             synchronized (this) {
@@ -115,11 +115,9 @@ class SpectrogramBMP {
         axisF = _axisFreq;
     }
 
-    private boolean bNeedReplot = false;
-
     void updateZoom() {
         if (logAxisMode == LogAxisPlotMode.REPLOT) {
-            bNeedReplot = true;
+            bNeedRebuildLogBmp = true;
         }
     }
 
@@ -195,9 +193,9 @@ class SpectrogramBMP {
             synchronized (this) {
                 if (logAxisMode == LogAxisPlotMode.REPLOT) {
                     // Draw in log, method: draw by axis
-                    if (bNeedReplot) {
+                    if (bNeedRebuildLogBmp) {
                         logBmp.rebuild(spectrumStore, axisF);
-                        bNeedReplot = false;
+                        bNeedRebuildLogBmp = false;
                     }
                     logBmp.draw(c, showModeSpectrogram, smoothBmpPaint);
                     pt = logBmp.bmPt;

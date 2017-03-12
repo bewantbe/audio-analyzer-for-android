@@ -132,16 +132,7 @@ class SpectrogramPlot {
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
         if (canvasHeight > 1 && canvasWidth > 1) {
-            labelBeginX = getLabelBeginX();
-            labelBeginY = getLabelBeginY();
-            Log.i(TAG, "setCanvas(): " + " x = " + (canvasWidth - labelBeginX) + " y = " + labelBeginY);
-            if (showFreqAlongX) {
-                axisFreq.setNCanvasPixel(canvasWidth - labelBeginX);
-                axisTime.setNCanvasPixel(labelBeginY);
-            } else {
-                axisTime.setNCanvasPixel(canvasWidth - labelBeginX);
-                axisFreq.setNCanvasPixel(labelBeginY);
-            }
+            updateDrawingWindowSize();
         }
         if (axisBounds != null) {
             if (showFreqAlongX) {
@@ -321,6 +312,25 @@ class SpectrogramPlot {
         }
     }
 
+    private float labelBeginXOld = 0;
+    private float labelBeginYOld = 0;
+
+    private void updateDrawingWindowSize() {
+        labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
+        labelBeginY = getLabelBeginY();
+        if (labelBeginX != labelBeginXOld || labelBeginY != labelBeginYOld) {
+            if (showFreqAlongX) {
+                axisFreq.setNCanvasPixel(canvasWidth - labelBeginX);
+                axisTime.setNCanvasPixel(labelBeginY);
+            } else {
+                axisTime.setNCanvasPixel(canvasWidth - labelBeginX);
+                axisFreq.setNCanvasPixel(labelBeginY);
+            }
+            labelBeginXOld = labelBeginX;
+            labelBeginYOld = labelBeginY;
+        }
+    }
+
     private void drawFreqCursor(Canvas c) {
         if (cursorFreq == 0) return;
         float cX, cY;
@@ -370,15 +380,7 @@ class SpectrogramPlot {
         if (canvasWidth == 0 || canvasHeight == 0) {
             return;
         }
-        labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
-        labelBeginY = getLabelBeginY();
-        if (showFreqAlongX) {
-            axisFreq.setNCanvasPixel(canvasWidth-labelBeginX);
-            axisTime.setNCanvasPixel(labelBeginY);
-        } else {
-            axisTime.setNCanvasPixel(canvasWidth-labelBeginX);
-            axisFreq.setNCanvasPixel(labelBeginY);
-        }
+        updateDrawingWindowSize();
         fqGridLabel.setDensity(axisFreq.nCanvasPixel * gridDensity / DPRatio);
         tmGridLabel.setDensity(axisTime.nCanvasPixel * gridDensity / DPRatio);
         fqGridLabel.updateGridLabels(axisFreq.vMinInView(), axisFreq.vMaxInView());
