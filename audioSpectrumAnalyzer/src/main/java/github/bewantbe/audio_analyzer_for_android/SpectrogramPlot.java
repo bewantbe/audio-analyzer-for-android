@@ -131,12 +131,17 @@ class SpectrogramPlot {
         Log.i(TAG, "setCanvas(): " + _canvasWidth + " x " + _canvasHeight);
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
-        if (showFreqAlongX) {
-            axisFreq.setNCanvasPixel(canvasWidth - labelBeginX);
-            axisTime.setNCanvasPixel(labelBeginY);
-        } else {
-            axisTime.setNCanvasPixel(canvasWidth - labelBeginX);
-            axisFreq.setNCanvasPixel(labelBeginY);
+        if (canvasHeight > 1 && canvasWidth > 1) {
+            labelBeginX = getLabelBeginX();
+            labelBeginY = getLabelBeginY();
+            Log.i(TAG, "setCanvas(): " + " x = " + (canvasWidth - labelBeginX) + " y = " + labelBeginY);
+            if (showFreqAlongX) {
+                axisFreq.setNCanvasPixel(canvasWidth - labelBeginX);
+                axisTime.setNCanvasPixel(labelBeginY);
+            } else {
+                axisTime.setNCanvasPixel(canvasWidth - labelBeginX);
+                axisFreq.setNCanvasPixel(labelBeginY);
+            }
         }
         if (axisBounds != null) {
             if (showFreqAlongX) {
@@ -172,6 +177,7 @@ class SpectrogramPlot {
 
     // Linear or Logarithmic frequency axis
     void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound_for_log) {
+        Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType);
         axisFreq.setMappingType(mapType, freq_lower_bound_for_log);
         if (mapType == ScreenPhysicalMapping.Type.LOG) {
             fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
@@ -361,6 +367,9 @@ class SpectrogramPlot {
 
     // Plot spectrogram with axis and ticks on the whole canvas c
     void drawSpectrogramPlot(Canvas c) {
+        if (canvasWidth == 0 || canvasHeight == 0) {
+            return;
+        }
         labelBeginX = getLabelBeginX();  // this seems will make the scaling gesture inaccurate
         labelBeginY = getLabelBeginY();
         if (showFreqAlongX) {

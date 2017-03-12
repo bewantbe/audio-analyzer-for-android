@@ -123,7 +123,7 @@ public class AnalyzerGraphic extends View {
         }
         // Spectrum
         RectF axisBounds = new RectF(freq_lower_bound_local, 0.0f, sampleRate/2.0f, spectrumPlot.axisY.vUpperBound);
-        Log.i(TAG, "setupPlot(): W=" + canvasWidth + "  H=" + canvasHeight + "  dB=" + spectrumPlot.axisY.vUpperBound);
+        Log.i(TAG, "setupAxes(): W=" + canvasWidth + "  H=" + canvasHeight + "  dB=" + spectrumPlot.axisY.vUpperBound);
         spectrumPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
 
         // Spectrogram
