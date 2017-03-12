@@ -35,8 +35,6 @@ class SpectrogramBMP {
 
     void init(int _nFreq, int _nTime, ScreenPhysicalMapping _axis) {
         bmpWidth = calBmpWidth(_axis);
-        if (bmpWidth <= 1) bmpWidth = bmpWidthDefault;
-        if (bmpWidth > 2000) bmpWidth = bmpWidthMax;
         synchronized (this) {
             spectrumStore.init(_nFreq, _nTime);
         }
@@ -101,10 +99,13 @@ class SpectrogramBMP {
         }
         if (logAxisMode == LogAxisPlotMode.REPLOT) {
             synchronized (this) {
-                if (bmpWidth != calBmpWidth(_axisFreq))
-                    Log.i(TAG, "updateAxis() reinitialize BMP width(freq): " + bmpWidth + " to " + calBmpWidth(_axisFreq));
-                bmpWidth = calBmpWidth(_axisFreq);
+                int bmpWidthNew = calBmpWidth(_axisFreq);
+                boolean needRebuild = bmpWidth != bmpWidthNew;
+                bmpWidth = bmpWidthNew;
                 logBmp.init(logBmp.nFreq, logBmp.nTime, _axisFreq, bmpWidth);
+                if (needRebuild) {
+                    logBmp.rebuild(spectrumStore, _axisFreq);
+                }
             }
         } else {
             synchronized (this) {
