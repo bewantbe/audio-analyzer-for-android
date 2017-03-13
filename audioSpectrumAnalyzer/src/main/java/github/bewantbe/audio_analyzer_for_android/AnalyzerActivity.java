@@ -450,11 +450,11 @@ public class AnalyzerActivity extends Activity
       }
 //      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
       // Fly the canvas in graphView when in scale mode
-      shiftingVelocity = (float) Math.sqrt(velocityX*velocityX + velocityY*velocityY);
+      shiftingVelocity = Math.sqrt(velocityX*velocityX + velocityY*velocityY);
       shiftingComponentX = velocityX / shiftingVelocity;
       shiftingComponentY = velocityY / shiftingVelocity;
       float DPRatio = getResources().getDisplayMetrics().density;
-      flyAcceleration = 1200f * DPRatio;
+      flyAcceleration = 1200 * DPRatio;
       timeFlingStart = SystemClock.uptimeMillis();
       flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
@@ -462,19 +462,19 @@ public class AnalyzerActivity extends Activity
 
     Handler flyingMoveHandler = new Handler();
     long timeFlingStart;                     // Prevent from running forever
-    float flyDt = 1/20f;                     // delta t of refresh
-    float shiftingVelocity;                  // fling velocity
-    float shiftingComponentX;                // fling direction x
-    float shiftingComponentY;                // fling direction y
-    float flyAcceleration = 1200f;           // damping acceleration of fling, pixels/second^2
+    double flyDt = 1/20.;                     // delta t of refresh
+    double shiftingVelocity;                  // fling velocity
+    double shiftingComponentX;                // fling direction x
+    double shiftingComponentY;                // fling direction y
+    double flyAcceleration = 1200.;           // damping acceleration of fling, pixels/second^2
 
     Runnable flyingMoveRunnable = new Runnable() {
       @Override
       public void run() {
-        float shiftingVelocityNew = shiftingVelocity - flyAcceleration*flyDt;
+        double shiftingVelocityNew = shiftingVelocity - flyAcceleration*flyDt;
         if (shiftingVelocityNew < 0) shiftingVelocityNew = 0;
         // Number of pixels that should move in this time step
-        float shiftingPixel = (shiftingVelocityNew + shiftingVelocity)/2 * flyDt;
+        double shiftingPixel = (shiftingVelocityNew + shiftingVelocity)/2 * flyDt;
         shiftingVelocity = shiftingVelocityNew;
         if (shiftingVelocity > 0f
             && SystemClock.uptimeMillis() - timeFlingStart < 10000) {
@@ -545,10 +545,10 @@ public class AnalyzerActivity extends Activity
   /**
    *  Manage scroll and zoom
    */
-  final private static float INIT = Float.MIN_VALUE;
+  final private static double INIT = Double.MIN_VALUE;
   private boolean isPinching = false;
-  private float xShift0 = INIT, yShift0 = INIT;
-  private float x0, y0;
+  private double xShift0 = INIT, yShift0 = INIT;
+  private double x0, y0;
   private int[] windowLocation = new int[2];
 
   private void scaleEvent(MotionEvent event) {

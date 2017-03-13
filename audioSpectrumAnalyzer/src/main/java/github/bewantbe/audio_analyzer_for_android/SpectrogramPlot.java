@@ -61,7 +61,7 @@ class SpectrogramPlot {
     ScreenPhysicalMapping axisTime;
     private GridLabel fqGridLabel;
     private GridLabel tmGridLabel;
-    float cursorFreq;
+    double cursorFreq;
 
     private float DPRatio;
     private float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
@@ -127,7 +127,7 @@ class SpectrogramPlot {
                 "\n  canvas size freq= " + axisFreq.nCanvasPixel + " time=" + axisTime.nCanvasPixel);
     }
 
-    void setCanvas(int _canvasWidth, int _canvasHeight, RectF axisBounds) {
+    void setCanvas(int _canvasWidth, int _canvasHeight, double[] axisBounds) {
         Log.i(TAG, "setCanvas(): " + _canvasWidth + " x " + _canvasHeight);
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
@@ -136,15 +136,15 @@ class SpectrogramPlot {
         }
         if (axisBounds != null) {
             if (showFreqAlongX) {
-                axisFreq.setBounds(axisBounds.left, axisBounds.right);
-                axisTime.setBounds(axisBounds.top,  axisBounds.bottom);
+                axisFreq.setBounds(axisBounds[0], axisBounds[2]);
+                axisTime.setBounds(axisBounds[1], axisBounds[3]);
             } else {
-                axisTime.setBounds(axisBounds.left, axisBounds.right);
-                axisFreq.setBounds(axisBounds.top,  axisBounds.bottom);
+                axisTime.setBounds(axisBounds[0], axisBounds[2]);
+                axisFreq.setBounds(axisBounds[1], axisBounds[3]);
             }
             if (showModeSpectrogram == TimeAxisMode.SHIFT) {
-                float b1 = axisTime.vLowerBound;
-                float b2 = axisTime.vUpperBound;
+                double b1 = axisTime.vLowerBound;
+                double b2 = axisTime.vUpperBound;
                 axisTime.setBounds(b2, b1);
             }
         }
@@ -154,7 +154,7 @@ class SpectrogramPlot {
         spectrogramBMP.updateAxis(axisFreq);
     }
 
-    void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
+    void setZooms(double xZoom, double xShift, double yZoom, double yShift) {
 //        Log.v(TAG, "setZooms():  xZ=" + xZoom + "  xS=" + xShift + "  yZ=" + yZoom + "  yS=" + yShift);
         if (showFreqAlongX) {
             axisFreq.setZoomShift(xZoom, xShift);
@@ -167,7 +167,7 @@ class SpectrogramPlot {
     }
 
     // Linear or Logarithmic frequency axis
-    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound_for_log) {
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, double freq_lower_bound_for_log) {
         Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType);
         axisFreq.setMappingType(mapType, freq_lower_bound_for_log);
         if (mapType == ScreenPhysicalMapping.Type.LOG) {
@@ -182,7 +182,7 @@ class SpectrogramPlot {
 
     void setSpectrogramDBLowerBound(double b) { spectrogramBMP.dBLowerBound = b; }
 
-    void setCursor(float x, float y) {
+    void setCursor(double x, double y) {
         if (showFreqAlongX) {
             //cursorFreq = axisBounds.width() * (xShift + (x-labelBeginX)/(canvasWidth-labelBeginX)/xZoom);  // frequency
             cursorFreq = axisFreq.vFromPixel(x - labelBeginX);
@@ -195,7 +195,7 @@ class SpectrogramPlot {
         }
     }
 
-    float getCursorFreq() {
+    double getCursorFreq() {
         return canvasWidth == 0 ? 0 : cursorFreq;
     }
 
@@ -205,7 +205,7 @@ class SpectrogramPlot {
 
     void setTimeMultiplier(int nAve) {
         timeMultiplier = nAve;
-        axisTime.vUpperBound = (float)(timeWatch * timeMultiplier);
+        axisTime.vUpperBound = timeWatch * timeMultiplier;
     }
 
     void setShowTimeAxis(boolean bSTA) {
@@ -215,8 +215,8 @@ class SpectrogramPlot {
     void setSpectrogramModeShifting(boolean b) {
         if ((showModeSpectrogram == TimeAxisMode.SHIFT) != b) {
             // mode change, swap time bounds.
-            float b1 = axisTime.vLowerBound;
-            float b2 = axisTime.vUpperBound;
+            double b1 = axisTime.vLowerBound;
+            double b2 = axisTime.vUpperBound;
             axisTime.setBounds(b2, b1);
         }
         if (b) {
@@ -230,7 +230,7 @@ class SpectrogramPlot {
     void setShowFreqAlongX(boolean b) {
         if (showFreqAlongX != b) {
             // Set (swap) canvas size
-            float t = axisFreq.nCanvasPixel;
+            double t = axisFreq.nCanvasPixel;
             axisFreq.setNCanvasPixel(axisTime.nCanvasPixel);
             axisTime.setNCanvasPixel(t);
             // swap bounds of freq axis
@@ -336,10 +336,10 @@ class SpectrogramPlot {
         float cX, cY;
         // Show only the frequency cursor
         if (showFreqAlongX) {
-            cX = axisFreq.pixelFromV(cursorFreq) + labelBeginX;
+            cX = (float)axisFreq.pixelFromV(cursorFreq) + labelBeginX;
             c.drawLine(cX, 0, cX, labelBeginY, cursorPaint);
         } else {
-            cY = axisFreq.pixelFromV(cursorFreq);
+            cY = (float)axisFreq.pixelFromV(cursorFreq);
             c.drawLine(labelBeginX, cY, canvasWidth, cY, cursorPaint);
         }
     }
@@ -372,7 +372,7 @@ class SpectrogramPlot {
         }
     }
 
-    private float pixelTimeCompensate = 0;
+    private double pixelTimeCompensate = 0;
     private volatile boolean isPaused = false;
 
     // Plot spectrogram with axis and ticks on the whole canvas c
@@ -387,28 +387,28 @@ class SpectrogramPlot {
         tmGridLabel.updateGridLabels(axisTime.vMinInView(), axisTime.vMaxInView());
 
         // show Spectrogram
-        float halfFreqResolutionShift;  // move the color patch to match the center frequency
+        double halfFreqResolutionShift;  // move the color patch to match the center frequency
         if (axisFreq.mapType == ScreenPhysicalMapping.Type.LINEAR) {
-            halfFreqResolutionShift = axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints / 2;
+            halfFreqResolutionShift = axisFreq.getZoom() * axisFreq.nCanvasPixel / nFreqPoints / 2;
         } else {
             halfFreqResolutionShift = 0;  // the correction is included in log axis render algo.
         }
         matrixSpectrogram.reset();
         if (showFreqAlongX) {
             // when xZoom== 1: nFreqPoints -> canvasWidth; 0 -> labelBeginX
-            matrixSpectrogram.postScale(axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints,
-                    axisTime.zoom * axisTime.nCanvasPixel / nTimePoints);
-            matrixSpectrogram.postTranslate((labelBeginX - axisFreq.shift * axisFreq.zoom * axisFreq.nCanvasPixel + halfFreqResolutionShift),
-                    -axisTime.shift * axisTime.zoom * axisTime.nCanvasPixel);
+            matrixSpectrogram.postScale((float)(axisFreq.getZoom() * axisFreq.nCanvasPixel / nFreqPoints),
+                    (float)(axisTime.getZoom() * axisTime.nCanvasPixel / nTimePoints));
+            matrixSpectrogram.postTranslate((float)(labelBeginX - axisFreq.getShift() * axisFreq.getZoom() * axisFreq.nCanvasPixel + halfFreqResolutionShift),
+                    (float)(-axisTime.getShift() * axisTime.getZoom() * axisTime.nCanvasPixel));
         } else {
             // postRotate() will make c.drawBitmap about 20% slower, don't know why
             matrixSpectrogram.postRotate(-90);
-            matrixSpectrogram.postScale(axisTime.zoom * axisTime.nCanvasPixel / nTimePoints,
-                    axisFreq.zoom * axisFreq.nCanvasPixel / nFreqPoints);
+            matrixSpectrogram.postScale((float)(axisTime.getZoom() * axisTime.nCanvasPixel / nTimePoints),
+                    (float)(axisFreq.getZoom() * axisFreq.nCanvasPixel / nFreqPoints));
             // (1-yShift) is relative position of shift (after rotation)
             // yZoom*labelBeginY is canvas length in frequency direction in pixel unit
-            matrixSpectrogram.postTranslate((labelBeginX - axisTime.shift * axisTime.zoom * axisTime.nCanvasPixel),
-                    (1-axisFreq.shift) * axisFreq.zoom * axisFreq.nCanvasPixel - halfFreqResolutionShift);
+            matrixSpectrogram.postTranslate((float)(labelBeginX - axisTime.getShift() * axisTime.getZoom() * axisTime.nCanvasPixel),
+                    (float)((1-axisFreq.getShift()) * axisFreq.getZoom() * axisFreq.nCanvasPixel - halfFreqResolutionShift));
         }
         c.save();
         c.concat(matrixSpectrogram);
@@ -417,22 +417,22 @@ class SpectrogramPlot {
         // But if user pressed pause, stop compensate.
         if (!isPaused && updateTimeDiff) {
             double timeCurrent = System.currentTimeMillis() / 1000.0;
-            pixelTimeCompensate = (float) ((timeLastSample - timeCurrent) / (timeInc * timeMultiplier * nTimePoints) * nTimePoints);
+            pixelTimeCompensate = (timeLastSample - timeCurrent) / (timeInc * timeMultiplier * nTimePoints) * nTimePoints;
             updateTimeDiff = false;
 //            Log.i(TAG, " time diff = " + (timeLastSample - timeCurrent));
         }
         if (showModeSpectrogram == TimeAxisMode.SHIFT) {
-            c.translate(0.0f, pixelTimeCompensate);
+            c.translate(0.0f, (float)pixelTimeCompensate);
         }
 
         if (axisFreq.mapType == ScreenPhysicalMapping.Type.LOG &&
                 spectrogramBMP.logAxisMode == SpectrogramBMP.LogAxisPlotMode.REPLOT) {
-            // Revert the effect of axisFreq.zoom axisFreq.shift for the mode REPLOT
-            c.scale(1f / axisFreq.zoom, 1f);
+            // Revert the effect of axisFreq.getZoom() axisFreq.getShift() for the mode REPLOT
+            c.scale((float)(1 / axisFreq.getZoom()), 1f);
             if (showFreqAlongX) {
-                c.translate(nFreqPoints * axisFreq.shift * axisFreq.zoom, 0.0f);
+                c.translate((float)(nFreqPoints * axisFreq.getShift() * axisFreq.getZoom()), 0.0f);
             } else {
-                c.translate(nFreqPoints * (1f - axisFreq.shift - 1f / axisFreq.zoom) * axisFreq.zoom, 0.0f);
+                c.translate((float)(nFreqPoints * (1f - axisFreq.getShift() - 1f / axisFreq.getZoom()) * axisFreq.getZoom()), 0.0f);
             }
         }
 
