@@ -79,14 +79,18 @@ class ScreenPhysicalMapping {
         nCanvasPixel = _nCanvasPixel;
     }
 
-    void setBounds(double _vLowerBound, double _vHigherBound) {
-        vLowerBound  = _vLowerBound;
-        vUpperBound = _vHigherBound;
-        // Reset view range, leave user the responsibility to customize it.
-        vLowerViewBound = vLowerBound;
-        vUpperViewBound = vUpperBound;
-        zoom = 1;
-        shift = 0;
+    void setBounds(double _vL, double _vU) {
+        vLowerBound = _vL;
+        vUpperBound = _vU;
+        // Reset view range, preserve zoom and shift
+        setZoomShift(zoom, shift);
+        if (AnalyzerUtil.isAlmostInteger(vLowerViewBound)) {  // dirty fix...
+            vLowerViewBound = Math.round(vLowerViewBound);
+        }
+        if (AnalyzerUtil.isAlmostInteger(vUpperViewBound)) {
+            vUpperViewBound = Math.round(vUpperViewBound);
+        }
+        setViewBounds(vLowerViewBound, vUpperViewBound);  // refine zoom shift
     }
 
     double getZoom() { return zoom; }
@@ -100,7 +104,7 @@ class ScreenPhysicalMapping {
     }
 
     // set zoom and shift from physical value bounds
-    void setZoomShiftFromV(double vL, double vU) { // TODO: rename to setViewBounds
+    void setViewBounds(double vL, double vU) {
         if (vL == vU) {
             return;  // Or throw an exception?
         }
@@ -162,7 +166,7 @@ class ScreenPhysicalMapping {
         double oldVL = vLowerViewBound;
         double oldVU = vUpperViewBound;
         setBounds(vUpperBound, vLowerBound);
-        setZoomShiftFromV(oldVU, oldVL);
+        setViewBounds(oldVU, oldVL);
     }
 
     void setMappingType(ScreenPhysicalMapping.Type _mapType, double lower_bound_ref) {
@@ -196,6 +200,6 @@ class ScreenPhysicalMapping {
             if (vL  <= lower_bound_ref) vL = 0;
             if (vH  <= lower_bound_ref) vH = 0;
         }
-        setZoomShiftFromV(vL, vH);
+        setViewBounds(vL, vH);
     }
 }

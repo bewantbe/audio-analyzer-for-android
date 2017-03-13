@@ -557,14 +557,14 @@ class SpectrogramBMP {
             iFreqToPix[0] = 0;
             double eps = 1e-7;  // 7 + log10(8192) < 15
             int iF = 1;
-            ScreenPhysicalMapping axisSeg = new ScreenPhysicalMapping(1.0f, (float) minFreq, (float) maxFreq, ScreenPhysicalMapping.Type.LOG);
+            ScreenPhysicalMapping axisSeg = new ScreenPhysicalMapping(1.0, minFreq, maxFreq, ScreenPhysicalMapping.Type.LOG);
             for (int i = 1; i <= nSegment; i++) {
-                axisSeg.setNCanvasPixel((float) Math.round(pixelAbscissa[i] - pixelAbscissa[i - 1]));  // should work without round()
-                axisSeg.setBounds((float) freqAbscissa[i - 1], (float) freqAbscissa[i]);
+                axisSeg.setNCanvasPixel(Math.round(pixelAbscissa[i] - pixelAbscissa[i - 1]));  // should work without round()
+                axisSeg.setBounds(freqAbscissa[i - 1], freqAbscissa[i]);
                 Log.v(TAG, "axisSeg[" + i + "] .nC = " + axisSeg.nCanvasPixel + "  .vL = " + axisSeg.vLowerBound + "  .vU = " + axisSeg.vUpperBound);
                 while ((iF + 0.5) * dFreq <= freqAbscissa[i] + eps) {
                     // upper bound of the pixel position of frequency point iF
-                    iFreqToPix[iF] = axisSeg.pixelFromV((float) ((iF + 0.5) * dFreq)) + pixelAbscissa[i - 1];
+                    iFreqToPix[iF] = axisSeg.pixelFromV((iF + 0.5) * dFreq) + pixelAbscissa[i - 1];
 //                    Log.d(TAG, "seg = " + i + "  iFreqToPix[" + iF + "] = " + iFreqToPix[iF]);
                     iF++;
                 }

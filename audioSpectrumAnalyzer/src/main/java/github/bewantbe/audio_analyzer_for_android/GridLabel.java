@@ -334,18 +334,8 @@ class GridLabel {
         }
     }
 
-    private static boolean isAlmostInteger(double x) {
-        // return x % 1 == 0;
-        double i = round(x);
-        if (i == 0) {
-            return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
-        } else {
-            return abs(x - i) / i < 1.2e-7;
-        }
-    }
-
     boolean isImportantLabel(int j) {
         // For freq, time
-        return isAlmostInteger(log10(values[j]));
+        return AnalyzerUtil.isAlmostInteger(log10(values[j]));
     }
 }
