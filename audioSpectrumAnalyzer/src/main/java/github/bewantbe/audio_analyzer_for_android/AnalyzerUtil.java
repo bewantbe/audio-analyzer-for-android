@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.round;
+
 /**
  * Utility functions for audio analyzer.
  */
@@ -79,6 +82,16 @@ class AnalyzerUtil {
                 Log.i(TAG, "sameTest(): same data row!!");
             }
             System.arraycopy(data, 0, cmpDB, 0, data.length);
+        }
+    }
+
+    static boolean isAlmostInteger(double x) {
+        // return x % 1 == 0;
+        double i = round(x);
+        if (i == 0) {
+            return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
+        } else {
+            return abs(x - i) / i < 1.2e-7;
         }
     }
 

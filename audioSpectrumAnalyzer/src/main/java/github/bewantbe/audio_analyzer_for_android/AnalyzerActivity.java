@@ -126,7 +126,7 @@ public class AnalyzerActivity extends Activity
     super.onResume();
 
     LoadPreferences();
-    analyzerViews.graphView.setReady(this);  // TODO: move this earlier
+    analyzerViews.graphView.setReady(this);  // TODO: move this earlier?
     analyzerViews.enableSaveWavView(bSaveWav);
 
     // Used to prevent extra calling to restartSampling() (e.g. in LoadPreferences())
@@ -276,7 +276,7 @@ public class AnalyzerActivity extends Activity
       b_need_restart_audio = false;
     }
 
-    editor.apply();
+    editor.commit();
 
     if (b_need_restart_audio) {
       restartSampling(analyzerParam);
@@ -795,7 +795,7 @@ public class AnalyzerActivity extends Activity
         Log.d(TAG, "processClick(): isLinearFreq=" + isLinearFreq);
         analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
         editor.putString("freq_scaling_mode", value);
-        editor.apply();
+        editor.commit();
         return false;
       }
       case R.id.dbA:
@@ -804,7 +804,7 @@ public class AnalyzerActivity extends Activity
           samplingThread.setAWeighting(analyzerParam.isAWeighting);
         }
         editor.putBoolean("dbA", analyzerParam.isAWeighting);
-        editor.apply();
+        editor.commit();
         return false;
       case R.id.spectrum_spectrogram_mode:
         if (value.equals("spum")) {
@@ -813,7 +813,7 @@ public class AnalyzerActivity extends Activity
           analyzerViews.graphView.switch2Spectrogram();
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
-        editor.apply();
+        editor.commit();
         return false;
       default:
         return true;

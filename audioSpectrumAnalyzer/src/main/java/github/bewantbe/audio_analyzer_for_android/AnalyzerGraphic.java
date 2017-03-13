@@ -24,7 +24,6 @@ package github.bewantbe.audio_analyzer_for_android;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -261,14 +260,14 @@ public class AnalyzerGraphic extends View {
 
         // Set range
         if (showMode == PlotMode.SPECTRUM) {
-            spectrumPlot.axisX.setZoomShiftFromV(ranges[0], ranges[1]);
-            spectrumPlot.axisY.setZoomShiftFromV(ranges[3], ranges[2]);  // reversed
+            spectrumPlot.axisX.setViewBounds(ranges[0], ranges[1]);
+            spectrumPlot.axisY.setViewBounds(ranges[3], ranges[2]);  // reversed
         } else if (showMode == PlotMode.SPECTROGRAM) {
-            spectrogramPlot.axisTime.setZoomShiftFromV(ranges[4], ranges[5]);
+            spectrogramPlot.axisTime.setViewBounds(ranges[4], ranges[5]);
             if (spectrogramPlot.showFreqAlongX) {
-                spectrogramPlot.axisFreq.setZoomShiftFromV(ranges[0], ranges[1]);
+                spectrogramPlot.axisFreq.setViewBounds(ranges[0], ranges[1]);
             } else {
-                spectrogramPlot.axisFreq.setZoomShiftFromV(ranges[1], ranges[0]);
+                spectrogramPlot.axisFreq.setViewBounds(ranges[1], ranges[0]);
             }
             spectrogramPlot.spectrogramBMP.updateAxis(spectrogramPlot.axisFreq);
         }
