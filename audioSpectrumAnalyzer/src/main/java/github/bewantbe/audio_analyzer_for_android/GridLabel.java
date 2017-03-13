@@ -47,9 +47,9 @@ class GridLabel {
     }
 
     private Type gridType;
-    private float gridDensity;
+    private double gridDensity;
 
-    GridLabel(Type _gridType, float _gridDensity) {
+    GridLabel(Type _gridType, double _gridDensity) {
         gridType = _gridType;
         gridDensity = _gridDensity;
     }
@@ -57,7 +57,7 @@ class GridLabel {
     Type getGridType() { return gridType; }
 
     void setGridType(GridLabel.Type gt) { gridType = gt; }
-    void setDensity(float _gridDensity) { gridDensity = _gridDensity; }
+    void setDensity(double _gridDensity) { gridDensity = _gridDensity; }
 
     // return position of grid lines, there are roughly gridDensity lines for the bigger grid
     private static int genLinearGridPoints(double[][] gridPointsArray, double startValue, double endValue,
@@ -189,6 +189,7 @@ class GridLabel {
             // Minor:  1, 2, 3, ... , 9, 10, 20, 30, ...
             double gapChangingPoint = pow(10, floor(log10(startValue)));
             double gridIntervalSmall = ceil(startValue / gapChangingPoint) * gapChangingPoint;
+//            Log.i(TAG, "startValue = " + startValue + "  gapChangingPoint = " + gapChangingPoint + "  gridIntervalSmall = " + gridIntervalSmall);
 
             double b1 = pow(10, ceil(log10(startValue)));
             double b2 = pow(10, floor(log10(endValue)));
@@ -333,9 +334,9 @@ class GridLabel {
         }
     }
 
-    private static boolean isAlmostInteger(float x) {
+    private static boolean isAlmostInteger(double x) {
         // return x % 1 == 0;
-        float i = round(x);
+        double i = round(x);
         if (i == 0) {
             return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
         } else {
@@ -345,6 +346,6 @@ class GridLabel {
 
     boolean isImportantLabel(int j) {
         // For freq, time
-        return isAlmostInteger((float)log10(values[j]));
+        return isAlmostInteger(log10(values[j]));
     }
 }

@@ -45,9 +45,9 @@ class SpectrumPlot {
     private GridLabel fqGridLabel;
     private GridLabel dbGridLabel;
     private float DPRatio;
-    private float gridDensity = 1/85f;  // every 85 pixel one grid line, on average
+    private double gridDensity = 1/85.0;  // every 85 pixel one grid line, on average
 
-    float cursorFreq, cursorDB;  // cursor location
+    double cursorFreq, cursorDB;  // cursor location
     ScreenPhysicalMapping axisX;  // For frequency axis
     ScreenPhysicalMapping axisY;  // For dB axis
 
@@ -84,7 +84,7 @@ class SpectrumPlot {
         axisY = new ScreenPhysicalMapping(0, 0, 0, ScreenPhysicalMapping.Type.LINEAR);
     }
 
-    void setCanvas(int _canvasWidth, int _canvasHeight, RectF axisBounds) {
+    void setCanvas(int _canvasWidth, int _canvasHeight, double[] axisBounds) {
 //        Log.i("SpectrumPlot", "setCanvas: W="+_canvasWidth+"  H="+_canvasHeight);
         canvasWidth  = _canvasWidth;
         canvasHeight = _canvasHeight;
@@ -93,18 +93,18 @@ class SpectrumPlot {
         axisX.setNCanvasPixel(canvasWidth);
         axisY.setNCanvasPixel(canvasHeight);
         if (axisBounds != null) {
-            axisX.setBounds(axisBounds.left, axisBounds.right);
-            axisY.setBounds(axisBounds.top,  axisBounds.bottom);
+            axisX.setBounds(axisBounds[0], axisBounds[2]);
+            axisY.setBounds(axisBounds[1], axisBounds[3]);
         }
     }
 
-    void setZooms(float xZoom, float xShift, float yZoom, float yShift) {
+    void setZooms(double xZoom, double xShift, double yZoom, double yShift) {
         axisX.setZoomShift(xZoom, xShift);
         axisY.setZoomShift(yZoom, yShift);
     }
 
     // Linear or Logarithmic frequency axis
-    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, float freq_lower_bound_for_log) {
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, double freq_lower_bound_for_log) {
         axisX.setMappingType(mapType, freq_lower_bound_for_log);
         if (mapType == ScreenPhysicalMapping.Type.LOG) {
             fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
@@ -114,28 +114,18 @@ class SpectrumPlot {
         Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType + " axisX.vL=" + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
     }
 
-    private boolean isAlmostInteger(float x) {
-        // return x % 1 == 0;
-        float i = round(x);
-        if (i == 0) {
-            return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
-        } else {
-            return abs(x - i) / i < 1.2e-7;
-        }
-    }
-
     private void drawGridLines(Canvas c) {
         for(int i = 0; i < fqGridLabel.values.length; i++) {
-            float xPos = axisX.pixelFromV((float)fqGridLabel.values[i]);
+            float xPos = (float)axisX.pixelFromV(fqGridLabel.values[i]);
             c.drawLine(xPos, 0, xPos, canvasHeight, gridPaint);
         }
         for(int i = 0; i < dbGridLabel.values.length; i++) {
-            float yPos = axisY.pixelFromV((float)dbGridLabel.values[i]);
+            float yPos = (float)axisY.pixelFromV(dbGridLabel.values[i]);
             c.drawLine(0, yPos, canvasWidth, yPos, gridPaint);
         }
     }
 
-    private float clampDB(float value) {
+    private double clampDB(double value) {
         if (value < AnalyzerGraphic.minDB || Double.isNaN(value)) {
             value = AnalyzerGraphic.minDB;
         }
@@ -161,14 +151,14 @@ class SpectrumPlot {
             System.arraycopy(_db, 0, db_cache, 0, _db.length);
         }
 
-        float canvasMinFreq = axisX.vMinInView();
-        float canvasMaxFreq = axisX.vMaxInView();
+        double canvasMinFreq = axisX.vMinInView();
+        double canvasMaxFreq = axisX.vMaxInView();
         // There are db.length frequency points, including DC component
         int nFreqPointsTotal = db_cache.length - 1;
-        float freqDelta = axisX.vUpperBound / nFreqPointsTotal;
+        double freqDelta = axisX.vUpperBound / nFreqPointsTotal;
         int beginFreqPt = (int)floor(canvasMinFreq / freqDelta);    // pointer to tmpLineXY
         int endFreqPt   = (int)ceil (canvasMaxFreq / freqDelta)+1;
-        final float minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
+        final double minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
 
         // add one more boundary points
         if (beginFreqPt == 0 && axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
@@ -191,8 +181,8 @@ class SpectrumPlot {
             if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2
                     || axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
                 matrix.reset();
-                matrix.setTranslate(0, -axisY.shift * canvasHeight);
-                matrix.postScale(1, axisY.zoom);
+                matrix.setTranslate(0, (float)(-axisY.getShift() * canvasHeight));
+                matrix.postScale(1, (float)axisY.getZoom());
                 c.concat(matrix);
                 //      float barWidthInPixel = 0.5f * freqDelta / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
                 //      if (barWidthInPixel > 2) {
@@ -202,11 +192,11 @@ class SpectrumPlot {
                 //      }
                 // plot directly to the canvas
                 for (int i = beginFreqPt; i < endFreqPt; i++) {
-                    float x = axisX.pixelFromV(i * freqDelta);
-                    float y = axisY.pixelNoZoomFromV(clampDB((float) db_cache[i]));
+                    float x = (float)axisX.pixelFromV(i * freqDelta);
+                    float y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[i]));
                     if (y != canvasHeight) { // ...forgot why
                         tmpLineXY[4 * i] = x;
-                        tmpLineXY[4 * i + 1] = minYCanvas;
+                        tmpLineXY[4 * i + 1] = (float)minYCanvas;
                         tmpLineXY[4 * i + 2] = x;
                         tmpLineXY[4 * i + 3] = y;
                     }
@@ -216,7 +206,7 @@ class SpectrumPlot {
                 // for zoomed linear scale
                 int pixelStep = 2;  // each bar occupy this virtual pixel
                 matrix.reset();
-                float extraPixelAlignOffset = 0.0f;
+                double extraPixelAlignOffset = 0.0f;
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 //          // There is an shift for Android 4.4, while no shift for Android 2.3
 //          // I guess that is relate to GL ES acceleration
@@ -224,17 +214,17 @@ class SpectrumPlot {
 //            extraPixelAlignOffset = 0.5f;
 //          }
 //        }
-                matrix.setTranslate(-axisX.shift * nFreqPointsTotal * pixelStep - extraPixelAlignOffset,
-                                    -axisY.shift * canvasHeight);
-                matrix.postScale(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep), axisY.zoom);
+                matrix.setTranslate((float)(-axisX.getShift() * nFreqPointsTotal * pixelStep - extraPixelAlignOffset),
+                                    (float)(-axisY.getShift() * canvasHeight));
+                matrix.postScale((float)(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep)), (float)axisY.getZoom());
                 c.concat(matrix);
                 // fill interval same as canvas pixel width.
                 for (int i = beginFreqPt; i < endFreqPt; i++) {
                     float x = i * pixelStep;
-                    float y = axisY.pixelNoZoomFromV(clampDB((float) db_cache[i]));
+                    float y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[i]));
                     if (y != canvasHeight) {
                         tmpLineXY[4*i  ] = x;
-                        tmpLineXY[4*i+1] = minYCanvas;
+                        tmpLineXY[4*i+1] = (float)minYCanvas;
                         tmpLineXY[4*i+2] = x;
                         tmpLineXY[4*i+3] = y;
                     }
@@ -247,14 +237,14 @@ class SpectrumPlot {
         // spectrum line
         c.save();
         matrix.reset();
-        matrix.setTranslate(0, -axisY.shift*canvasHeight);
-        matrix.postScale(1, axisY.zoom);
+        matrix.setTranslate(0, (float)(-axisY.getShift()*canvasHeight));
+        matrix.postScale(1, (float)axisY.getZoom());
         c.concat(matrix);
-        float o_x = axisX.pixelFromV(beginFreqPt * freqDelta);
-        float o_y = axisY.pixelNoZoomFromV(clampDB((float)db_cache[beginFreqPt]));
+        float o_x = (float)axisX.pixelFromV(beginFreqPt * freqDelta);
+        float o_y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[beginFreqPt]));
         for (int i = beginFreqPt+1; i < endFreqPt; i++) {
-            float x = axisX.pixelFromV(i * freqDelta);
-            float y = axisY.pixelNoZoomFromV(clampDB((float)db_cache[i]));
+            float x = (float)axisX.pixelFromV(i * freqDelta);
+            float y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[i]));
             tmpLineXY[4*i  ] = o_x;
             tmpLineXY[4*i+1] = o_y;
             tmpLineXY[4*i+2] = x;
@@ -269,16 +259,16 @@ class SpectrumPlot {
     }
 
     // x, y is in pixel unit
-    void setCursor(float x, float y) {
+    void setCursor(double x, double y) {
         cursorFreq = axisX.vFromPixel(x);  // frequency
         cursorDB   = axisY.vFromPixel(y);  // decibel
     }
 
-    float getCursorFreq() {
+    double getCursorFreq() {
         return  canvasWidth == 0 ? 0 : cursorFreq;
     }
 
-    float getCursorDB() {
+    double getCursorDB() {
         return canvasHeight == 0 ?   0 : cursorDB;
     }
 
@@ -292,8 +282,8 @@ class SpectrumPlot {
             return;
         }
         float cX, cY;
-        cX = axisX.pixelFromV(cursorFreq);
-        cY = axisY.pixelFromV(cursorDB);
+        cX = (float)axisX.pixelFromV(cursorFreq);
+        cY = (float)axisY.pixelFromV(cursorDB);
         c.drawLine(cX, 0, cX, canvasHeight, cursorPaint);
         c.drawLine(0, cY, canvasWidth, cY, cursorPaint);
     }
