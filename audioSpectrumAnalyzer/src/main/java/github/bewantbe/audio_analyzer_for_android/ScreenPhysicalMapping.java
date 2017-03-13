@@ -25,6 +25,19 @@ import static java.lang.Math.log;
  * Use double or float ?
  */
 
+//    | lower bound  ...  higher bound |  physical unit
+//    | 0            ...             1 |  "unit 1" (Mapping can be linear or logarithmic)
+
+// In LINEAR mode (default):
+//    |lower value  ...    higher value|  physical unit
+//    | shift       ... shift + 1/zoom |  "unit 1", 0=vLowerBound, 1=vUpperBound
+//    | 0 | 1 |     ...          | n-1 |  pixel
+
+// In LINEAR_ON mode (not implemented):
+//      |lower value ...    higher value|     physical unit
+//      | shift      ... shift + 1/zoom |     "unit 1" window
+//    | 0 | 1 |      ...             | n-1 |  pixel
+
 class ScreenPhysicalMapping {
     private final static String TAG = "ScreenPhysicalMapping";
 
@@ -36,15 +49,18 @@ class ScreenPhysicalMapping {
         public int getValue() { return value; }
     }
 
-    Type mapType;                     // Linear or Log
+    Type mapType;                                     // Linear or Log
     double nCanvasPixel;
-    double vLowerBound, vUpperBound;   // Physical limits
-    private double zoom = 1, shift = 0;        // zoom==1 means no zooming, shift=0 means no shift
+    double vLowerBound, vUpperBound;                  // Physical limits
+    private double vLowerViewBound, vUpperViewBound;  // view bounds
+    private double zoom = 1, shift = 0;               // zoom==1: no zooming, shift=0: no shift
 
     ScreenPhysicalMapping(double _nCanvasPixel, double _vLowerBound, double _vHigherBound, ScreenPhysicalMapping.Type _mapType) {
         nCanvasPixel = _nCanvasPixel;
         vLowerBound  = _vLowerBound;
         vUpperBound = _vHigherBound;
+        vLowerViewBound = vLowerBound;
+        vUpperViewBound = vUpperBound;
         mapType      = _mapType;
     }
 
@@ -53,6 +69,8 @@ class ScreenPhysicalMapping {
         nCanvasPixel = _axis.nCanvasPixel;
         vLowerBound  = _axis.vLowerBound;
         vUpperBound  = _axis.vUpperBound;
+        vLowerViewBound = _axis.vLowerViewBound;
+        vUpperViewBound = _axis.vUpperViewBound;
         zoom         = _axis.zoom;
         shift        = _axis.shift;
     }
@@ -64,119 +82,87 @@ class ScreenPhysicalMapping {
     void setBounds(double _vLowerBound, double _vHigherBound) {
         vLowerBound  = _vLowerBound;
         vUpperBound = _vHigherBound;
-    }
-
-    void setZoomShift(double _zoom, double _shift) {
-        zoom = _zoom;
-        shift = _shift;
+        // Reset view range, leave user the responsibility to customize it.
+        vLowerViewBound = vLowerBound;
+        vUpperViewBound = vUpperBound;
+        zoom = 1;
+        shift = 0;
     }
 
     double getZoom() { return zoom; }
     double getShift() { return shift; }
 
+    void setZoomShift(double _zoom, double _shift) {
+        zoom = _zoom;
+        shift = _shift;
+        vLowerViewBound = vFromUnitPosition(0, zoom, shift);
+        vUpperViewBound = vFromUnitPosition(1, zoom, shift);
+    }
+
     // set zoom and shift from physical value bounds
-    void setZoomShiftFromV(double vLower, double vHigher) {
-        if (vLower == vHigher) {
+    void setZoomShiftFromV(double vL, double vU) { // TODO: rename to setViewBounds
+        if (vL == vU) {
             return;  // Or throw an exception?
         }
-        double nCanvasPixelSave = nCanvasPixel;
-        nCanvasPixel = 1;                       // This function do not depends on nCanvasPixel
-        double p1 = pixelNoZoomFromV(vLower);
-        double p2 = pixelNoZoomFromV(vHigher);
-        zoom = nCanvasPixel / (p2 - p1);
-        shift = p1 / nCanvasPixel;
-        nCanvasPixel = nCanvasPixelSave;
+        double p1 = UnitPositionFromV(vL, vLowerBound, vUpperBound);
+        double p2 = UnitPositionFromV(vU, vLowerBound, vUpperBound);
+        zoom  = 1 / (p2 - p1);
+        shift = p1;
+        vLowerViewBound = vL;
+        vUpperViewBound = vU;
     }
 
-    //    | lower bound  ...  higher bound |  physical unit
-    //    | 0            ...             1 |  "unit 1" (Mapping can be linear or logarithmic)
-
-    // In LINEAR mode (default):
-    //    |lower value  ...    higher value|  physical unit
-    //    | shift       ... shift + 1/zoom |  "unit 1", 0=vLowerBound, 1=vUpperBound
-    //    | 0 | 1 |     ...          | n-1 |  pixel
-
-    // In LINEAR_ON mode (not implemented):
-    //      |lower value ...    higher value|     physical unit
-    //      | shift      ... shift + 1/zoom |     "unit 1" window
-    //    | 0 | 1 |      ...             | n-1 |  pixel
-
-    // this class do not verify if the input data are legal
-    double pixelFromV(double v, double zoom, double shift) {
-        // old: canvasX4axis
-        // return (v - vLowerBound) / (vUpperBound - vLowerBound) * nCanvasPixel;
-        // old: canvasViewX4axis
-        if (vUpperBound == vLowerBound || vUpperBound != vUpperBound || vLowerBound != vLowerBound) {
+    double UnitPositionFromV(double v, double vL, double vU) {
+        if (vL == vU) {
             return 0;
         }
         if (mapType == Type.LINEAR) {
-            return ((v - vLowerBound) / (vUpperBound - vLowerBound) - shift) * zoom * nCanvasPixel;
+            return (v - vL) / (vU - vL);
         } else {
-            return pixelFromVLog(v, zoom, shift);
+            return log(v/vL) / log(vU/vL);
         }
     }
 
-    double vFromPixel(double pixel, double zoom, double shift) {
-        if (nCanvasPixel == 0 || zoom == 0) {
+    double vFromUnitPosition(double u, double zoom, double shift) {
+        if (zoom == 0) {
             return 0;
         }
         if (mapType == Type.LINEAR) {
-            return (pixel / nCanvasPixel / zoom + shift) * (vUpperBound - vLowerBound) + vLowerBound;
+            return (u / zoom + shift) * (vUpperBound - vLowerBound) + vLowerBound;
         } else {
-            return vLogFromPixel(pixel, zoom, shift);
+            return exp((u / zoom + shift) * log(vUpperBound / vLowerBound)) * vLowerBound;
         }
-    }
-
-//    double unit1FromV(double v) {
-//        return (v - vLowerBound) / (vUpperBound - vLowerBound);
-//    }
-
-    private double pixelFromVLog(double v, double zoom, double shift) {
-        return (log(v/vLowerBound) / log(vUpperBound /vLowerBound) - shift) * zoom * nCanvasPixel;
-    }
-
-    private double vLogFromPixel(double pixel, double zoom, double shift) {
-        return exp((pixel / nCanvasPixel / zoom + shift) * log(vUpperBound /vLowerBound)) * vLowerBound;
-    }
-
-    double vMinInView(double zoom, double shift) {
-        return vFromPixel(0, zoom, shift);
-    }
-
-    double vMaxInView(double zoom, double shift) {
-        return vFromPixel(nCanvasPixel, zoom, shift);
     }
 
     double pixelFromV(double v) {
-        return pixelFromV(v, zoom, shift);
+        return UnitPositionFromV(v, vLowerViewBound, vUpperViewBound) * nCanvasPixel;
     }
 
     double vFromPixel(double pixel) {
-        return vFromPixel(pixel, zoom, shift);
+        if (nCanvasPixel == 0)
+            return vLowerViewBound;
+        return vFromUnitPosition(pixel / nCanvasPixel, zoom, shift);
     }
 
     double vMinInView() {
-        return vFromPixel(0, zoom, shift);
+        return vLowerViewBound;
     }
 
     double vMaxInView() {
-        return vFromPixel(nCanvasPixel, zoom, shift);
+        return vUpperViewBound;
     }
 
     double pixelNoZoomFromV(double v) {
-        return pixelFromV(v, 1, 0);
+        return UnitPositionFromV(v, vLowerBound, vUpperBound) * nCanvasPixel;
     }
 
     double diffVBounds() { return vUpperBound - vLowerBound; }
 
     void reverseBounds() {
-//        double vL = vMinInView();
-//        double vH = vMaxInView();
-//        setBounds(vUpperBound, vLowerBound);
-//        setZoomShiftFromV(vH, vL);
-
-        shift = 1 - 1/zoom - shift;
+        double oldVL = vLowerViewBound;
+        double oldVU = vUpperViewBound;
         setBounds(vUpperBound, vLowerBound);
+        setZoomShiftFromV(oldVU, oldVL);
     }
 
     void setMappingType(ScreenPhysicalMapping.Type _mapType, double lower_bound_ref) {
