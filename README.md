@@ -14,20 +14,21 @@ Features
 --------
 
 * Show [spectrum](http://en.wikipedia.org/wiki/Frequency_spectrum) or [spectrogram](http://en.wikipedia.org/wiki/Spectrogram) in real-time, with decent axis labels.
-* In spectrum mode you may put a cursor in the plot, for measurement or as a marker.
-* Fine exam the spectrum by gestures: i.e. pinch for scaling and swipe for  view move.
-* Show peak frequency, in a moderate accuracy (FFT + interpolation).
+* Log and Linear frequency axis support.
+* You can put a cursor in the plot, for measurement or as a marker.
+* Easy gestures to fine exam the spectrum: i.e. pinch for scaling and swipe for  view move.
+* Show peak frequency in a moderate accuracy (FFT + interpolation).
 * Show dB or [A-weighting dB (dBA)](http://en.wikipedia.org/wiki/A-weighting), although not suitable for serious application.
-* Take averages of several spectrum then plot, make the spectrum smoother.
-* You may record the sound (while analyzing or not) to a WAV file (PCM format). Then deal with it with your favorite tool.
-* You can choose various recorder source. (see Android reference: [MediaRecorder.AudioSource](http://developer.android.com/reference/android/media/MediaRecorder.AudioSource.html))
-* You can try different sampling rates that your phone supports. Useful for example to find out the native (or best) sampling format for you phone.
+* Possible to take averages of several spectrum then plot, make the spectrum smoother.
+* You may record the sound (while analyzing!) to a WAV file (PCM format). Then deal with it with your favorite tool.
+* Support all recorder sources except those need root privilege (see list in Android reference: [MediaRecorder.AudioSource](http://developer.android.com/reference/android/media/MediaRecorder.AudioSource.html))
+* Support all possible sampling rates that your phone is capable. e.g. useful to find out the native (or best) sampling format for you phone.
 
 
 Installation Requirements
 -------------------------
 
-* >= Android 2.2 (API Level 8)
+* >= Android 2.2 (API Level 8). The recent version need Android 2.3 (API Level 9).
 * External storage (e.g MicroSD card), if you want to record the sound.
 
 

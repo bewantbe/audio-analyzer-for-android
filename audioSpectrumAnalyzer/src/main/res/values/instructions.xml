@@ -2,45 +2,88 @@
 <resources>
         <string name="instructions_title">      Instructions</string>
         <string name="dismiss">      Dismiss</string>
-        <string name="instructions_text"><![CDATA[<h2>Important Notes</h2>
-\u2022 In this software, we define all instances of “dB” to represent decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustical dB (e.g. dB SPL, dBC, or dBA) without at least requiring a full spectrum calibration.
-<br/><br/>
-\u2022 The dBA in this software is a simple minded, A-weighting dBFS measure.
-<br/><br/>
-\u2022 Some, if not many, mobile devices have a low-quality sampling rate converter. In these devices, one may see false spectrum lines (generally weak, while visible). To test that, you may generate a sine wave swap signal, then analyze its spectrogram using a different sampling rate.
-<br/><br/>
-\u2022 This software consumes power at a high rate.
-<br/><br/>
-
-<h2>Implementation Notes</h2>
-\u2022 A full-scale sine wave is designated at reference: <b>0 dBFS</b>.
-<br/><br/>
-\u2022 All calculations of spectrum and spectrogram are done through fast Fourier transform (FFT) with the chosen window function, with a 50% data overlap.
-<br/><br/>
-\u2022 The peak frequency is found by identifying the maximum spectrum point, then correcting it through quadratic interpolation fitting using three nearby points. The error is usually smaller than one tenth of (sample rate)/(FFT length).
-<br/><br/>
-\u2022 This software will drop frames when the specified sample rate is too high. For example, a sampling rate (<b>SAMPLE/S</b>) of 48000, with FFT length (<b>FFT LEN</b>) set to 1024 results in a frame rate per second (fps) equal to:<br/> (SAMPLES/LENGTH)*2 = 48000 / 1024 * 2 = (<b>93.75</b>) fps, which is far too high for a mobile device.
-<br/><br/>
-
-<h2>Button operation</h2>
-<font color="red">spum/spam</font>
-<br/><b>spum</b>: Show the <b>sp</b>ectr<b>um</b> at each time point.
+        <string name="instructions_text"><![CDATA[<h2>Button operation</h2>
+<font color="green">spum/spam</font>
+<br/><b>spum</b>: Show the real time <b>sp</b>ectr<b>um</b>.
 <br/><b>spam</b>: Show the <b>sp</b>ectrogr<b>am</b> in a duration. The color represents strength of the sound at a certain frequency and time.
 <p/>
-Note: <b>spam</b> mode expends more power to run than in <b>spum</b> mode, and may exhaust all available computing power (CPU/GPU) at high sampling rates. In this case, check <b>Preferences</b> to ensure you will receive a "Recorder buffer overrun" alert.
+<font color="green">dB/dBA</font>
+<br/>Switch between dBFS and A-weighting dBFS. dBA is widely used in environmental noise measurement. But here, dBA is only for reference, see notes below.
 <p/>
-<font color="red">dB/dBA</font>
-<br/>Switch between dBFS and A-weighting dBFS. dBA is widely used in environmental noise measurement. But here, dBA is only for reference (simple minded A-weighting dBFS, instead of acoustics dBA).
+<font color="green">linear/log</font>
+<br/>Switch between linear or log frequency axis. In log mode, the lowest frequency is determined by sampling rate divided by Fourier transform length.
 <p/>
-<font color="red">cursor/scale</font>
-<br/>In <b>cursor</b> mode, touching anywhere in the plot area moves the cursor.
-<br/>In <b>scale</b> mode, moving or "pinching" scales and zooms the x axis. Double-click anywhere in the plot area to switch to <b>cursor</b> mode.
-<p/>
-<font color="red">run/stop</font>
+<font color="green">run/stop</font>
 <br/><b>stop</b> freezes/pauses the display, making it easier to inspect the waveform. However, the recorder is still working when paused.
 <br/><b>run</b> resumes real-time analysis of samples and unfreezes the display.
 <p/>
+
+<h2>Viewport operation</h2>
+<font color="#00BFFF">Drag and Swipe</font>
+<br/>Move the spectrum or spectrogram.
+<p/>
+<font color="#00BFFF">Pinch</font>
+<br/>Scales the spectrum or spectrogram.
+<p/>
+<font color="#00BFFF">Double click</font>
+<br/>Reset the scaling.
+<p/>
+<font color="#00BFFF">Long press</font>
+<br/>Place a cursor at the point pressing, you can move the cursor while pressing. Once the finger leaves the screen, the cursor fixed at the last position.
+<br/>Move the cursor outside viewport to delete it.
+<p/>
+
+<h2>Preferences</h2>
+<h4>Audio source</h4>
+It is recommended to use <b>VOICE_RECOGNITION</b> for measurement purpose.
+<h4>Window Function</h4>
+It is recommended to use <b>Hanning</b> for general purpose.
+<br/>The window function with high dynamical range (i.e. low leakage) will be poor in locating the frequency, and vise versa.
+<br/>Dynamical range from low to high (frequency accuracy high to low) is:
+<br/>
+<br/><font face="monospace">Rectangular:      57 dB (54 Hz)</font>
+<br/><font face="monospace">Bartlett:        105 dB (79 dB, 82 Hz)</font>
+<br/><font face="monospace">Kaiser,a=2.0:     90 dB (93 Hz)</font>
+<br/><font face="monospace">Hanning:         154 dB (90 dB, 94 Hz)</font>
+<br/><font face="monospace">Blackman:        162 dB (107 dB, 107 Hz)</font>
+<br/><font face="monospace">Kaiser,a=3.0:    114 dB (111 Hz)</font>
+<br/><font face="monospace">Blackman-harris: 133 dB (124 Hz)</font>
+<br/><font face="monospace">Kaiser,a=4.0:    138 dB (127 Hz)</font>
+<br/>
+<br/><font color="gray">Dynamical range measured at half highest frequency away from the peak and use FFT length 1024, (frequency accuracy at sampling rate 48kHz).</font>
+<br/><font color="gray">For "Blackman", "Hanning" and "Bartlett" the dynamical range increase fast when away from the central frequency. For these window function, the dynamical range in parenthesis is measured using DPSS window function with identical frequency accuracy.</font>
+<br/><font color="gray">Doubling the FFT length will make dynamical range at least +6 dB, for "Bartlett", "Hanning" and "Blackman" the increament is +12dB, +18dB and +18dB.</font>
+
+
+<h4></h4>
+<h4></h4>
+
+<h2>Techenical Notes</h2>
+\u2022 In this software, we define all instances of “dB” to represent decibels relative to full scale (dBFS). There is no simple way to convert dBFS to acoustical dB (e.g. dB SPL, dBC, or dBA) without at least requiring a full spectrum calibration.
+<br/><br/>
+\u2022 A full-scale sine wave is designated at reference: <b>0 dBFS</b>. Hence the RMS of a full-scale square wave will be about 3.0 dBFS and its base frequency is about 2.0 dBFS. The signal of 1/32768 of full-scale will be about -90.3 dBFS.
+<br/><br/>
+\u2022 The dBA in this software is a simple minded, A-weighting dBFS measure, instead of acoustics dBA which requires acoustical dB.
+<br/><br/>
+\u2022 The spectrum (hence spectrogram) below -110 dB is essentially noise, due to the precision limitation and accumulated error in the Fourier transform procedure.
+<br/><br/>
+\u2022 Some, if not many, mobile devices have a low-quality sampling rate converter. In these devices, one may see false spectrum lines (generally weak, while visible). To test that, you may generate a sine wave swap signal, then analyze its spectrogram using a different sampling rate.
+<br/><br/>
+\u2022 This software consumes power at a high rate, e.g. about half the rate of viewing a HD video.
+<br/><br/>
+
+<h2>Implementation Notes</h2>
+\u2022 All calculations of spectrum and spectrogram are done through fast Fourier transform (FFT) with the chosen window function, with a 50% data overlap.
+<br/><br/>
+\u2022 The peak frequency is found by identifying the maximum spectrum point, then correcting it through quadratic interpolation fitting using three nearby points. The error is usually smaller than one tenth of (sample rate)/(FFT length). In the case of 48kHz samping and 8192 FFT length, that is about 0.6 Hz.
+<br/><br/>
+\u2022 <b>spam</b> mode expends more power to run than in <b>spum</b> mode, and in a low-end device, that may exhaust all available computing power (CPU/GPU), especially at high sampling rates. Check <b>Preferences</b> to ensure you will receive a "Recorder buffer overrun" alert.
+<br/><br/>
+\u2022 This software will drop frames when the specified sample rate is too high. For example, a sampling rate (<b>SAMPLE/S</b>) of 48000, with FFT length (<b>FFT LEN</b>) set to 1024 results in a frame rate per second (fps) equal to:<br/> (SAMPLES/LENGTH)*2 = 48000 / 1024 * 2 = (<b>93.75</b>) fps, which is far too high for a mobile device.
+<br/><br/>
+</p>
 by S A Uhler and xyy
-</p>]]></string>
+</p>
+]]></string>
 
 </resources>
