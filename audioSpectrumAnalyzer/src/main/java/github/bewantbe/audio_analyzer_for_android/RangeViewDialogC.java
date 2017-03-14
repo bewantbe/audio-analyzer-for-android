@@ -107,13 +107,13 @@ class RangeViewDialogC {
         ((EditText) rangeViewView.findViewById(R.id.et_db_setting_upper_bound))
                 .setText(df.format(vals[3]));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_fL))
-                .setText(ct.getString(R.string.show_range_tv_fL,vals[6]));
+                .setText(ct.getString(R.string.show_range_tv_fL));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_fH))
-                .setText(ct.getString(R.string.show_range_tv_fH,vals[7]));
+                .setText(ct.getString(R.string.show_range_tv_fH,vals[6],vals[7]));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_dBL))
-                .setText(ct.getString(R.string.show_range_tv_dBL,vals[8]));
+                .setText(ct.getString(R.string.show_range_tv_dBL));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_dBH))
-                .setText(ct.getString(R.string.show_range_tv_dBH,vals[9]));
+                .setText(ct.getString(R.string.show_range_tv_dBH,vals[8],vals[9]));
 
         ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
     }

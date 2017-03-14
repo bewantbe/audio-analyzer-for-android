@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">Audio Spectrum Analyzer</string>
 
     <!-- Main UI -->
     <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>
     <string name="textview_cur_text" >Cur :XXXXX.XHz(AX#+XX) -XXX.XdB</string>
+    <string name="text_cur">Cur :</string>
     <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
+    <string name="text_peak">Peak:</string>
     <string name="textview_rec_text">Rec: 00:00:00.0, Remain: 0000:00:00</string>
+    <string name="text_rec">Rec:</string>
+    <string name="text_remain">", Remain: "</string>
     <string name="sample_s">SAMPLE/S</string>
     <string name="fftlen">FFT LEN</string>
     <string name="ave">N AVE</string>
@@ -28,10 +31,10 @@
     <!-- Show range dialog -->
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="show_range_tv_fL">"Set lower Frequency Bound (&gt;=%1$.2f)"</string>
-    <string name="show_range_tv_fH">"and upper Frequency Bound (&lt;=%1$.2f)"</string>
-    <string name="show_range_tv_dBL">"Set low dB Bound (&gt;=%1$.2f)"</string>
-    <string name="show_range_tv_dBH">"and upper dB Bound (&lt;=%1$.2f)"</string>
+    <string name="show_range_tv_fL">"Set lower and upper Frequency Bound"</string>
+    <string name="show_range_tv_fH">"(%1$.2f&lt;= Hz &lt;=%2$.2f)"</string>
+    <string name="show_range_tv_dBL">"Set lower and upper dB Bound"</string>
+    <string name="show_range_tv_dBH">"(%1$.2f&lt;= dB &lt;=%2$.2f)"</string>
     <string name="et_freq_setting_lower_bound">frequency lower bound</string>
     <string name="et_freq_setting_upper_bound">frequency upper bound</string>
     <string name="et_db_setting_lower_bound">dB lower bound</string>
