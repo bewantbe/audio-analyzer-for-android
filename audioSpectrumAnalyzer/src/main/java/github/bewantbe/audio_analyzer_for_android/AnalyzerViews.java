@@ -27,6 +27,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
+import android.text.method.LinkMovementMethod;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
@@ -196,7 +197,7 @@ class AnalyzerViews {
 
     void showInstructions() {
         TextView tv = new TextView(activity);
-        tv.setMovementMethod(new ScrollingMovementMethod());
+        tv.setMovementMethod(LinkMovementMethod.getInstance());
         tv.setText(fromHtml(activity.getString(R.string.instructions_text)));
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.instructions_title)
