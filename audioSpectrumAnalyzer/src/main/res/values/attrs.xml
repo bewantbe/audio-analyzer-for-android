@@ -3,6 +3,7 @@
 
     <declare-styleable name="SelectorText">
         <attr name="items" format="string" />
+        <attr name="itemsDisplay" format="string" />
         <attr name="itemDelim" format="string" />
     </declare-styleable>
     <declare-styleable name="AnalyzerGraphic">
