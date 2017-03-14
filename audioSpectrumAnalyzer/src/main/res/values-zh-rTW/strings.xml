@@ -5,8 +5,12 @@
     <!-- Main UI -->
     <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>
     <string name="textview_cur_text" >指针:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
+    <string name="text_cur">指针:</string>
     <string name="textview_peak_text">峰值:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
+    <string name="text_peak">峰值:</string>
     <string name="textview_rec_text">錄音: 00:00:00.0, 剩餘空間: 0000:00:00</string>
+    <string name="text_rec">錄音:</string>
+    <string name="text_remain">", 剩餘: "</string>
     <string name="sample_s">採樣率</string>
     <string name="fftlen">FFT長度</string>
     <string name="ave">平均數</string>
@@ -27,10 +31,10 @@
     <!-- Show range dialog -->
     <string name="ok">確定</string>
     <string name="cancel">取消</string>
-    <string name="show_range_tv_fL">"設置頻率下限 (&gt;=%1$.2f)"</string>
-    <string name="show_range_tv_fH">"和頻率上限 (&lt;=%1$.2f)"</string>
-    <string name="show_range_tv_dBL">"設置分貝下限 (&gt;=%1$.2f)"</string>
-    <string name="show_range_tv_dBH">"和分貝上限 (&lt;=%1$.2f)"</string>
+    <string name="show_range_tv_fL">"設置頻率下限和上限"</string>
+    <string name="show_range_tv_fH">"(%1$.2f&lt;= Hz &lt;=%2$.2f)"</string>
+    <string name="show_range_tv_dBL">"設置分貝下限和上限"</string>
+    <string name="show_range_tv_dBH">"(%1$.2f&lt;= dB &lt;=%2$.2f)"</string>
     <string name="et_freq_setting_lower_bound">頻率下限</string>
     <string name="et_freq_setting_upper_bound">頻率上限</string>
     <string name="et_db_setting_lower_bound">dB 下限</string>
@@ -40,7 +44,7 @@
 
     <!-- Pop-up menu -->
     <string name="user_manual">使用幫助</string>
-    <string name="application_preferences">設置</string>
+    <string name="application_preferences">設定</string>
     <string name="menu_test_rec_sources">錄音源測試</string>
     <string name="view_range_setting">顯示範圍設定</string>
 
