@@ -303,7 +303,7 @@ public class AnalyzerActivity extends Activity
     }
     String axisMode = sharedPref.getString("freq_scaling_mode", "linear");
     SelectorText st = (SelectorText) findViewById(R.id.freq_scaling_mode);
-    if (! axisMode.equals(st.getText())) {
+    if (! axisMode.equals(st.getValue())) {
       st.nextValue();
     }
 
@@ -767,7 +767,12 @@ public class AnalyzerActivity extends Activity
   public boolean processClick(View v) {
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
-    String value = ((TextView) v).getText().toString();
+    String value;
+    if (v instanceof SelectorText) {
+      value = ((SelectorText) v).getValue();
+    } else {
+      value = ((TextView) v).getText().toString();
+    }
     switch (v.getId()) {
       case R.id.button_recording:
         bSaveWav = value.equals("Rec");

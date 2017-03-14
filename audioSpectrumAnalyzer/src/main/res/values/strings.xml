@@ -8,9 +8,17 @@
     <string name="textview_cur_text" >Cur :XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     <string name="textview_peak_text">Peak:XXXXX.XHz(AX#+XX) -XXX.XdB</string>
     <string name="textview_rec_text">Rec: 00:00:00.0, Remain: 0000:00:00</string>
-    <string name="sample_s">Sample/S</string>
-    <string name="fftlen">fftlen</string>
-    <string name="ave">ave</string>
+    <string name="sample_s">SAMPLE/S</string>
+    <string name="fftlen">FFT LEN</string>
+    <string name="ave">N AVE</string>
+    <string name="sample_rates_name">SAMPLE/S::0</string>
+    <string name="fft_len_name">FFT LEN::0</string>
+    <string name="fft_ave_num_name">N AVE::0</string>
+    <string name="button_freq_scaling_mode">linear::log</string>
+    <string name="button_run">run::stop</string>
+    <string name="button_dbA">dB::dBA</string>
+    <string name="button_spectrum_spectrogram_mode">spum::spam</string>
+    <string name="button_recording">Mon::Rec</string>
 
     <!-- permission dialog -->
     <string name="permission_explanation_title">Permission denied</string>

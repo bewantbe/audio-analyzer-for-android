@@ -3,26 +3,26 @@
     <string name="instructions_title">      使用手册</string>
     <string name="dismiss">      关闭</string>
     <string name="instructions_text"><![CDATA[<h2>按钮操作</h2>
-<font color="green">spum/spam</font>
-<br/><b>spum</b>：显示实时频谱 (<b>sp</b>ectr<b>um</b>)。
-<br/><b>spam</b>：显示时频谱 (<b>sp</b>ectrogr<b>am</b>)。颜色表示声音在该频率和时刻的强度。
+<font color="green">频谱/时频谱</font>
+<br/><b>spum</b>：显示实时频谱 (spectrum)。横轴为频率，纵轴为该频率成分的强度。
+<br/><b>spam</b>：显示时频谱 (spectrogram)。颜色表示声音在该频率和时刻的强度。
 <p/>
 <font color="green">dB/dBA</font>
-<br/>切换 dBFS 和 A-weighting dBFS。dBA 在环境噪音测量中被广泛使用，但此处 dBA 仅供参考，见下面注。
+<br/>切换 dBFS 和 A-加权 (A-weighting) 的 dBFS。dBA 在环境噪音测量中被广泛使用，但此处 dBA 仅供参考，见后文技术参数。
 <p/>
-<font color="green">linear/log</font>
+<font color="green">线性/对数</font>
 <br/>切换线性(linear)或对数(log)频率轴显示。在对数模式，最低频率由采样率除以傅里叶变换长度决定。
 <p/>
-<font color="green">run/stop</font>
+<font color="green">运行/暂停</font>
 <br/>开始(<b>run</b>)或暂停(<b>stop</b>)实时分析。注意，暂停时仍然可以正常录音。
 <p/>
-<font color="green">SAMPLE/S</font>
+<font color="green">采样率</font>
 <br/>选择采样率。高采样率可以看到更高频率的信息，而低采样率有更高的频率分辨率。
 <p/>
-<font color="green">FFT LEN</font>
+<font color="green">FFT长度</font>
 <br/>选择傅里叶变换长度。较大的长度具有更高的频率分辨率，但同时时间分辨率会较低。
 <p/>
-<font color="green">N AVE</font>
+<font color="green">N平均</font>
 <br/>频谱取平均的个数。更高的值能减小分析误差以及使频谱光滑，但同时时间分辨率会更低。
 <p/>
 

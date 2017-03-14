@@ -72,6 +72,7 @@
             android:tag="select"
             android:text="Mon"
             android:textSize="20sp"
+            custom:itemsDisplay="@string/button_recording"
             custom:items="Mon Rec" />
 
         <Button
@@ -117,6 +118,7 @@
             android:tag="select"
             android:text="spum"
             android:textSize="20sp"
+            custom:itemsDisplay="@string/button_spectrum_spectrogram_mode"
             custom:items="spum spam" />
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
@@ -129,6 +131,7 @@
             android:tag="select"
             android:text="dB"
             android:textSize="20sp"
+            custom:itemsDisplay="@string/button_dbA"
             custom:items="dB dBA" />
 
         <!--<github.bewantbe.audio_analyzer_for_android.SelectorText-->
@@ -152,6 +155,7 @@
             android:tag="select"
             android:text="linear"
             android:textSize="20sp"
+            custom:itemsDisplay="@string/button_freq_scaling_mode"
             custom:items="linear log" />
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
@@ -164,6 +168,7 @@
             android:tag="select"
             android:text="run"
             android:textSize="20sp"
+            custom:itemsDisplay="@string/button_run"
             custom:items="run stop" />
     </LinearLayout>
 

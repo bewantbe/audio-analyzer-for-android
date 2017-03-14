@@ -12,6 +12,7 @@
         <item>plasma (Matplotlib)</item>
         <item>viridis (Matplotlib)</item>
     </string-array>
+    <string name="dbColorMap_default" translatable="false">hot</string>
     <string-array name="dbColorMap">
         <item>hot</item>
         <item>blackbody_uniform</item>
@@ -23,6 +24,8 @@
         <item>plasma</item>
         <item>viridis</item>
     </string-array>
+    <string name="spectrum_dbRange_default" translatable="false">-120</string>
+    <string name="spectrogram_dbRange_default" translatable="false">-120</string>
     <string-array name="dbRangeArray">
         <item>-30</item>
         <item>-60</item>
@@ -30,6 +33,7 @@
         <item>-120</item>
         <item>-150</item>
     </string-array>
+    <string name="spectrogram_duration_default" translatable="false">6.0</string>
     <string-array name="spectrogram_duration_array">
         <item>2.0</item>
         <item>4.0</item>
@@ -37,6 +41,7 @@
         <item>8.0</item>
         <item>10.0</item>
     </string-array>
+    <string name="wnd_func_default" translatable="false">Hanning</string>
     <string-array name="wnd_func_names">
         <item>Rectangular</item>
         <item>Bartlett</item>
@@ -73,7 +78,7 @@
     </string-array>
     <string name="audio_source_id_default" translatable="false">6</string>
     <string-array name="sample_rates">
-        <item>SAMPLE/S::0</item>
+        <item>@string/sample_rates_name</item>
         <item>8000::8000</item>
         <item>11025::11025</item>
         <item>16000::16000</item>
@@ -83,7 +88,7 @@
         <item>48000::48000</item>
     </string-array>
     <string-array name="fft_len">
-        <item>FFT LEN::0</item>
+        <item>@string/fft_len_name</item>
         <item>512::512</item>
         <item>1024::1024</item>
         <item>2048::2048</item>
@@ -91,7 +96,7 @@
         <item>8192::8192</item>
     </string-array>
     <string-array name="fft_ave_num">
-        <item>N AVE::0</item>
+        <item>@string/fft_ave_num_name</item>
         <item>1::1</item>
         <item>2::2</item>
         <item>4::4</item>
