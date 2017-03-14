@@ -59,4 +59,39 @@
     <string name="rec_tester_col3_end">".\n"</string>
     <string name="True">true</string>
 
+    <!-- preferences -->
+    <string name="preference_generalSettings">General Settings</string>
+    <string name="preference_keepScreenOn_1">Prevent display from turning off</string>
+    <string name="preference_keepScreenOn_2">Keep screen on</string>
+    <string name="preference_audioSource_1">Audio source for spectrum</string>
+    <string name="preference_audioSource_2">Audio source</string>
+    <string name="preference_windowFunction_1">Window function for (local) short-time Fourier transform (STFT)</string>
+    <string name="preference_windowFunction_2">Window Function</string>
+    <string name="preference_spectrumAppearance">Spectrum appearance</string>
+    <string name="preference_showLines_1">Use lines instead of bars (area) for spectrum</string>
+    <string name="preference_showLines_2">Spectrum uses lines</string>
+    <string name="preference_spectrumRange_1">Show range of spectrum in dB scale</string>
+    <string name="preference_spectrumRange_2">Spectrum range scale</string>
+    <string name="preference_spectrogramAppearance">Spectrogram appearance</string>
+    <string name="preference_spectrogramShifting_1">The whole spectrogram shifts on a rolling basis over time</string>
+    <string name="preference_spectrogramShifting_2">Spectrogram shifting</string>
+    <string name="preference_spectrogramTimeAxis_1">Turns on/off time axis label</string>
+    <string name="preference_spectrogramTimeAxis_2">Show time axis</string>
+    <string name="preference_spectrogramShowFreqAlongX_1">So time axis is Y axis</string>
+    <string name="preference_spectrogramShowFreqAlongX_2">Frequency as X axis</string>
+    <string name="preference_spectrogramSmoothRender_1">Smoothly render the spectrogram</string>
+    <string name="preference_spectrogramSmoothRender_2">Smooth render</string>
+    <string name="preference_spectrogramColorMap_1">Choose color of dB to map</string>
+    <string name="preference_spectrogramColorMap_2">Color Map</string>
+    <string name="preference_spectrogramRange_1">Show range of spectrogram in dB scale</string>
+    <string name="preference_spectrogramRange_2">Spectrogram range</string>
+    <string name="preference_spectrogramDuration_1">Show duration of spectrogram (when average number is set to 1)</string>
+    <string name="preference_spectrogramDuration_2">Spectrogram duration</string>
+    <string name="preference_miscellaneous">Miscellaneous</string>
+    <string name="preference_warnOverrun_1">Show warning if audio buffer enters overrun state</string>
+    <string name="preference_warnOverrun_2">Overrun Warning</string>
+    <string name="preference_developerSetting">Developer Settings</string>
+    <string name="preference_spectrogramLogPlotMethod_1">Replot spectrogram only while zooming (Saves battery)</string>
+    <string name="preference_spectrogramLogPlotMethod_2">Log plot: Replot on zoom</string>
+
 </resources>

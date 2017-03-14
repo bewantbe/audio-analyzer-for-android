@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- internal defaults -->
-    <string name="max_DB_range">-150</string>
-    <string name="test_signal_1_freq1">440.0</string>
-    <string name="test_signal_1_db1">-6.0</string>
-    <string name="test_signal_2_freq1">625.0</string>
-    <string name="test_signal_2_db1">-6.0</string>
-    <string name="test_signal_2_freq2">1875.0</string>
-    <string name="test_signal_2_db2">-12.0</string>
+    <string name="max_DB_range" translatable="false">-150</string>
+    <string name="test_signal_1_freq1" translatable="false">440.0</string>
+    <string name="test_signal_1_db1" translatable="false">-6.0</string>
+    <string name="test_signal_2_freq1" translatable="false">625.0</string>
+    <string name="test_signal_2_db1" translatable="false">-6.0</string>
+    <string name="test_signal_2_freq2" translatable="false">1875.0</string>
+    <string name="test_signal_2_db2" translatable="false">-12.0</string>
 
 </resources>
