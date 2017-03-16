@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">实用音频频谱分析器</string>
+    <string name="preferences">设置</string>
 
     <!-- Main UI -->
     <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>

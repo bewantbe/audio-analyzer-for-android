@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Audio Spectrum Analyzer</string>
+    <string name="preferences">Preferences</string>
 
     <!-- Main UI -->
     <string name="textview_RMS_text">RMS:dB \n-XXX.X</string>
