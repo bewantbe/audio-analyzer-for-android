@@ -222,6 +222,7 @@ public class AnalyzerGraphic extends View {
                 spectrogramPlot.axisFreq.setZoomShift(yZoom, yShift);
             }
         }
+        spectrogramPlot.spectrogramBMP.updateAxis(spectrogramPlot.axisFreq);
         spectrogramPlot.prepare();
         showMode = PlotMode.SPECTROGRAM;
     }
