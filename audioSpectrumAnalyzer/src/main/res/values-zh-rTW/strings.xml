@@ -61,7 +61,7 @@
     <string name="rec_tester_hint1">"(僅測試單聲道16位格式)\n"</string>
     <string name="rec_tester_col1">"\n採樣率     最小緩衝區   (時間)\n"</string>
     <string name="rec_tester_col2">"%1$5d Hz  %2$4d Bytes (%3$4.1f ms)\n"</string>
-    <string name="rec_tester_error1">"  錯誤\n"</string>
+    <string name="rec_tester_error1">" Hz  錯誤\n"</string>
     <string name="rec_tester_hint2">"\n--- 錄音源測試 ---\n"</string>
     <string name="rec_tester_col3">"\錄音源: %1$s\n"</string>
     <string name="rec_tester_col3_row1">"%1$5d Hz  "</string>
