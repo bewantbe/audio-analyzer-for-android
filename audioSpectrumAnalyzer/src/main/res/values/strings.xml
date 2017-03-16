@@ -43,10 +43,14 @@
     <string name="show_range_button_lock">Load Previous</string>
 
     <!-- Pop-up menu -->
-    <string name="user_manual">User Manual</string>
-    <string name="application_preferences">Preferences</string>
-    <string name="menu_test_rec_sources">Test Recorder Sources</string>
-    <string name="view_range_setting">View Range Setting</string>
+    <string name="menu_manual">User Manual</string>
+    <string name="menu_preferences">Preferences</string>
+    <string name="menu_test">Recorder Sources Test</string>
+    <string name="menu_set_view">View Range Setting</string>
+    <string name="menu_manual_condensed">Manual</string>
+    <string name="menu_preferences_condensed">Preferences</string>
+    <string name="menu_test_condensed">Test</string>
+    <string name="menu_set_view_condensed">Set View</string>
 
     <!-- InfoRecActivity (Test Recorder Sources) -->
     <string name="text_view_info_log_0">Testing AudioRecord properties..</string>
