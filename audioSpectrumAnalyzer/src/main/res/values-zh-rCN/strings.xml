@@ -43,10 +43,14 @@
     <string name="show_range_button_lock">载入之前设定</string>
 
     <!-- Pop-up menu -->
-    <string name="user_manual">使用帮助</string>
-    <string name="application_preferences">设置</string>
-    <string name="menu_test_rec_sources">录音源测试</string>
-    <string name="view_range_setting">显示范围设定</string>
+    <string name="menu_manual">使用帮助</string>
+    <string name="menu_preferences">设置</string>
+    <string name="menu_test">录音源测试</string>
+    <string name="menu_set_view">显示范围设定</string>
+    <string name="menu_manual_condensed">帮助</string>
+    <string name="menu_preferences_condensed">设置</string>
+    <string name="menu_test_condensed">测试</string>
+    <string name="menu_set_view_condensed">范围设定</string>
 
     <!-- InfoRecActivity (Test Recorder Sources) -->
     <string name="text_view_info_log_0">录音源测试中..</string>
@@ -80,7 +84,7 @@
     <string name="preference_windowFunction_2">窗函数</string>
     <string name="preference_spectrumAppearance">频谱设定</string>
     <string name="preference_showLines_1">频谱显示为线条（而不是柱状图）</string>
-    <string name="preference_showLines_2">仅显示线条频谱</string>
+    <string name="preference_showLines_2">仅显示频谱轮廓线条</string>
     <string name="preference_spectrumRange_1">频谱显示的动态范围</string>
     <string name="preference_spectrumRange_2">频谱动态范围</string>
     <string name="preference_spectrogramAppearance">时频谱设定</string>

@@ -198,6 +198,7 @@ class AnalyzerViews {
     void showInstructions() {
         TextView tv = new TextView(activity);
         tv.setMovementMethod(LinkMovementMethod.getInstance());
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         tv.setText(fromHtml(activity.getString(R.string.instructions_text)));
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.instructions_title)

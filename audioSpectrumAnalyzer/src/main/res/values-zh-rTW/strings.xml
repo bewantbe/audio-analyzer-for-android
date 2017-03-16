@@ -43,10 +43,14 @@
     <string name="show_range_button_lock">載入之前設定</string>
 
     <!-- Pop-up menu -->
-    <string name="user_manual">使用幫助</string>
-    <string name="application_preferences">設定</string>
-    <string name="menu_test_rec_sources">錄音源測試</string>
-    <string name="view_range_setting">顯示範圍設定</string>
+    <string name="menu_manual">使用幫助</string>
+    <string name="menu_preferences">設定</string>
+    <string name="menu_test">錄音源測試</string>
+    <string name="menu_set_view">顯示範圍設定</string>
+    <string name="menu_manual_condensed">幫助</string>
+    <string name="menu_preferences_condensed">設定</string>
+    <string name="menu_test_condensed">測試</string>
+    <string name="menu_set_view_condensed">範圍設定</string>
 
     <!-- InfoRecActivity (Test Recorder Sources) -->
     <string name="text_view_info_log_0">錄音源測試中..</string>
@@ -80,7 +84,7 @@
     <string name="preference_windowFunction_2">窗函數</string>
     <string name="preference_spectrumAppearance">頻譜設定</string>
     <string name="preference_showLines_1">頻譜顯示為線條（而不是柱狀圖）</string>
-    <string name="preference_showLines_2">僅顯示線條頻譜</string>
+    <string name="preference_showLines_2">僅顯示頻譜輪廓線條</string>
     <string name="preference_spectrumRange_1">頻譜顯示的動態範圍</string>
     <string name="preference_spectrumRange_2">頻譜動態範圍</string>
     <string name="preference_spectrogramAppearance">時頻譜設定</string>

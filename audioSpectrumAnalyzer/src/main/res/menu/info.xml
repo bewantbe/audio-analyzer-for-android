@@ -6,31 +6,31 @@
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_info_details"
         android:menuCategory="container"
-        android:title="@string/user_manual"
-        android:titleCondensed="info"/>
+        android:title="@string/menu_manual"
+        android:titleCondensed="@string/menu_manual_condensed"/>
 
     <item
         android:id="@+id/settings"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="@string/application_preferences"
-        android:titleCondensed="settings"/>
+        android:title="@string/menu_preferences"
+        android:titleCondensed="@string/menu_preferences_condensed"/>
 
     <item
         android:id="@+id/info_recorder"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="@string/menu_test_rec_sources"
-        android:titleCondensed="info rec"/>
+        android:title="@string/menu_test"
+        android:titleCondensed="@string/menu_test_condensed"/>
 
     <item
         android:id="@+id/view_range_setting"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
-        android:title="@string/view_range_setting"
-        android:titleCondensed="View Range"/>
+        android:title="@string/menu_set_view"
+        android:titleCondensed="@string/menu_set_view_condensed"/>
 
 </menu>
