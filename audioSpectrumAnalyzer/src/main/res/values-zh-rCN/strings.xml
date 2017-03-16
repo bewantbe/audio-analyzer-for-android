@@ -61,7 +61,7 @@
     <string name="rec_tester_hint1">"(仅测试单声道16位格式)\n"</string>
     <string name="rec_tester_col1">"\n采样率     最小缓冲区   (时间)\n"</string>
     <string name="rec_tester_col2">"%1$5d Hz  %2$4d Bytes (%3$4.1f ms)\n"</string>
-    <string name="rec_tester_error1">"  错误\n"</string>
+    <string name="rec_tester_error1">" Hz  错误\n"</string>
     <string name="rec_tester_hint2">"\n--- 录音源测试 ---\n"</string>
     <string name="rec_tester_col3">"\n录音源: %1$s\n"</string>
     <string name="rec_tester_col3_row1">"%1$5d Hz  "</string>

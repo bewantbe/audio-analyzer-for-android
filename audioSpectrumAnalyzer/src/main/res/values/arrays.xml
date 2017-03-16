@@ -86,6 +86,7 @@
         <item>32000::32000</item>
         <item>44100::44100</item>
         <item>48000::48000</item>
+        <item>96000::96000</item>
     </string-array>
     <string-array name="fft_len">
         <item>@string/fft_len_name</item>
