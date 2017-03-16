@@ -57,7 +57,7 @@ class ScreenPhysicalMapping {
 
     ScreenPhysicalMapping(double _nCanvasPixel, double _vLowerBound, double _vHigherBound, ScreenPhysicalMapping.Type _mapType) {
         nCanvasPixel = _nCanvasPixel;
-        vLowerBound  = _vLowerBound;
+        vLowerBound = _vLowerBound;
         vUpperBound = _vHigherBound;
         vLowerViewBound = vLowerBound;
         vUpperViewBound = vUpperBound;

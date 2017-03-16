@@ -48,7 +48,7 @@ class SamplingLoop extends Thread {
         activity = _activity;
         analyzerParam = _analyzerParam;
 
-        isPaused1 = ((SelectorText) activity.findViewById(R.id.run)).getText().toString().equals("stop");
+        isPaused1 = ((SelectorText) activity.findViewById(R.id.run)).getValue().equals("stop");
         // Signal sources for testing
         double fq0 = Double.parseDouble(activity.getString(R.string.test_signal_1_freq1));
         double amp0 = Math.pow(10, 1/20.0 * Double.parseDouble(activity.getString(R.string.test_signal_1_db1)));

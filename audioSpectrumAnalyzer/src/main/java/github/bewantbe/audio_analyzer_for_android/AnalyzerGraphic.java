@@ -522,8 +522,7 @@ public class AnalyzerGraphic extends View {
                     (minDB - spectrumPlot.axisY.vLowerBound) / spectrumPlot.axisY.diffVBounds() - 1 / yZoom);
         } else {
             // strict restrict, y can be frequency or time.
-            //  - 0.25f/canvasHeight so we can see "0" for sure
-            return clamp(offset, 0f, 1 - (1 - 0.25f/canvasHeight) / yZoom);
+            return clamp(offset, 0f, 1 - 1 / yZoom);
         }
     }
 
