@@ -237,16 +237,22 @@ public class AnalyzerActivity extends Activity
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
 
+    // so change of sample rate do not change view range
+    if (! isLockViewRange) {
+      viewRangeArray = analyzerViews.graphView.getViewPhysicalRange();
+      // if range is align at boundary, extend the range.
+      Log.i(TAG, "set sampling rate:a " + viewRangeArray[0] + " ==? " + viewRangeArray[6]);
+      if (viewRangeArray[0] == viewRangeArray[6]) {
+        viewRangeArray[0] = 0;
+      }
+    }
+
     // dismiss the pop up
     switch (buttonId) {
     case R.id.button_sample_rate:
       analyzerViews.popupMenuSampleRate.dismiss();
-      if (! isLockViewRange) {  // so change of sample rate do not change view range
-        viewRangeArray = analyzerViews.graphView.getViewPhysicalRange();
-        // if range is align at boundary, extend the range.
-        if (viewRangeArray[0] == viewRangeArray[6]) {
-          viewRangeArray[0] = 0;
-        }
+      if (! isLockViewRange) {
+        Log.i(TAG, "set sampling rate:b " + viewRangeArray[1] + " ==? " + viewRangeArray[6 + 1]);
         if (viewRangeArray[1] == viewRangeArray[6 + 1]) {
           viewRangeArray[1] = Integer.parseInt(selectedItemTag) / 2;
         }
