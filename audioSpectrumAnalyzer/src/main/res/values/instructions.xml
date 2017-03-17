@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-        <string name="instructions_title">      Instructions</string>
-        <string name="dismiss">      Dismiss</string>
-        <string name="instructions_text"><![CDATA[<h2>Button operation</h2>
+    <string name="instructions_title">      Instructions</string>
+    <string name="dismiss">      Dismiss</string>
+    <string name="instructions_text"><![CDATA[<h2>Button operation</h2>
 <font color="green">spum/spam</font>
 <br/><b>spum</b>: Show the real time <b>sp</b>ectr<b>um</b>.
 <br/><b>spam</b>: Show the <b>sp</b>ectrogr<b>am</b> in a duration. The color represents strength of the sound at a certain frequency and time.
@@ -40,6 +40,13 @@
 <font color="#00BFFF">Long press</font>
 <br/>Place a cursor at the point pressing, you can move the cursor while pressing. Once the finger leaves the screen, the cursor fixed at the last position.
 <br/>Move the cursor outside viewport to delete it.
+<p/>
+
+<h2>Get a screen shot</h2>
+General (>=Android 4.0):
+<br/>&nbsp;&nbsp; Press \"Volume Down\" + \"Power\" at the same time.
+<br/>For Samsung:
+<br/>&nbsp;&nbsp; Press \"Power\" + \"Home\" at the same time.
 <p/>
 
 <h2>Preferences</h2>
