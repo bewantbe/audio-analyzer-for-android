@@ -1,45 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string-array name="dbColorMapDescribe">
+    <string-array name="dbColorMapDescribe" translatable="false">
         <item>Hot</item>
-        <item>Black-body radiation</item>
+        <item>Black-body</item>
         <item>Jet</item>
         <item>Parula (Matlab)</item>
         <item>Gray</item>
-        <item>Rainbow with weaken red</item>
-        <item>magma (Matplotlib)</item>
         <item>inferno (Matplotlib)</item>
+        <item>magma (Matplotlib)</item>
         <item>plasma (Matplotlib)</item>
         <item>viridis (Matplotlib)</item>
     </string-array>
-    <string-array name="dbColorMap">
+    <string name="dbColorMap_default" translatable="false">hot</string>
+    <string-array name="dbColorMap" translatable="false">
         <item>hot</item>
-        <item>blackbody_v1</item>
+        <item>blackbody_uniform</item>
         <item>jet</item>
         <item>parula</item>
         <item>gray</item>
-        <item>rainbow_weak_red</item>
-        <item>magma</item>
         <item>inferno</item>
+        <item>magma</item>
         <item>plasma</item>
         <item>viridis</item>
     </string-array>
-    <string-array name="dbRangeArray">
+    <string name="spectrum_dbRange_default" translatable="false">-120</string>
+    <string name="spectrogram_dbRange_default" translatable="false">-120</string>
+    <string-array name="dbRangeArray" translatable="false">
         <item>-30</item>
         <item>-60</item>
         <item>-90</item>
         <item>-120</item>
         <item>-150</item>
     </string-array>
-    <string-array name="spectrogram_duration_array">
+    <string name="spectrogram_duration_default" translatable="false">6.0</string>
+    <string-array name="spectrogram_duration_array" translatable="false">
         <item>2.0</item>
         <item>4.0</item>
         <item>6.0</item>
         <item>8.0</item>
         <item>10.0</item>
     </string-array>
-    <string-array name="wnd_func_names">
+    <string name="wnd_func_default" translatable="false">Hanning</string>
+    <string-array name="wnd_func_names" translatable="false">
         <item>Rectangular</item>
         <item>Bartlett</item>
         <item>Hanning</item>
@@ -49,7 +52,7 @@
         <item>Kaiser, a=3.0</item>
         <item>Kaiser, a=4.0</item>
     </string-array>
-    <string-array name="audio_source">
+    <string-array name="audio_source" translatable="false">
         <item>VOICE_RECOGNITION</item>
         <item>DEFAULT</item>
         <item>MIC</item>
@@ -61,7 +64,7 @@
         <item>test signal 2\n\t 625Hz @ -6dB\n +1875Hz @ -12dB</item>
         <item>white noise</item>
     </string-array>
-    <string-array name="audio_source_id">
+    <string-array name="audio_source_id" translatable="false">
         <item>6</item>
         <item>0</item>
         <item>1</item>
@@ -73,9 +76,9 @@
         <item>1001</item>
         <item>1002</item>
     </string-array>
-    <string name="audio_source_id_default">6</string>
-    <string-array name="sample_rates">
-        <item>SAMPLE/S::0</item>
+    <string name="audio_source_id_default" translatable="false">6</string>
+    <string-array name="sample_rates" translatable="false">
+        <item>@string/sample_rates_name</item>
         <item>8000::8000</item>
         <item>11025::11025</item>
         <item>16000::16000</item>
@@ -83,17 +86,18 @@
         <item>32000::32000</item>
         <item>44100::44100</item>
         <item>48000::48000</item>
+        <item>96000::96000</item>
     </string-array>
-    <string-array name="fft_len">
-        <item>FFT LEN::0</item>
+    <string-array name="fft_len" translatable="false">
+        <item>@string/fft_len_name</item>
         <item>512::512</item>
         <item>1024::1024</item>
         <item>2048::2048</item>
         <item>4096::4096</item>
         <item>8192::8192</item>
     </string-array>
-    <string-array name="fft_ave_num">
-        <item>N AVE::0</item>
+    <string-array name="fft_ave_num" translatable="false">
+        <item>@string/fft_ave_num_name</item>
         <item>1::1</item>
         <item>2::2</item>
         <item>4::4</item>

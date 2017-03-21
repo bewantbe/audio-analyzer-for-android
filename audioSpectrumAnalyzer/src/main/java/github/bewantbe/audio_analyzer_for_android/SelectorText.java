@@ -25,6 +25,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.RotateAnimation;
@@ -36,9 +37,12 @@ import android.widget.TextView;
  */
 
 public class SelectorText extends TextView {
+  static final String TAG = "SelectorText:";
   private static float DPRatio;
   private static final int ANIMATION_DELAY = 100;
-  private String[] values;
+  private int value_id = 0;
+  private String[] values = new String[0];
+  private String[] valuesDisplay = new String[0];
   private Paint paint, bg;
   private RectF rect = new RectF();
   private RectF bgRect = new RectF();
@@ -61,6 +65,7 @@ public class SelectorText extends TextView {
   @Override
   public boolean performClick() {
     setText(getText());  // fix the no-animation bug
+    //setText(valuesDisplay[value_id]);
     Animation an = createAnimation(true, ANIMATION_DELAY);
     an.setAnimationListener(new AnimationListener() {
       @Override
@@ -130,11 +135,19 @@ public class SelectorText extends TextView {
       TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SelectorText);
       String items = a.getString(R.styleable.SelectorText_items);
       String delim = getValue(a, R.styleable.SelectorText_itemDelim, " ");
+      String itemsDisplay = a.getString(R.styleable.SelectorText_itemsDisplay);
       if (items != null) {
 //        Log.i(AnalyzerActivity.TAG, "items: " + items);
-        setValues(items.split(delim));
+        if (itemsDisplay != null && itemsDisplay.length() > 0) {
+          setValues(items.split(delim), itemsDisplay.split("::"));
+        } else {
+          setValues(items.split(delim), items.split(delim));
+        }
       }
       a.recycle();
+    }
+    if (valuesDisplay.length > 0) {
+      setText(valuesDisplay[0]);
     }
   }
   
@@ -143,26 +156,32 @@ public class SelectorText extends TextView {
     return result == null ? dflt : result;
   }
   
-  public void setValues(String[] values) {
+  public void setValues(String[] values, String[] valuesDisplay) {
     this.values = values;
+    if (values.length == valuesDisplay.length) {
+      this.valuesDisplay = valuesDisplay;
+    } else {
+      Log.w(TAG, "values.length != valuesDisplay.length");
+      this.valuesDisplay = values;
+    }
     adjustWidth();
     invalidate();
   }
-  
+
+  public String getValue() { return values[value_id]; }
+
   public String[] getValues() {
     return values;
   }
 
   public String nextValue() {
-    if (values != null) {
-      int i;
-      for(i = 0; i < values.length; i++) {
-        if (getText().equals(values[i])) {
-          setText(values[(i+1)%values.length]);
-          return getText().toString();
-        }
+    if (values.length != 0) {
+      value_id++;
+      if (value_id >= values.length) {
+        value_id = 0;
       }
-      setText(values[0]);
+      setText(valuesDisplay[value_id]);
+      return valuesDisplay[value_id];
     }
     return getText().toString();
   }
@@ -171,7 +190,7 @@ public class SelectorText extends TextView {
     Paint p = getPaint();
     int adj = getPaddingLeft() + getPaddingRight();
     int width = 0;
-    for (String s : values) {
+    for (String s : valuesDisplay) {
       width = Math.max(width, Math.round(p.measureText(s)));
     }
     setMinWidth(width + adj + (int)(4*DPRatio));

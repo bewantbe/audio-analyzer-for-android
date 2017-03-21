@@ -126,7 +126,7 @@ public class AnalyzerActivity extends Activity
     super.onResume();
 
     LoadPreferences();
-    analyzerViews.graphView.setReady(this);  // TODO: move this earlier
+    analyzerViews.graphView.setReady(this);  // TODO: move this earlier?
     analyzerViews.enableSaveWavView(bSaveWav);
 
     // Used to prevent extra calling to restartSampling() (e.g. in LoadPreferences())
@@ -237,16 +237,22 @@ public class AnalyzerActivity extends Activity
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
 
+    // so change of sample rate do not change view range
+    if (! isLockViewRange) {
+      viewRangeArray = analyzerViews.graphView.getViewPhysicalRange();
+      // if range is align at boundary, extend the range.
+      Log.i(TAG, "set sampling rate:a " + viewRangeArray[0] + " ==? " + viewRangeArray[6]);
+      if (viewRangeArray[0] == viewRangeArray[6]) {
+        viewRangeArray[0] = 0;
+      }
+    }
+
     // dismiss the pop up
     switch (buttonId) {
     case R.id.button_sample_rate:
       analyzerViews.popupMenuSampleRate.dismiss();
-      if (! isLockViewRange) {  // so change of sample rate do not change view range
-        viewRangeArray = analyzerViews.graphView.getViewPhysicalRange();
-        // if range is align at boundary, extend the range.
-        if (viewRangeArray[0] == viewRangeArray[6]) {
-          viewRangeArray[0] = 0;
-        }
+      if (! isLockViewRange) {
+        Log.i(TAG, "set sampling rate:b " + viewRangeArray[1] + " ==? " + viewRangeArray[6 + 1]);
         if (viewRangeArray[1] == viewRangeArray[6 + 1]) {
           viewRangeArray[1] = Integer.parseInt(selectedItemTag) / 2;
         }
@@ -276,7 +282,7 @@ public class AnalyzerActivity extends Activity
       b_need_restart_audio = false;
     }
 
-    editor.apply();
+    editor.commit();
 
     if (b_need_restart_audio) {
       restartSampling(analyzerParam);
@@ -303,7 +309,7 @@ public class AnalyzerActivity extends Activity
     }
     String axisMode = sharedPref.getString("freq_scaling_mode", "linear");
     SelectorText st = (SelectorText) findViewById(R.id.freq_scaling_mode);
-    if (! axisMode.equals(st.getText())) {
+    if (! axisMode.equals(st.getValue())) {
       st.nextValue();
     }
 
@@ -450,11 +456,11 @@ public class AnalyzerActivity extends Activity
       }
 //      Log.d(TAG, "  AnalyzerGestureListener::onFling: " + event1.toString()+event2.toString());
       // Fly the canvas in graphView when in scale mode
-      shiftingVelocity = (float) Math.sqrt(velocityX*velocityX + velocityY*velocityY);
+      shiftingVelocity = Math.sqrt(velocityX*velocityX + velocityY*velocityY);
       shiftingComponentX = velocityX / shiftingVelocity;
       shiftingComponentY = velocityY / shiftingVelocity;
       float DPRatio = getResources().getDisplayMetrics().density;
-      flyAcceleration = 1200f * DPRatio;
+      flyAcceleration = 1200 * DPRatio;
       timeFlingStart = SystemClock.uptimeMillis();
       flyingMoveHandler.postDelayed(flyingMoveRunnable, 0);
       return true;
@@ -462,19 +468,19 @@ public class AnalyzerActivity extends Activity
 
     Handler flyingMoveHandler = new Handler();
     long timeFlingStart;                     // Prevent from running forever
-    float flyDt = 1/20f;                     // delta t of refresh
-    float shiftingVelocity;                  // fling velocity
-    float shiftingComponentX;                // fling direction x
-    float shiftingComponentY;                // fling direction y
-    float flyAcceleration = 1200f;           // damping acceleration of fling, pixels/second^2
+    double flyDt = 1/20.;                     // delta t of refresh
+    double shiftingVelocity;                  // fling velocity
+    double shiftingComponentX;                // fling direction x
+    double shiftingComponentY;                // fling direction y
+    double flyAcceleration = 1200.;           // damping acceleration of fling, pixels/second^2
 
     Runnable flyingMoveRunnable = new Runnable() {
       @Override
       public void run() {
-        float shiftingVelocityNew = shiftingVelocity - flyAcceleration*flyDt;
+        double shiftingVelocityNew = shiftingVelocity - flyAcceleration*flyDt;
         if (shiftingVelocityNew < 0) shiftingVelocityNew = 0;
         // Number of pixels that should move in this time step
-        float shiftingPixel = (shiftingVelocityNew + shiftingVelocity)/2 * flyDt;
+        double shiftingPixel = (shiftingVelocityNew + shiftingVelocity)/2 * flyDt;
         shiftingVelocity = shiftingVelocityNew;
         if (shiftingVelocity > 0f
             && SystemClock.uptimeMillis() - timeFlingStart < 10000) {
@@ -545,10 +551,10 @@ public class AnalyzerActivity extends Activity
   /**
    *  Manage scroll and zoom
    */
-  final private static float INIT = Float.MIN_VALUE;
+  final private static double INIT = Double.MIN_VALUE;
   private boolean isPinching = false;
-  private float xShift0 = INIT, yShift0 = INIT;
-  private float x0, y0;
+  private double xShift0 = INIT, yShift0 = INIT;
+  private double x0, y0;
   private int[] windowLocation = new int[2];
 
   private void scaleEvent(MotionEvent event) {
@@ -767,7 +773,12 @@ public class AnalyzerActivity extends Activity
   public boolean processClick(View v) {
     SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
     SharedPreferences.Editor editor = sharedPref.edit();
-    String value = ((TextView) v).getText().toString();
+    String value;
+    if (v instanceof SelectorText) {
+      value = ((SelectorText) v).getValue();
+    } else {
+      value = ((TextView) v).getText().toString();
+    }
     switch (v.getId()) {
       case R.id.button_recording:
         bSaveWav = value.equals("Rec");
@@ -795,7 +806,7 @@ public class AnalyzerActivity extends Activity
         Log.d(TAG, "processClick(): isLinearFreq=" + isLinearFreq);
         analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
         editor.putString("freq_scaling_mode", value);
-        editor.apply();
+        editor.commit();
         return false;
       }
       case R.id.dbA:
@@ -804,7 +815,7 @@ public class AnalyzerActivity extends Activity
           samplingThread.setAWeighting(analyzerParam.isAWeighting);
         }
         editor.putBoolean("dbA", analyzerParam.isAWeighting);
-        editor.apply();
+        editor.commit();
         return false;
       case R.id.spectrum_spectrogram_mode:
         if (value.equals("spum")) {
@@ -813,7 +824,7 @@ public class AnalyzerActivity extends Activity
           analyzerViews.graphView.switch2Spectrogram();
         }
         editor.putBoolean("spectrum_spectrogram_mode", value.equals("spum"));
-        editor.apply();
+        editor.commit();
         return false;
       default:
         return true;

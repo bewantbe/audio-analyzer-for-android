@@ -29,7 +29,7 @@ class AxisTickLabels {
             Paint tickPainter = k == 0 ? gridPaint : rulerBrightPaint;
             double[] values   = k == 0 ? gridLabel.ticks : gridLabel.values;
             for (int i = 0; i < values.length; i++) {
-                posAlongAxis = axisMap.pixelFromV((float) values[i]) * directionSign;
+                posAlongAxis = (float)axisMap.pixelFromV(values[i]) * directionSign;
                 if (drawOnXAxis) {
                     c.drawLine(axisBeginX + posAlongAxis, axisBeginY,
                                axisBeginX + posAlongAxis, axisBeginY + labelLen, tickPainter);
@@ -40,9 +40,9 @@ class AxisTickLabels {
             }
         }
         if (drawOnXAxis) {
-            c.drawLine(axisBeginX, axisBeginY, axisBeginX + axisMap.nCanvasPixel * (1-directionI), axisBeginY, labelPaint);
+            c.drawLine(axisBeginX, axisBeginY, axisBeginX + (float)axisMap.nCanvasPixel * (1-directionI), axisBeginY, labelPaint);
         } else {
-            c.drawLine(axisBeginX, axisBeginY, axisBeginX, axisBeginY + axisMap.nCanvasPixel * (2-directionI), labelPaint);
+            c.drawLine(axisBeginX, axisBeginY, axisBeginX, axisBeginY + (float)axisMap.nCanvasPixel * (2-directionI), labelPaint);
         }
 
         // Plot labels
@@ -52,16 +52,16 @@ class AxisTickLabels {
 
         // For drawOnXAxis == true
         float axisNamePosX = directionSign==1
-                ? - widthAxisNameExt + axisMap.nCanvasPixel
+                ? - widthAxisNameExt + (float)axisMap.nCanvasPixel
                 : - widthAxisNameExt;
         // For drawOnXAxis == false
         // always show y-axis name at the smaller (in pixel) position.
         float axisNamePosY = directionSign==1
                 ? textHeight
-                : textHeight - axisMap.nCanvasPixel;
+                : textHeight - (float)axisMap.nCanvasPixel;
         if (gridLabel.getGridType() == GridLabel.Type.DB) {
             // For dB axis, show axis name far from 0dB (directionSign==1)
-            axisNamePosY = axisMap.nCanvasPixel - 0.8f*widthDigit;
+            axisNamePosY = (float)axisMap.nCanvasPixel - 0.8f*widthDigit;
         }
 
         float labelPosY = axisBeginY + ( labelSide == 1 ? 0.1f*labelLargeLen + textHeight : -0.3f*labelLargeLen);
@@ -69,7 +69,7 @@ class AxisTickLabels {
         int notShowNextLabel = 0;
 
         for(int i = 0; i < gridLabel.strings.length; i++) {
-            posAlongAxis = axisMap.pixelFromV((float)gridLabel.values[i]) * directionSign;
+            posAlongAxis = (float)axisMap.pixelFromV(gridLabel.values[i]) * directionSign;
             // Avoid label overlap:
             // (1) No overlap to axis name like "Hz";
             // (2) If no (1), no overlap to important label 1, 10, 100, 1000, 10000, 1k, 10k;
@@ -86,7 +86,7 @@ class AxisTickLabels {
                 }
                 int j = i+1;
                 while (j < gridLabel.strings.length) {
-                    float nextDigitPos = axisMap.pixelFromV((float)gridLabel.values[j]) * directionSign;
+                    float nextDigitPos = (float)axisMap.pixelFromV(gridLabel.values[j]) * directionSign;
                     float nextDigitWidth = widthDigit*gridLabel.strings[j].length() + 0.3f*widthDigit;
                     if (! isIntvOverlap(posAlongAxis, thisDigitWidth,
                             nextDigitPos, nextDigitWidth)) {

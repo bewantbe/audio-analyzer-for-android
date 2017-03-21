@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.round;
+
 /**
  * Utility functions for audio analyzer.
  */
@@ -82,6 +85,16 @@ class AnalyzerUtil {
         }
     }
 
+    static boolean isAlmostInteger(double x) {
+        // return x % 1 == 0;
+        double i = round(x);
+        if (i == 0) {
+            return abs(x) < 1.2e-7;  // 2^-23 = 1.1921e-07
+        } else {
+            return abs(x - i) / i < 1.2e-7;
+        }
+    }
+
     /**
      * Return a array of verified audio sampling rates.
      * @param requested: the sampling rates to be verified
@@ -97,9 +110,24 @@ class AnalyzerUtil {
                 rate = Integer.parseInt(sv[1]);
             }
             if (rate != 0) {
-                if (AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.ENCODING_PCM_16BIT) != AudioRecord.ERROR_BAD_VALUE) {
-                    validated.add(s);
+                int recBufferSize = AudioRecord.getMinBufferSize(rate,
+                        AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+                if (recBufferSize != AudioRecord.ERROR_BAD_VALUE) {
+                    // Extra exam to high sampling rate, by opening it.
+                    if (rate > 48000) {
+                        AudioRecord record;
+                        try {
+                            record = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, rate,
+                                    AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, recBufferSize);
+                        } catch (IllegalArgumentException e) {
+                            continue;
+                        }
+                        if (record.getState() == AudioRecord.STATE_INITIALIZED) {
+                            validated.add(s);
+                        }
+                    } else {
+                        validated.add(s);
+                    }
                 }
             } else {
                 validated.add(s);
@@ -133,13 +161,12 @@ class AnalyzerUtil {
         stdSourceApi  = context.getResources().getIntArray(R.array.std_audio_source_api_level);
         stdSourceName            = context.getResources().getStringArray(R.array.std_audio_source_name);
         stdAudioSourcePermission = context.getResources().getStringArray(R.array.std_audio_source_permission);
-
     }
 
     // filterLevel = 0: no filter
-    //             & 1: leave only standard source
-    //             & 2: leave only permitted source (&1)
-    //             & 4: leave only source coincide the API level (&1)
+    //             & 1: leave only standard sources
+    //             & 2: leave only permitted sources (&1)
+    //             & 4: leave only sources coincide the API level (&1)
     int[] GetAllAudioSource(int filterLevel) {
         // Use reflection to get all possible audio source (in compilation environment)
         ArrayList<Integer> iList = new ArrayList<>();

@@ -27,6 +27,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.text.Html;
 import android.text.method.ScrollingMovementMethod;
+import android.text.method.LinkMovementMethod;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
@@ -196,7 +197,8 @@ class AnalyzerViews {
 
     void showInstructions() {
         TextView tv = new TextView(activity);
-        tv.setMovementMethod(new ScrollingMovementMethod());
+        tv.setMovementMethod(LinkMovementMethod.getInstance());
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         tv.setText(fromHtml(activity.getString(R.string.instructions_text)));
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.instructions_title)
@@ -363,7 +365,7 @@ class AnalyzerViews {
         double f1 = graphView.getCursorFreq();
 
         textCur.setLength(0);
-        textCur.append("Cur :");
+        textCur.append(activity.getString(R.string.text_cur));
         SBNumFormat.fillInNumFixedWidthPositive(textCur, f1, 5, 1);
         textCur.append("Hz(");
         AnalyzerUtil.freq2Cent(textCur, f1, " ");
@@ -389,7 +391,7 @@ class AnalyzerViews {
 
     private void refreshPeakLabel(double maxAmpFreq, double maxAmpDB) {
         textPeak.setLength(0);
-        textPeak.append("Peak:");
+        textPeak.append(activity.getString(R.string.text_peak));
         SBNumFormat.fillInNumFixedWidthPositive(textPeak, maxAmpFreq, 5, 1);
         textPeak.append("Hz(");
         AnalyzerUtil.freq2Cent(textPeak, maxAmpFreq, " ");
@@ -406,9 +408,9 @@ class AnalyzerViews {
     private void refreshRecTimeLable(double wavSec, double wavSecRemain) {
         // consist with @string/textview_rec_text
         textRec.setLength(0);
-        textRec.append("Rec: ");
+        textRec.append(activity.getString(R.string.text_rec));
         SBNumFormat.fillTime(textRec, wavSec, 1);
-        textRec.append(", Remain: ");
+        textRec.append(activity.getString(R.string.text_remain));
         SBNumFormat.fillTime(textRec, wavSecRemain, 0);
         textRec.getChars(0, Math.min(textRec.length(), textRecChar.length), textRecChar, 0);
         ((TextView) activity.findViewById(R.id.textview_rec))

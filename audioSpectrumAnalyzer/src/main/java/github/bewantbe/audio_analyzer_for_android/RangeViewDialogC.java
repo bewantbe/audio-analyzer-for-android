@@ -107,13 +107,13 @@ class RangeViewDialogC {
         ((EditText) rangeViewView.findViewById(R.id.et_db_setting_upper_bound))
                 .setText(df.format(vals[3]));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_fL))
-                .setText(ct.getString(R.string.show_range_tv_fL,vals[6]));
+                .setText(ct.getString(R.string.show_range_tv_fL));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_fH))
-                .setText(ct.getString(R.string.show_range_tv_fH,vals[7]));
+                .setText(ct.getString(R.string.show_range_tv_fH,vals[6],vals[7]));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_dBL))
-                .setText(ct.getString(R.string.show_range_tv_dBL,vals[8]));
+                .setText(ct.getString(R.string.show_range_tv_dBL));
         ((TextView) rangeViewView.findViewById(R.id.show_range_tv_dBH))
-                .setText(ct.getString(R.string.show_range_tv_dBH,vals[9]));
+                .setText(ct.getString(R.string.show_range_tv_dBH,vals[8],vals[9]));
 
         ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).setChecked(isLock);
     }
@@ -150,6 +150,7 @@ class RangeViewDialogC {
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int id) {
+                        boolean isLock = ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).isChecked();
                         double[] rangeDefault = graphView.getViewPhysicalRange();
                         double[] rr = new double[rangeDefault.length / 2];
                         int[] resList = {R.id.et_freq_setting_lower_bound, R.id.et_freq_setting_upper_bound,
@@ -159,16 +160,15 @@ class RangeViewDialogC {
                             if (et == null) Log.v(TAG, "  EditText[" + i + "] == null");
                             if (et == null) continue;
                             if (et.getTag() == null) Log.v(TAG, "  EditText[" + i + "].getTag == null");
-                            if (et.getTag() == null || (boolean)et.getTag()) {
+                            if (et.getTag() == null || (boolean)et.getTag() || isLock) {
                                 rr[i] = AnalyzerUtil.parseDouble(et.getText().toString());
                             } else {
                                 rr[i] = rangeDefault[i];
                                 Log.v(TAG, "  EditText[" + i + "] not change. rr[i] = " + rr[i]);
                             }
                         }
-                        rr = graphView.setViewRange(rr, rangeDefault);
                         // Save setting to preference, after sanitized.
-                        boolean isLock = ((CheckBox) rangeViewView.findViewById(R.id.show_range_lock)).isChecked();
+                        rr = graphView.setViewRange(rr, rangeDefault);
                         SaveViewRange(rr, isLock);
                         if (isLock) {
                             ct.stickToMeasureMode();
@@ -195,6 +195,6 @@ class RangeViewDialogC {
             AnalyzerUtil.putDouble(editor, "view_range_rr_" + i, rr[i]);  // no editor.putDouble ? kidding me?
         }
         editor.putBoolean("view_range_lock", isLock);
-        editor.apply();
+        editor.commit();
     }
 }

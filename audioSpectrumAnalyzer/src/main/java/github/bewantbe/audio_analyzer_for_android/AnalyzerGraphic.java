@@ -24,7 +24,6 @@ package github.bewantbe.audio_analyzer_for_android;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Canvas;
-import android.graphics.RectF;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -45,15 +44,15 @@ import java.io.OutputStream;
 public class AnalyzerGraphic extends View {
     private final String TAG = "AnalyzerGraphic:";
     private Context context;
-    private float xZoom, yZoom;     // horizontal and vertical scaling
-    private float xShift, yShift;   // horizontal and vertical translation, in unit 1 unit
-    static final float minDB = -144f;    // hard lower bound for dB
-    static final float maxDB = 12f;      // hard upper bound for dB
+    private double xZoom, yZoom;     // horizontal and vertical scaling
+    private double xShift, yShift;   // horizontal and vertical translation, in unit 1 unit
+    static final double minDB = -144f;    // hard lower bound for dB
+    static final double maxDB = 12f;      // hard upper bound for dB
 
     private int canvasWidth, canvasHeight;   // size of my canvas
     private int[] myLocation = {0, 0}; // window location on screen
     private volatile static boolean isBusy = false;
-    private float freq_lower_bound_for_log = 0f;
+    private double freq_lower_bound_for_log = 0f;
     private double[] savedDBSpectrum = new double[0];
     static final int VIEW_RANGE_DATA_LENGTH = 6;
 
@@ -116,14 +115,14 @@ public class AnalyzerGraphic extends View {
         int nAve             = analyzerParam.nFFTAverage;
         double timeDurationE = analyzerParam.spectrogramDuration;
 
-        freq_lower_bound_for_log = (float)sampleRate/fftLen;
-        float freq_lower_bound_local = 0;
+        freq_lower_bound_for_log = (double)sampleRate/fftLen;
+        double freq_lower_bound_local = 0;
         if (spectrumPlot.axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
             freq_lower_bound_local = freq_lower_bound_for_log;
         }
         // Spectrum
-        RectF axisBounds = new RectF(freq_lower_bound_local, 0.0f, sampleRate/2.0f, spectrumPlot.axisY.vUpperBound);
-        Log.i(TAG, "setupPlot(): W=" + canvasWidth + "  H=" + canvasHeight + "  dB=" + spectrumPlot.axisY.vUpperBound);
+        double axisBounds[] = new double[]{freq_lower_bound_local, 0.0, sampleRate/2.0, spectrumPlot.axisY.vUpperBound};
+        Log.i(TAG, "setupAxes(): W=" + canvasWidth + "  H=" + canvasHeight + "  dB=" + spectrumPlot.axisY.vUpperBound);
         spectrumPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
 
         // Spectrogram
@@ -132,9 +131,9 @@ public class AnalyzerGraphic extends View {
             freq_lower_bound_local = freq_lower_bound_for_log;
         }
         if (spectrogramPlot.showFreqAlongX) {
-            axisBounds = new RectF(freq_lower_bound_local, 0.0f, sampleRate/2.0f, (float)timeDurationE * nAve);
+            axisBounds = new double[]{freq_lower_bound_local, 0.0, sampleRate/2.0, timeDurationE * nAve};
         } else {
-            axisBounds = new RectF(0.0f, sampleRate/2.0f, (float)timeDurationE * nAve, freq_lower_bound_local);
+            axisBounds = new double[]{0.0, sampleRate/2.0, timeDurationE * nAve, freq_lower_bound_local};
         }
         spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
     }
@@ -155,15 +154,15 @@ public class AnalyzerGraphic extends View {
         spectrumPlot   .setFreqAxisMode(mapType, freq_lower_bound_for_log);
         spectrogramPlot.setFreqAxisMode(mapType, freq_lower_bound_for_log);
         if (showMode == PlotMode.SPECTRUM) {
-            xZoom  = spectrumPlot.axisX.zoom;
-            xShift = spectrumPlot.axisX.shift;
+            xZoom  = spectrumPlot.axisX.getZoom();
+            xShift = spectrumPlot.axisX.getShift();
         } else if (showMode == PlotMode.SPECTROGRAM) {
             if (spectrogramPlot.showFreqAlongX) {
-                xZoom  = spectrogramPlot.axisFreq.zoom;
-                xShift = spectrogramPlot.axisFreq.shift;
+                xZoom  = spectrogramPlot.axisFreq.getZoom();
+                xShift = spectrogramPlot.axisFreq.getShift();
             } else {
-                yZoom  = spectrogramPlot.axisFreq.zoom;
-                yShift = spectrogramPlot.axisFreq.shift;
+                yZoom  = spectrogramPlot.axisFreq.getZoom();
+                yShift = spectrogramPlot.axisFreq.getShift();
             }
         }
     }
@@ -174,15 +173,15 @@ public class AnalyzerGraphic extends View {
         if (showMode == PlotMode.SPECTRUM) return;
 
         if (spectrogramPlot.showFreqAlongX) {
-            xZoom  = spectrogramPlot.axisFreq.zoom;
-            xShift = spectrogramPlot.axisFreq.shift;
-            yZoom  = spectrogramPlot.axisTime.zoom;
-            yShift = spectrogramPlot.axisTime.shift;
+            xZoom  = spectrogramPlot.axisFreq.getZoom();
+            xShift = spectrogramPlot.axisFreq.getShift();
+            yZoom  = spectrogramPlot.axisTime.getZoom();
+            yShift = spectrogramPlot.axisTime.getShift();
         } else {
-            xZoom  = spectrogramPlot.axisTime.zoom;
-            xShift = spectrogramPlot.axisTime.shift;
-            yZoom  = spectrogramPlot.axisFreq.zoom;
-            yShift = spectrogramPlot.axisFreq.shift;
+            xZoom  = spectrogramPlot.axisTime.getZoom();
+            xShift = spectrogramPlot.axisTime.getShift();
+            yZoom  = spectrogramPlot.axisFreq.getZoom();
+            yShift = spectrogramPlot.axisFreq.getShift();
         }
     }
 
@@ -194,15 +193,15 @@ public class AnalyzerGraphic extends View {
         Log.v(TAG, "switch2Spectrum()");
         // execute when switch from Spectrogram mode to Spectrum mode
         showMode = PlotMode.SPECTRUM;
-        xZoom  = spectrogramPlot.axisFreq.zoom;
-        xShift = spectrogramPlot.axisFreq.shift;
+        xZoom  = spectrogramPlot.axisFreq.getZoom();
+        xShift = spectrogramPlot.axisFreq.getShift();
         if (! spectrogramPlot.showFreqAlongX) {
             xShift = 1 - 1/xZoom - xShift;
         }
         spectrumPlot.axisX.setZoomShift(xZoom, xShift);
 
-        yZoom  = spectrumPlot.axisY.zoom;
-        yShift = spectrumPlot.axisY.shift;
+        yZoom  = spectrumPlot.axisY.getZoom();
+        yShift = spectrumPlot.axisY.getShift();
     }
 
     // Note: Assume setupPlot() was called once.
@@ -211,18 +210,19 @@ public class AnalyzerGraphic extends View {
             Log.v(TAG, "switch2Spectrogram()");
             if (spectrogramPlot.showFreqAlongX) {
                 // no need to change x scaling
-                yZoom  = spectrogramPlot.axisTime.zoom;
-                yShift = spectrogramPlot.axisTime.shift;
+                yZoom  = spectrogramPlot.axisTime.getZoom();
+                yShift = spectrogramPlot.axisTime.getShift();
                 spectrogramPlot.axisFreq.setZoomShift(xZoom, xShift);
             } else {
                 //noinspection SuspiciousNameCombination
                 yZoom = xZoom;
                 yShift = 1 - 1/xZoom - xShift;         // axisFreq is reverted
-                xZoom  = spectrogramPlot.axisTime.zoom;
-                xShift = spectrogramPlot.axisTime.shift;
+                xZoom  = spectrogramPlot.axisTime.getZoom();
+                xShift = spectrogramPlot.axisTime.getShift();
                 spectrogramPlot.axisFreq.setZoomShift(yZoom, yShift);
             }
         }
+        spectrogramPlot.spectrogramBMP.updateAxis(spectrogramPlot.axisFreq);
         spectrogramPlot.prepare();
         showMode = PlotMode.SPECTROGRAM;
     }
@@ -261,34 +261,35 @@ public class AnalyzerGraphic extends View {
 
         // Set range
         if (showMode == PlotMode.SPECTRUM) {
-            spectrumPlot.axisX.setZoomShiftFromV((float) ranges[0], (float) ranges[1]);
-            spectrumPlot.axisY.setZoomShiftFromV((float) ranges[3], (float) ranges[2]);  // reversed
+            spectrumPlot.axisX.setViewBounds(ranges[0], ranges[1]);
+            spectrumPlot.axisY.setViewBounds(ranges[3], ranges[2]);  // reversed
         } else if (showMode == PlotMode.SPECTROGRAM) {
-            spectrogramPlot.axisTime.setZoomShiftFromV((float) ranges[4], (float) ranges[5]);
+            spectrogramPlot.axisTime.setViewBounds(ranges[4], ranges[5]);
             if (spectrogramPlot.showFreqAlongX) {
-                spectrogramPlot.axisFreq.setZoomShiftFromV((float) ranges[0], (float) ranges[1]);
+                spectrogramPlot.axisFreq.setViewBounds(ranges[0], ranges[1]);
             } else {
-                spectrogramPlot.axisFreq.setZoomShiftFromV((float) ranges[1], (float) ranges[0]);
+                spectrogramPlot.axisFreq.setViewBounds(ranges[1], ranges[0]);
             }
+            spectrogramPlot.spectrogramBMP.updateAxis(spectrogramPlot.axisFreq);
         }
 
         // Set zoom shift for view
         if (showMode == PlotMode.SPECTRUM) {
-            xZoom  = spectrumPlot.axisX.zoom;
-            xShift = spectrumPlot.axisX.shift;
-            yZoom  = spectrumPlot.axisY.zoom;
-            yShift = spectrumPlot.axisY.shift;
+            xZoom  = spectrumPlot.axisX.getZoom();
+            xShift = spectrumPlot.axisX.getShift();
+            yZoom  = spectrumPlot.axisY.getZoom();
+            yShift = spectrumPlot.axisY.getShift();
         } else if (showMode == PlotMode.SPECTROGRAM) {
             if (spectrogramPlot.showFreqAlongX) {
-                xZoom  = spectrogramPlot.axisFreq.zoom;
-                xShift = spectrogramPlot.axisFreq.shift;
-                yZoom  = spectrogramPlot.axisTime.zoom;
-                yShift = spectrogramPlot.axisTime.shift;
+                xZoom  = spectrogramPlot.axisFreq.getZoom();
+                xShift = spectrogramPlot.axisFreq.getShift();
+                yZoom  = spectrogramPlot.axisTime.getZoom();
+                yShift = spectrogramPlot.axisTime.getShift();
             } else {
-                yZoom  = spectrogramPlot.axisFreq.zoom;
-                yShift = spectrogramPlot.axisFreq.shift;
-                xZoom  = spectrogramPlot.axisTime.zoom;
-                xShift = spectrogramPlot.axisTime.shift;
+                yZoom  = spectrogramPlot.axisFreq.getZoom();
+                yShift = spectrogramPlot.axisFreq.getShift();
+                xZoom  = spectrogramPlot.axisTime.getZoom();
+                xShift = spectrogramPlot.axisTime.getShift();
             }
         }
 
@@ -375,11 +376,11 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    void setSpectrumDBLowerBound(float b) {
+    void setSpectrumDBLowerBound(double b) {
         spectrumPlot.axisY.vUpperBound = b;
     }
 
-    void setSpectrogramDBLowerBound(float b) {
+    void setSpectrogramDBLowerBound(double b) {
         spectrogramPlot.setSpectrogramDBLowerBound(b);
     }
 
@@ -410,7 +411,7 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    public float getCursorFreq() {
+    public double getCursorFreq() {
         if (showMode == PlotMode.SPECTRUM) {
             return spectrumPlot.getCursorFreq();
         } else {
@@ -418,7 +419,7 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    public float getCursorDB() {
+    public double getCursorDB() {
         if (showMode == PlotMode.SPECTRUM) {
             return spectrumPlot.getCursorDB();
         } else {
@@ -469,23 +470,23 @@ public class AnalyzerGraphic extends View {
         return r;
     }
 
-    public float getXZoom() {
+    public double getXZoom() {
         return xZoom;
     }
 
-    public float getYZoom() {
+    public double getYZoom() {
         return yZoom;
     }
 
-    public float getXShift() {
+    public double getXShift() {
         return xShift;
     }
 
-    public float getYShift() {
+    public double getYShift() {
         return yShift;
     }
 
-    public float getCanvasWidth() {
+    public double getCanvasWidth() {
         if (showMode == PlotMode.SPECTRUM) {
             return canvasWidth;
         } else {
@@ -493,7 +494,7 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    public float getCanvasHeight() {
+    public double getCanvasHeight() {
         if (showMode == PlotMode.SPECTRUM) {
             return canvasHeight;
         } else {
@@ -501,7 +502,7 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    private float clamp(float x, float min, float max) {
+    private double clamp(double x, double min, double max) {
         if (x > max) {
             return max;
         } else if (x < min) {
@@ -511,28 +512,27 @@ public class AnalyzerGraphic extends View {
         }
     }
 
-    private float clampXShift(float offset) {
+    private double clampXShift(double offset) {
         return clamp(offset, 0f, 1 - 1 / xZoom);
     }
 
-    private float clampYShift(float offset) {
+    private double clampYShift(double offset) {
         if (showMode == PlotMode.SPECTRUM) {
             // limit view to minDB ~ maxDB, assume linear in dB scale
             return clamp(offset, (maxDB - spectrumPlot.axisY.vLowerBound) / spectrumPlot.axisY.diffVBounds(),
                     (minDB - spectrumPlot.axisY.vLowerBound) / spectrumPlot.axisY.diffVBounds() - 1 / yZoom);
         } else {
             // strict restrict, y can be frequency or time.
-            //  - 0.25f/canvasHeight so we can see "0" for sure
-            return clamp(offset, 0f, 1 - (1 - 0.25f/canvasHeight) / yZoom);
+            return clamp(offset, 0f, 1 - 1 / yZoom);
         }
     }
 
-    public void setXShift(float offset) {
+    public void setXShift(double offset) {
         xShift = clampXShift(offset);
         updateAxisZoomShift();
     }
 
-    public void setYShift(float offset) {
+    public void setYShift(double offset) {
         yShift = clampYShift(offset);
         updateAxisZoomShift();
     }
@@ -545,17 +545,17 @@ public class AnalyzerGraphic extends View {
         updateAxisZoomShift();
     }
 
-    private float xMidOld = 100;
-    private float xDiffOld = 100;
-    private float xZoomOld = 1;
-    private float xShiftOld = 0;
-    private float yMidOld = 100;
-    private float yDiffOld = 100;
-    private float yZoomOld = 1;
-    private float yShiftOld = 0;
+    private double xMidOld = 100;
+    private double xDiffOld = 100;
+    private double xZoomOld = 1;
+    private double xShiftOld = 0;
+    private double yMidOld = 100;
+    private double yDiffOld = 100;
+    private double yZoomOld = 1;
+    private double yShiftOld = 0;
 
     // record the coordinate frame state when starting scaling
-    public void setShiftScaleBegin(float x1, float y1, float x2, float y2) {
+    public void setShiftScaleBegin(double x1, double y1, double x2, double y2) {
         xMidOld = (x1+x2)/2f;
         xDiffOld = Math.abs(x1-x2);
         xZoomOld  = xZoom;
@@ -567,9 +567,9 @@ public class AnalyzerGraphic extends View {
     }
 
     // Do the scaling according to the motion event getX() and getY() (getPointerCount()==2)
-    public void setShiftScale(float x1, float y1, float x2, float y2) {
-        float limitXZoom;
-        float limitYZoom;
+    public void setShiftScale(double x1, double y1, double x2, double y2) {
+        double limitXZoom;
+        double limitYZoom;
         if (showMode == PlotMode.SPECTRUM) {
             limitXZoom =  spectrumPlot.axisX.diffVBounds()/200f;  // limit to 200 Hz a screen
             limitYZoom = -spectrumPlot.axisY.diffVBounds()/6f;    // limit to 6 dB a screen
@@ -644,14 +644,14 @@ public class AnalyzerGraphic extends View {
         state.xS  = xShift;
         state.yZ  = yZoom;
         state.yS  = yShift;
-        state.SpumXZ = spectrumPlot.axisX.zoom;
-        state.SpumXS = spectrumPlot.axisX.shift;
-        state.SpumYZ = spectrumPlot.axisY.zoom;
-        state.SpumYS = spectrumPlot.axisY.shift;
-        state.SpamFZ = spectrogramPlot.axisFreq.zoom;
-        state.SpamFS = spectrogramPlot.axisFreq.shift;
-        state.SpamTZ = spectrogramPlot.axisTime.zoom;
-        state.SpamTS = spectrogramPlot.axisTime.shift;
+        state.SpumXZ = spectrumPlot.axisX.getZoom();
+        state.SpumXS = spectrumPlot.axisX.getShift();
+        state.SpumYZ = spectrumPlot.axisY.getZoom();
+        state.SpumYS = spectrumPlot.axisY.getShift();
+        state.SpamFZ = spectrogramPlot.axisFreq.getZoom();
+        state.SpamFS = spectrogramPlot.axisFreq.getShift();
+        state.SpamTZ = spectrogramPlot.axisTime.getZoom();
+        state.SpamTS = spectrogramPlot.axisTime.getShift();
 
         state.tmpS     = savedDBSpectrum;
 
@@ -699,14 +699,10 @@ public class AnalyzerGraphic extends View {
             xShift = s.xS;
             yZoom  = s.yZ;
             yShift = s.yS;
-            spectrumPlot.axisX.zoom  = s.SpumXZ;
-            spectrumPlot.axisX.shift = s.SpumXS;
-            spectrumPlot.axisY.zoom  = s.SpumYZ;
-            spectrumPlot.axisY.shift = s.SpumYS;
-            spectrogramPlot.axisFreq.zoom  = s.SpamFZ;
-            spectrogramPlot.axisFreq.shift = s.SpamFS;
-            spectrogramPlot.axisTime.zoom  = s.SpamTZ;
-            spectrogramPlot.axisTime.shift = s.SpamTS;
+            spectrumPlot.axisX.setZoomShift(s.SpumXZ, s.SpumXS);
+            spectrumPlot.axisY.setZoomShift(s.SpumYZ, s.SpumYS);
+            spectrogramPlot.axisFreq.setZoomShift(s.SpamFZ, s.SpamFS);
+            spectrogramPlot.axisTime.setZoomShift(s.SpamTZ, s.SpamTS);
 
             savedDBSpectrum = s.tmpS;
 
@@ -753,21 +749,21 @@ public class AnalyzerGraphic extends View {
 
     private static class SavedState extends BaseSavedState {
         int freqAxisAlongX;
-        float cFreqSpum;
-        float cFreqSpam;
-        float cDb;
-        float xZ;
-        float xS;
-        float yZ;
-        float yS;
-        float SpumXZ;
-        float SpumXS;
-        float SpumYZ;
-        float SpumYS;
-        float SpamFZ;
-        float SpamFS;
-        float SpamTZ;
-        float SpamTS;
+        double cFreqSpum;
+        double cFreqSpam;
+        double cDb;
+        double xZ;
+        double xS;
+        double yZ;
+        double yS;
+        double SpumXZ;
+        double SpumXS;
+        double SpumYZ;
+        double SpumYS;
+        double SpamFZ;
+        double SpamFS;
+        double SpamTZ;
+        double SpamTS;
 
         double[] tmpS;
 
@@ -782,21 +778,21 @@ public class AnalyzerGraphic extends View {
         private SavedState(Parcel in) {
             super(in);
             freqAxisAlongX = in.readInt();
-            cFreqSpum  = in.readFloat();
-            cFreqSpam  = in.readFloat();
-            cDb  = in.readFloat();
-            xZ   = in.readFloat();
-            xS   = in.readFloat();
-            yZ   = in.readFloat();
-            yS   = in.readFloat();
-            SpumXZ = in.readFloat();
-            SpumXS = in.readFloat();
-            SpumYZ = in.readFloat();
-            SpumYS = in.readFloat();
-            SpamFZ = in.readFloat();
-            SpamFS = in.readFloat();
-            SpamTZ = in.readFloat();
-            SpamTS = in.readFloat();
+            cFreqSpum  = in.readDouble();
+            cFreqSpam  = in.readDouble();
+            cDb  = in.readDouble();
+            xZ   = in.readDouble();
+            xS   = in.readDouble();
+            yZ   = in.readDouble();
+            yS   = in.readDouble();
+            SpumXZ = in.readDouble();
+            SpumXS = in.readDouble();
+            SpumYZ = in.readDouble();
+            SpumYS = in.readDouble();
+            SpamFZ = in.readDouble();
+            SpamFS = in.readDouble();
+            SpamTZ = in.readDouble();
+            SpamTS = in.readDouble();
 
             tmpS = in.createDoubleArray();
 
@@ -809,21 +805,21 @@ public class AnalyzerGraphic extends View {
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
             out.writeInt(freqAxisAlongX);
-            out.writeFloat(cFreqSpum);
-            out.writeFloat(cFreqSpam);
-            out.writeFloat(cDb);
-            out.writeFloat(xZ);
-            out.writeFloat(xS);
-            out.writeFloat(yZ);
-            out.writeFloat(yS);
-            out.writeFloat(SpumXZ);
-            out.writeFloat(SpumXS);
-            out.writeFloat(SpumYZ);
-            out.writeFloat(SpumYS);
-            out.writeFloat(SpamFZ);
-            out.writeFloat(SpamFS);
-            out.writeFloat(SpamTZ);
-            out.writeFloat(SpamTS);
+            out.writeDouble(cFreqSpum);
+            out.writeDouble(cFreqSpam);
+            out.writeDouble(cDb);
+            out.writeDouble(xZ);
+            out.writeDouble(xS);
+            out.writeDouble(yZ);
+            out.writeDouble(yS);
+            out.writeDouble(SpumXZ);
+            out.writeDouble(SpumXS);
+            out.writeDouble(SpumYZ);
+            out.writeDouble(SpumYS);
+            out.writeDouble(SpamFZ);
+            out.writeDouble(SpamFS);
+            out.writeDouble(SpamTZ);
+            out.writeDouble(SpamTS);
 
             out.writeDoubleArray(tmpS);
 

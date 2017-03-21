@@ -1,14 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="github.bewantbe.audio_analyzer_for_android"
-    android:versionCode="20170222"
-    android:versionName="1.5"
-    android:installLocation="auto" >
+    android:versionCode="20170315"
+    android:versionName="1.6"
+    android:installLocation="auto">
 
     <!--<uses-sdk-->
-        <!--android:minSdkVersion="9"-->
+        <!--android:minSdkVersion="8"-->
         <!--android:targetSdkVersion="25" />-->
-    
+
+    <!-- For supporting sdkversion 8 ~ 25, instead of 9 ~ 25 -->
+    <uses-sdk tools:overrideLibrary="
+    android.support.v7.appcompat,
+    android.support.v4,
+    android.support.fragment,
+    android.support.mediacompat,
+    android.support.coreui,
+    android.support.coreutils,
+    android.support.graphics.drawable,
+    android.support.compat"/>
+
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -39,7 +51,7 @@
         </activity>
         <activity
             android:name="github.bewantbe.audio_analyzer_for_android.MyPreferences"
-            android:label="Preferences" >
+            android:label="@string/preferences" >
         </activity>
         <activity
             android:name="github.bewantbe.audio_analyzer_for_android.InfoRecActivity"

@@ -29,7 +29,7 @@
         <item>9</item>
     </integer-array>
 
-    <string-array name="std_audio_source_name">
+    <string-array name="std_audio_source_name" translatable="false">
         <item>DEFAULT</item>
         <item>MIC</item>
         <item>VOICE_UPLINK</item>
@@ -57,7 +57,7 @@
     </integer-array>
 
     <!--Some sources not available for third-party applications.-->
-    <string-array name="std_audio_source_permission">
+    <string-array name="std_audio_source_permission" translatable="false">
         <item>""</item>
         <item>""</item>
         <item>"CAPTURE_AUDIO_OUTPUT"</item>
@@ -70,7 +70,7 @@
         <item>""</item>
     </string-array>
 
-    <string-array name="std_sampling_rates">
+    <string-array name="std_sampling_rates" translatable="false">
         <item>8000</item>
         <item>11025</item>
         <item>16000</item>

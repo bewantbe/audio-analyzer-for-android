@@ -3,109 +3,111 @@
 
     <PreferenceCategory
         android:key="generalSettingsBar"
-        android:title="General Settings" >
+        android:title="@string/preference_generalSettings" >
         <CheckBoxPreference
             android:defaultValue="@string/True"
             android:key="keepScreenOn"
-            android:summary="Prevent display from turning off"
-            android:title="Keep screen on" />
+            android:summary="@string/preference_keepScreenOn_1"
+            android:title="@string/preference_keepScreenOn_2" />
 
         <ListPreference
             android:defaultValue="@string/audio_source_id_default"
             android:entries="@array/audio_source"
             android:entryValues="@array/audio_source_id"
             android:key="audioSource"
-            android:summary="Audio source for spectrum"
-            android:title="Audio source" />
+            android:summary="@string/preference_audioSource_1"
+            android:title="@string/preference_audioSource_2" />
         <ListPreference
-            android:defaultValue="Hanning"
+            android:defaultValue="@string/wnd_func_default"
             android:entries="@array/wnd_func_names"
             android:entryValues="@array/wnd_func_names"
             android:key="windowFunction"
-            android:summary="Window function for (local) short-time Fourier transform (STFT)"
-            android:title="Window Function" />
+            android:summary="@string/preference_windowFunction_1"
+            android:title="@string/preference_windowFunction_2" />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:key="spectrumAppearance"
-        android:title="Spectrum appearance" >
+        android:title="@string/preference_spectrumAppearance" >
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="showLines"
-            android:summary="Use lines instead of bars (area) for spectrum"
-            android:title="Spectrum uses lines" />
+            android:summary="@string/preference_showLines_1"
+            android:title="@string/preference_showLines_2" />
 
         <ListPreference
-            android:defaultValue="-120"
+            android:defaultValue="@string/spectrum_dbRange_default"
             android:entries="@array/dbRangeArray"
             android:entryValues="@array/dbRangeArray"
             android:key="spectrumRange"
-            android:summary="Show range of spectrum in dB scale"
-            android:title="Spectrum range scale" />
+            android:summary="@string/preference_spectrumRange_1"
+            android:title="@string/preference_spectrumRange_2" />
     </PreferenceCategory>
+
     <PreferenceCategory
         android:key="spectrogramAppearance"
-        android:title="Spectrogram appearance" >
+        android:title="@string/preference_spectrogramAppearance" >
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="spectrogramShifting"
-            android:summary="The whole spectrogram shifts on a rolling basis over time"
-            android:title="Spectrogram shifting" />
+            android:summary="@string/preference_spectrogramShifting_1"
+            android:title="@string/preference_spectrogramShifting_2" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="spectrogramTimeAxis"
-            android:summary="Turns on/off time axis label"
-            android:title="Show time axis" />
+            android:summary="@string/preference_spectrogramTimeAxis_1"
+            android:title="@string/preference_spectrogramTimeAxis_2" />
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="spectrogramShowFreqAlongX"
-            android:summary="So time axis is Y axis"
-            android:title="Frequency as X axis" />
+            android:summary="@string/preference_spectrogramShowFreqAlongX_1"
+            android:title="@string/preference_spectrogramShowFreqAlongX_2" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="spectrogramSmoothRender"
-            android:summary="Smoothly render the spectrogram"
-            android:title="Smooth render" />
+            android:summary="@string/preference_spectrogramSmoothRender_1"
+            android:title="@string/preference_spectrogramSmoothRender_2" />
 
         <ListPreference
-            android:defaultValue="hot"
+            android:defaultValue="@string/dbColorMap_default"
             android:entries="@array/dbColorMapDescribe"
             android:entryValues="@array/dbColorMap"
             android:key="spectrogramColorMap"
-            android:summary="Choose color of dB to map"
-            android:title="Color Map" />
+            android:summary="@string/preference_spectrogramColorMap_1"
+            android:title="@string/preference_spectrogramColorMap_2" />
         <ListPreference
-            android:defaultValue="-120"
+            android:defaultValue="@string/spectrogram_dbRange_default"
             android:entries="@array/dbRangeArray"
             android:entryValues="@array/dbRangeArray"
             android:key="spectrogramRange"
-            android:summary="Show range of spectrogram in dB scale"
-            android:title="Spectrogram range" />
+            android:summary="@string/preference_spectrogramRange_1"
+            android:title="@string/preference_spectrogramRange_2" />
         <ListPreference
-            android:defaultValue="6.0"
+            android:defaultValue="@string/spectrogram_duration_default"
             android:entries="@array/spectrogram_duration_array"
             android:entryValues="@array/spectrogram_duration_array"
             android:key="spectrogramDuration"
-            android:summary="Show duration of spectrogram (when average number is set to 1)"
-            android:title="Spectrogram duration" />
+            android:summary="@string/preference_spectrogramDuration_1"
+            android:title="@string/preference_spectrogramDuration_2" />
     </PreferenceCategory>
+
     <PreferenceCategory
         android:key="miscellaneous"
-        android:title="Miscellaneous" >
+        android:title="@string/preference_miscellaneous" >
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="warnOverrun"
-            android:summary="Show warning if audio buffer enters overrun state"
-            android:title="Overrun Warning" />
+            android:summary="@string/preference_warnOverrun_1"
+            android:title="@string/preference_warnOverrun_2" />
     </PreferenceCategory>
 
     <PreferenceCategory
         android:key="developerSetting"
-        android:title="Developer Settings" >
+        android:title="@string/preference_developerSetting" >
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="spectrogramLogPlotMethod"
-            android:summary="Replot spectrogram only while zooming (Saves battery)"
-            android:title="Log plot: Replot on zoom" />
+            android:summary="@string/preference_spectrogramLogPlotMethod_1"
+            android:title="@string/preference_spectrogramLogPlotMethod_2" />
     </PreferenceCategory>
 </PreferenceScreen>

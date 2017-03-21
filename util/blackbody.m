@@ -56,9 +56,17 @@ plot(1:length(T_s), invCSRGB(rgb) * [0.2126 0.7152 0.0722]');
 title('Relative luminance');
 
 c = rgb;
-v=int32(floor(flipud(c)*255.99)*[0x10000 0x100 1]');
-s=reshape(sprintf('0x%06x, ', v), 10*8, [])(1:end-1,:)';  s(end)=' '
+c(2,:) = [5/255 0 0];  % hand tune, make it brighter
 
+fid = fopen('./blackbody.csv', 'w');
+for i=2:length(c)  % ignore the first value, which should be filled by black
+  fprintf(fid, '%.16f, %.16f, %.16f\n', c(i,1), c(i,2), c(i,3));
+end
+fclose(fid);
+# then the file balckbody.csv can be read by cm_list.py
+
+%v=int32(floor(flipud(c)*255.99)*[0x10000 0x100 1]');
+%s=reshape(sprintf('0x%06x, ', v), 10*8, [])(1:end-1,:)';  s(end)=' '
 
 cm_ex1 = hot(256);
 
