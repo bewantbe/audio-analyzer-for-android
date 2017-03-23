@@ -264,7 +264,11 @@ public class AnalyzerGraphic extends View {
             spectrumPlot.axisX.setViewBounds(ranges[0], ranges[1]);
             spectrumPlot.axisY.setViewBounds(ranges[3], ranges[2]);  // reversed
         } else if (showMode == PlotMode.SPECTROGRAM) {
-            spectrogramPlot.axisTime.setViewBounds(ranges[4], ranges[5]);
+            if (spectrogramPlot.getSpectrogramMode() == SpectrogramPlot.TimeAxisMode.SHIFT) {
+                spectrogramPlot.axisTime.setViewBounds(ranges[5], ranges[4]);
+            } else {
+                spectrogramPlot.axisTime.setViewBounds(ranges[4], ranges[5]);
+            }
             if (spectrogramPlot.showFreqAlongX) {
                 spectrogramPlot.axisFreq.setViewBounds(ranges[0], ranges[1]);
             } else {
@@ -466,6 +470,11 @@ public class AnalyzerGraphic extends View {
             r[9] = AnalyzerGraphic.maxDB;
             r[10]= spectrogramPlot.axisTime.vLowerBound;
             r[11]= spectrogramPlot.axisTime.vUpperBound;
+        }
+        for (int i=6; i<r.length; i+=2) {
+            if (r[i] > r[i+1]) {
+                double t = r[i]; r[i] = r[i+1]; r[i+1] = t;
+            }
         }
         return r;
     }
