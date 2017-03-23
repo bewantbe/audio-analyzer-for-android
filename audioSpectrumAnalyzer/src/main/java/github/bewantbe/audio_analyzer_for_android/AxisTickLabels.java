@@ -18,7 +18,7 @@ class AxisTickLabels {
         float labelSmallLen = 0.6f * labelLargeLen;
 
         // directionI: 0:+x, 1:+y, 2:-x, 3:-y
-        // labelSide:  1: label at further side of axis, -1: otherwise
+        // labelSide:  1: label at positive side of axis, -1: otherwise
         boolean drawOnXAxis = directionI % 2 == 0;
         int directionSign = directionI <=1 ? 1 : -1;
 
@@ -39,6 +39,7 @@ class AxisTickLabels {
                 }
             }
         }
+        // Straight line
         if (drawOnXAxis) {
             c.drawLine(axisBeginX, axisBeginY, axisBeginX + (float)axisMap.nCanvasPixel * (1-directionI), axisBeginY, labelPaint);
         } else {
@@ -70,51 +71,56 @@ class AxisTickLabels {
 
         for(int i = 0; i < gridLabel.strings.length; i++) {
             posAlongAxis = (float)axisMap.pixelFromV(gridLabel.values[i]) * directionSign;
+            float thisDigitWidth = drawOnXAxis ? widthDigit*gridLabel.strings[i].length() + 0.3f*widthDigit
+                                               : -textHeight;
+            float axisNamePos = drawOnXAxis ? axisNamePosX
+                                            : axisNamePosY;
+            float axisNameLen = drawOnXAxis ? widthAxisNameExt
+                                            : -textHeight;
+
             // Avoid label overlap:
             // (1) No overlap to axis name like "Hz";
             // (2) If no (1), no overlap to important label 1, 10, 100, 1000, 10000, 1k, 10k;
             // (3) If no (1) and (2), no overlap to previous label.
+            if (isIntvOverlap(posAlongAxis, thisDigitWidth,
+                    axisNamePos, axisNameLen)) {
+                continue;  // case (1)
+            }
+            if (notShowNextLabel > 0) {
+                notShowNextLabel--;
+                continue;  // case (3)
+            }
+            int j = i+1;
+            while (j < gridLabel.strings.length) {
+                float nextDigitPos = (float)axisMap.pixelFromV(gridLabel.values[j]) * directionSign;
+                float nextDigitWidth = drawOnXAxis ? widthDigit*gridLabel.strings[j].length() + 0.3f*widthDigit
+                                                   : -textHeight;
+                if (! isIntvOverlap(posAlongAxis, thisDigitWidth,
+                        nextDigitPos, nextDigitWidth)) {
+                    break;  // no overlap of case (3)
+                }
+                notShowNextLabel++;
+                if (gridLabel.isImportantLabel(j)) {
+                    // do not show label i (case (2))
+                    // but also check case (1) for label j
+                    if (! isIntvOverlap(nextDigitPos, nextDigitWidth,
+                            axisNamePos, axisNameLen)) {
+                        notShowNextLabel = -1;
+                        break;
+                    }
+                }
+                j++;
+            }
+            if (notShowNextLabel == -1) {
+                notShowNextLabel = j - i - 1;  // show the label in case (2)
+                continue;
+            }
+
+            // Now safe to draw label
             if (drawOnXAxis) {
-                float thisDigitWidth = widthDigit*gridLabel.strings[i].length() + 0.3f*widthDigit;
-                if (isIntvOverlap(posAlongAxis, thisDigitWidth,
-                        axisNamePosX, widthAxisNameExt)) {
-                    continue;  // case (1)
-                }
-                if (notShowNextLabel > 0) {
-                    notShowNextLabel--;
-                    continue;  // case (3)
-                }
-                int j = i+1;
-                while (j < gridLabel.strings.length) {
-                    float nextDigitPos = (float)axisMap.pixelFromV(gridLabel.values[j]) * directionSign;
-                    float nextDigitWidth = widthDigit*gridLabel.strings[j].length() + 0.3f*widthDigit;
-                    if (! isIntvOverlap(posAlongAxis, thisDigitWidth,
-                            nextDigitPos, nextDigitWidth)) {
-                        break;  // no overlap of case (3)
-                    }
-                    notShowNextLabel++;
-                    if (gridLabel.isImportantLabel(j)) {
-                        // do not show label i (case (2))
-                        // but also check case (1) for label j
-                        if (! isIntvOverlap(nextDigitPos, nextDigitWidth,
-                                axisNamePosX, widthAxisNameExt)) {
-                            notShowNextLabel = -1;
-                            break;
-                        }
-                    }
-                    j++;
-                }
-                if (notShowNextLabel == -1) {
-                    notShowNextLabel = j - i - 1;  // show the label in case (2)
-                    continue;
-                }
                 c.drawText(gridLabel.chars[i], 0, gridLabel.strings[i].length(),
                            axisBeginX + posAlongAxis, labelPosY, labelPaint);
             } else {
-                if (isIntvOverlap(posAlongAxis, -textHeight,
-                        axisNamePosY, -textHeight)) {
-                    continue;
-                }
                 labelPosX = labelSide == -1
                         ? axisBeginX - 0.5f * labelLargeLen - widthDigit * gridLabel.strings[i].length()
                         : axisBeginX + 0.5f * labelLargeLen;
@@ -133,6 +139,7 @@ class AxisTickLabels {
 
     }
 
+    // Return true if two intervals [pos1, pos1+len1] [pos2, pos2+len2] overlaps.
     private static boolean isIntvOverlap(float pos1, float len1, float pos2, float len2) {
         if (len1 < 0) { pos1 -= len1; len1 = -len1; }
         if (len2 < 0) { pos2 -= len2; len2 = -len2; }
