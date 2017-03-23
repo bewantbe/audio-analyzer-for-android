@@ -41,6 +41,15 @@
         <item>8.0</item>
         <item>10.0</item>
     </string-array>
+    <string name="spectrogram_fps_default" translatable="false">8</string>
+    <string-array name="spectrogram_fps_array" translatable="false">
+        <item>8</item>
+        <item>12</item>
+        <item>18</item>
+        <item>27</item>
+        <item>40</item>
+        <item>60</item>
+    </string-array>
     <string name="wnd_func_default" translatable="false">Hanning</string>
     <string-array name="wnd_func_names" translatable="false">
         <item>Rectangular</item>

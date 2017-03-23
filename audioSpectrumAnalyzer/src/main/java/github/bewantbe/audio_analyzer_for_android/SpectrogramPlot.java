@@ -195,6 +195,10 @@ class SpectrogramPlot {
         }
     }
 
+    TimeAxisMode getSpectrogramMode() {
+        return showModeSpectrogram;
+    }
+
     double getCursorFreq() {
         return canvasWidth == 0 ? 0 : cursorFreq;
     }
@@ -205,7 +209,13 @@ class SpectrogramPlot {
 
     void setTimeMultiplier(int nAve) {
         timeMultiplier = nAve;
-        axisTime.vUpperBound = timeWatch * timeMultiplier;
+        if (showModeSpectrogram == TimeAxisMode.SHIFT) {
+            axisTime.vLowerBound = timeWatch * timeMultiplier;
+        } else {
+            axisTime.vUpperBound = timeWatch * timeMultiplier;
+        }
+        // keep zoom shift
+        axisTime.setZoomShift(axisTime.getZoom(), axisTime.getShift());
     }
 
     void setShowTimeAxis(boolean bSTA) {

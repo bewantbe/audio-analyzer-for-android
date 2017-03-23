@@ -103,6 +103,8 @@
     <string name="preference_spectrogramRange_2">時頻譜動態範圍</string>
     <string name="preference_spectrogramDuration_1">時頻譜記錄的時長（頻譜平均數為1時）</string>
     <string name="preference_spectrogramDuration_2">時頻譜時長</string>
+    <string name="preference_spectrogramFPS_1">調高以獲得更平滑的圖像，調低以節省電量。</string>
+    <string name="preference_spectrogramFPS_2">幀率限制</string>
     <string name="preference_miscellaneous">雜項</string>
     <string name="preference_warnOverrun_1">當音頻緩衝區溢出(進入 overrun 狀態)時顯示警告</string>
     <string name="preference_warnOverrun_2">Overrun 警告</string>
