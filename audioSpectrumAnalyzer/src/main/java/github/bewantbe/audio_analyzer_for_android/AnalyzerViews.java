@@ -53,6 +53,7 @@ class AnalyzerViews {
     private float DPRatio;
     private float listItemTextSize = 20;        // see R.dimen.button_text_fontsize
     private float listItemTitleTextSize = 12;   // see R.dimen.button_text_small_fontsize
+    private double fpsLimit = 8;
 
     private StringBuilder textCur = new StringBuilder("");  // for textCurChar
     private StringBuilder textRMS  = new StringBuilder("");
@@ -438,7 +439,7 @@ class AnalyzerViews {
         isInvalidating = true;
         long frameTime;                      // time delay for next frame
         if (graphView.getShowMode() != AnalyzerGraphic.PlotMode.SPECTRUM) {
-            frameTime = 1000/8;  // use a much lower frame rate for spectrogram
+            frameTime = (long)(1000/fpsLimit);  // use a much lower frame rate for spectrogram
         } else {
             frameTime = 1000/60;
         }
@@ -474,6 +475,10 @@ class AnalyzerViews {
             }
         }
         isInvalidating = false;
+    }
+
+    void setFpsLimit(double _fpsLimit) {
+        fpsLimit = _fpsLimit;
     }
 
     private volatile boolean idPaddingInvalidate = false;

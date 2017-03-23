@@ -103,6 +103,8 @@
     <string name="preference_spectrogramRange_2">时频谱动态范围</string>
     <string name="preference_spectrogramDuration_1">时频谱记录的时长（频谱平均数为1时）</string>
     <string name="preference_spectrogramDuration_2">时频谱时长</string>
+    <string name="preference_spectrogramFPS_1">调高以获得更平滑的图像，调低以节省电量。</string>
+    <string name="preference_spectrogramFPS_2">帧率限制</string>
     <string name="preference_miscellaneous">杂项</string>
     <string name="preference_warnOverrun_1">当音频缓冲区溢出(进入 overrun 状态)时显示警告</string>
     <string name="preference_warnOverrun_2">Overrun 警告</string>

@@ -103,6 +103,8 @@
     <string name="preference_spectrogramRange_2">Spectrogram range</string>
     <string name="preference_spectrogramDuration_1">Show duration of spectrogram (when average number is set to 1)</string>
     <string name="preference_spectrogramDuration_2">Spectrogram duration</string>
+    <string name="preference_spectrogramFPS_1">Higher for smoother graphic, lower to save battery.</string>
+    <string name="preference_spectrogramFPS_2">Limit Refresh rate</string>
     <string name="preference_miscellaneous">Miscellaneous</string>
     <string name="preference_warnOverrun_1">Show warning if audio buffer enters overrun state</string>
     <string name="preference_warnOverrun_2">Overrun Warning</string>

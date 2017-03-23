@@ -89,6 +89,13 @@
             android:key="spectrogramDuration"
             android:summary="@string/preference_spectrogramDuration_1"
             android:title="@string/preference_spectrogramDuration_2" />
+        <ListPreference
+            android:defaultValue="@string/spectrogram_fps_default"
+            android:entries="@array/spectrogram_fps_array"
+            android:entryValues="@array/spectrogram_fps_array"
+            android:key="spectrogramFPS"
+            android:summary="@string/preference_spectrogramFPS_1"
+            android:title="@string/preference_spectrogramFPS_2" />
     </PreferenceCategory>
 
     <PreferenceCategory
