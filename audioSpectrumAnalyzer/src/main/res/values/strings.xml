@@ -21,7 +21,7 @@
     <string name="button_freq_scaling_mode">linear::log</string>
     <string name="button_run">run::stop</string>
     <string name="button_dbA">dB::dBA</string>
-    <string name="button_spectrum_spectrogram_mode">spum::spam</string>
+    <string name="button_spectrum_spectrogram_mode">1D::2D</string>
     <string name="button_recording">Mon::Rec</string>
 
     <!-- permission dialog -->
