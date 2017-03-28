@@ -184,7 +184,7 @@ class GridLabel {
 
         int cntTick = 0;
         int cntVal = 0;
-        if (endValue / startValue > 50) {
+        if (endValue / startValue > 100) {
             // Major:  1, 10, 100, ...
             // Minor:  1, 2, 3, ... , 9, 10, 20, 30, ...
             double gapChangingPoint = pow(10, floor(log10(startValue)));
@@ -214,11 +214,42 @@ class GridLabel {
                 gapChangingPoint *= 10;
             }
             return Integer.MAX_VALUE;
-        } else if (endValue / startValue > 10 && false) {  // not implemented
+        } else if (endValue / startValue > 10) {
             // Major:  1, 2, 3, ... , 9, 10, 20, 30, ...
             // Minor:  1, 1.5, 2, 2.5, ..., 9, 9.5, 10, 15, 20 25, ...
-            // skip it
-            return 0;
+            double gapChangingPoint = pow(10, floor(log10(startValue)));
+            double gapChangingPointd2 = gapChangingPoint / 2;
+            double gridIntervalSmall = ceil(startValue / gapChangingPoint) * gapChangingPoint;
+            double gridIntervalSmall2 = ceil(startValue / gapChangingPointd2) * gapChangingPointd2;
+
+            double b1 = pow(10, ceil(log10(startValue)));
+            double b2 = pow(10, floor(log10(endValue)));
+            int nGridBig   = (int)(floor(log10(endValue)) - ceil(log10(startValue)) + 1);
+            int nGridSmall = (int)(floor((b1 - startValue) / gapChangingPoint)
+                    + 9 * (nGridBig - 1)
+                    + floor((endValue - b2) / b2)) + 1;
+            int nGridSmall2 = (int)(floor((b1 - startValue) / gapChangingPointd2)
+                    + 18 * (nGridBig - 1)
+                    + floor((endValue - b2) / (b2/2))) + 1;
+            if (nGridSmall != gridPointsArray[0].length) {
+                gridPointsArray[0] = new double[nGridSmall];
+            }
+            if (nGridSmall2 != gridPointsArray[1].length) {
+                gridPointsArray[1] = new double[nGridSmall2];
+            }
+            while (gapChangingPoint <= endValue) {
+                while (gridIntervalSmall < 10*gapChangingPoint && gridIntervalSmall <= endValue) {
+                    gridPointsArray[0][cntVal++] = gridIntervalSmall;
+                    gridIntervalSmall += gapChangingPoint;
+                }
+                while (gridIntervalSmall2 < 10*gapChangingPoint && gridIntervalSmall2 <= endValue) {
+                    gridPointsArray[1][cntTick++] = gridIntervalSmall2;
+                    gridIntervalSmall2 += gapChangingPointd2;
+                }
+                gapChangingPoint *= 10;
+                gapChangingPointd2 = gapChangingPoint / 2;
+            }
+            return Integer.MAX_VALUE;
         } else {
             // Linear increment.
             // limit the largest major gap <= 1/3 screen width
