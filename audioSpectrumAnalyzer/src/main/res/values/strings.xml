@@ -18,7 +18,7 @@
     <string name="sample_rates_name">SAMPLE/S::0</string>
     <string name="fft_len_name">FFT LEN::0</string>
     <string name="fft_ave_num_name">N AVE::0</string>
-    <string name="button_freq_scaling_mode">linear::log</string>
+    <string name="button_freq_scaling_mode">linear::log::note</string>
     <string name="button_run">run::stop</string>
     <string name="button_dbA">dB::dBA</string>
     <string name="button_spectrum_spectrogram_mode">spum::spam</string>

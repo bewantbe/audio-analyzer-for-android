@@ -167,14 +167,10 @@ class SpectrogramPlot {
     }
 
     // Linear or Logarithmic frequency axis
-    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, double freq_lower_bound_for_log) {
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, double freq_lower_bound_for_log, GridLabel.Type gridType) {
         Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType);
         axisFreq.setMappingType(mapType, freq_lower_bound_for_log);
-        if (mapType == ScreenPhysicalMapping.Type.LOG) {
-            fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
-        } else {
-            fqGridLabel.setGridType(GridLabel.Type.FREQ);
-        }
+        fqGridLabel.setGridType(gridType);
         spectrogramBMP.updateAxis(axisFreq);
     }
 

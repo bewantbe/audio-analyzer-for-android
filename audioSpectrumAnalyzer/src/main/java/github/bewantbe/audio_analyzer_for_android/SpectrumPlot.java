@@ -104,13 +104,9 @@ class SpectrumPlot {
     }
 
     // Linear or Logarithmic frequency axis
-    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, double freq_lower_bound_for_log) {
+    void setFreqAxisMode(ScreenPhysicalMapping.Type mapType, double freq_lower_bound_for_log, GridLabel.Type gridType) {
         axisX.setMappingType(mapType, freq_lower_bound_for_log);
-        if (mapType == ScreenPhysicalMapping.Type.LOG) {
-            fqGridLabel.setGridType(GridLabel.Type.FREQ_LOG);
-        } else {
-            fqGridLabel.setGridType(GridLabel.Type.FREQ);
-        }
+        fqGridLabel.setGridType(gridType);
         Log.i(TAG, "setFreqAxisMode(): set to mode " + mapType + " axisX.vL=" + axisX.vLowerBound + "  freq_lower_bound_for_log = " + freq_lower_bound_for_log);
     }
 

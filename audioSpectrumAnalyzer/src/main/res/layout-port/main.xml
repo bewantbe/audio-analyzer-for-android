@@ -156,7 +156,7 @@
             android:text="linear"
             android:textSize="20sp"
             custom:itemsDisplay="@string/button_freq_scaling_mode"
-            custom:items="linear log" />
+            custom:items="linear log note" />
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/run"

@@ -18,7 +18,7 @@
     <string name="sample_rates_name">採樣率::0</string>
     <string name="fft_len_name">FFT長度::0</string>
     <string name="fft_ave_num_name">N平均::0</string>
-    <string name="button_freq_scaling_mode">線性::對數</string>
+    <string name="button_freq_scaling_mode">線性::對數::音符</string>
     <string name="button_run">運行::暫停</string>
     <string name="button_dbA">dB::dBA</string>
     <string name="button_spectrum_spectrogram_mode">頻譜::時頻譜</string>

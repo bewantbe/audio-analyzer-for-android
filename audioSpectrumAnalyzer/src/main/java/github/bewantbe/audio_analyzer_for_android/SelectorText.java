@@ -174,6 +174,14 @@ public class SelectorText extends TextView {
     return values;
   }
 
+  public void setValue(String v) {
+    for (int i = 0; i < values.length; i++) {
+      if (! v.equals(values[value_id])) {
+        nextValue();
+      }
+    }
+  }
+
   public String nextValue() {
     if (values.length != 0) {
       value_id++;
