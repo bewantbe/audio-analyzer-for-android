@@ -309,9 +309,7 @@ public class AnalyzerActivity extends Activity
         }
         String axisMode = sharedPref.getString("freq_scaling_mode", "linear");
         SelectorText st = (SelectorText) findViewById(R.id.freq_scaling_mode);
-        if (! axisMode.equals(st.getValue())) {
-            st.nextValue();
-        }
+        st.setValue(axisMode);
 
         Log.i(TAG, "loadPreferenceForView():"+
                 "\n  sampleRate  = " + analyzerParam.sampleRate +
@@ -803,9 +801,8 @@ public class AnalyzerActivity extends Activity
                 //  isMeasure = !value.equals("scale");
                 //  return false;
             case R.id.freq_scaling_mode: {
-                boolean isLinearFreq = value.equals("linear");
-                Log.d(TAG, "processClick(): isLinearFreq=" + isLinearFreq);
-                analyzerViews.graphView.setAxisModeLinear(isLinearFreq);
+                Log.d(TAG, "processClick(): freq_scaling_mode = " + value);
+                analyzerViews.graphView.setAxisModeLinear(value);
                 editor.putString("freq_scaling_mode", value);
                 editor.commit();
                 return false;

@@ -144,15 +144,19 @@ public class AnalyzerGraphic extends View {
         spectrogramPlot.setupSpectrogram(analyzerParam);
     }
 
-    void setAxisModeLinear(boolean b) {
+    void setAxisModeLinear(String mode) {
+        boolean b = mode.equals("linear");  // see also layout/*.xml
         ScreenPhysicalMapping.Type mapType;
+        GridLabel.Type gridType;
         if (b) {
             mapType = ScreenPhysicalMapping.Type.LINEAR;
+            gridType = GridLabel.Type.FREQ;
         } else {
             mapType = ScreenPhysicalMapping.Type.LOG;
+            gridType = mode.equals("note") ? GridLabel.Type.FREQ_NOTE : GridLabel.Type.FREQ_LOG;
         }
-        spectrumPlot   .setFreqAxisMode(mapType, freq_lower_bound_for_log);
-        spectrogramPlot.setFreqAxisMode(mapType, freq_lower_bound_for_log);
+        spectrumPlot   .setFreqAxisMode(mapType, freq_lower_bound_for_log, gridType);
+        spectrogramPlot.setFreqAxisMode(mapType, freq_lower_bound_for_log, gridType);
         if (showMode == PlotMode.SPECTRUM) {
             xZoom  = spectrumPlot.axisX.getZoom();
             xShift = spectrumPlot.axisX.getShift();
