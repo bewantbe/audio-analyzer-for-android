@@ -4,7 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 class AxisTickLabels {
-    private static final String[] axisNames = {"Hz", "dB", "Sec", "Hz"};
+    private static final String[] axisNames = {"Hz", "dB", "Sec", "Hz", "Pitch"};  // See GridLabel.Type
 
     // Draw ticks and labels for a axisMap.
     // labelPaint should use fixed width font

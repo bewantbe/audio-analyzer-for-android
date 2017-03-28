@@ -88,7 +88,7 @@ class SBNumFormat {
     fillInNumFixedWidthPositive(sb, d, nInt, nFrac);
   }
 
-  static public void fillInNumFixedWidthSigned(StringBuilder sb, double d, int nInt, int nFrac) {
+  static void fillInNumFixedWidthSigned(StringBuilder sb, double d, int nInt, int nFrac) {
     int it = sb.length();
     sb.append(' ');
     fillInNumFixedWidthPositive(sb, Math.abs(d), nInt, nFrac);
