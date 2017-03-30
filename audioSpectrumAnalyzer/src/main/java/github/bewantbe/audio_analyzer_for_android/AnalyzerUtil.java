@@ -39,6 +39,34 @@ class AnalyzerUtil {
     private static String TAG = "AnalyzerUtil";
     private static final String[] LP = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 
+    static double freq2pitch(double f) {
+        return 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
+    }
+
+    static double pitch2freq(double p) {
+        return Math.pow(2, (p - 69)/12) * 440.0;
+    }
+
+    static void pitch2Note(StringBuilder a, double p, int prec_frac, boolean tightMode) {
+        int pi = (int) Math.round(p);
+        int po = (int) Math.floor(pi/12.0);
+        int pm = pi-po*12;
+        a.append(LP[pm]);
+        SBNumFormat.fillInInt(a, po-1);
+        if (LP[pm].length() == 1 && !tightMode) {
+            a.append(' ');
+        }
+        double cent = Math.round(100 * (p - pi) * Math.pow(10, prec_frac)) * Math.pow(10, -prec_frac);
+        if (!tightMode) {
+            SBNumFormat.fillInNumFixedWidthSignedFirst(a, cent, 2, prec_frac);
+        } else {
+            if (cent != 0) {
+                a.append(cent < 0 ? '-' : '+');
+                SBNumFormat.fillInNumFixedWidthPositive(a, Math.abs(cent), 2, prec_frac, '\0');
+            }
+        }
+    }
+
     // Convert frequency to pitch
     // Fill with sFill until length is 6. If sFill=="", do not fill
     static void freq2Cent(StringBuilder a, double f, String sFill) {
@@ -48,16 +76,8 @@ class AnalyzerUtil {
         }
         int len0 = a.length();
         // A4 = 440Hz
-        double p = 69 + 12 * Math.log(f/440.0)/Math.log(2);  // MIDI pitch
-        int pi = (int) Math.round(p);
-        int po = (int) Math.floor(pi/12.0);
-        int pm = pi-po*12;
-        a.append(LP[pm]);
-        SBNumFormat.fillInInt(a, po-1);
-        if (LP[pm].length() == 1) {
-            a.append(' ');
-        }
-        SBNumFormat.fillInNumFixedWidthSignedFirst(a, Math.round(100*(p-pi)), 2, 0);
+        double p = freq2pitch(f);
+        pitch2Note(a, p, 0, false);
         while (a.length()-len0 < 6 && sFill!=null && sFill.length()>0) {
             a.append(sFill);
         }
