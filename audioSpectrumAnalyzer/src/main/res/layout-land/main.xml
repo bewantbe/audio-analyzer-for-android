@@ -142,7 +142,7 @@
             android:tag="select"
             android:text="linear"
             android:textSize="20sp"
-            custom:items="linear log" />
+            custom:items="linear log note"/>
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText
             android:id="@+id/run"
