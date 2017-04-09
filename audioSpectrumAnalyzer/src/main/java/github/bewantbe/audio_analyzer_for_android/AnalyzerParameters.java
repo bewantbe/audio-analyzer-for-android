@@ -28,6 +28,8 @@ class AnalyzerParameters {
     int audioSourceId = RECORDER_AGC_OFF;
     int sampleRate = 16000;
     int fftLen = 2048;
+    int hopLen = 1024;
+    double overlapPercent = 50;  // = (1 - hopLen/fftLen) * 100%
     String wndFuncName;
     int nFFTAverage = 2;
     boolean isAWeighting = false;

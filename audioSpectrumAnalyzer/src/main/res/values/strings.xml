@@ -83,6 +83,8 @@
     <string name="preference_audioSource_2">Audio source</string>
     <string name="preference_windowFunction_1">Window function for (local) short-time Fourier transform (STFT)</string>
     <string name="preference_windowFunction_2">Window Function</string>
+    <string name="preference_windowOverlap_1">Higher percentage for finer time resolution, lower to save CPU</string>
+    <string name="preference_windowOverlap_2">Time window overlap</string>
     <string name="preference_spectrumAppearance">Spectrum appearance</string>
     <string name="preference_showLines_1">Use lines instead of bars (area) for spectrum</string>
     <string name="preference_showLines_2">Spectrum uses lines</string>

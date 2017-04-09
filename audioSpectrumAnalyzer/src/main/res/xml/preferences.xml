@@ -24,6 +24,13 @@
             android:key="windowFunction"
             android:summary="@string/preference_windowFunction_1"
             android:title="@string/preference_windowFunction_2" />
+        <ListPreference
+            android:defaultValue="@string/fft_overlap_percent_default"
+            android:entries="@array/fft_overlap_percent_describe"
+            android:entryValues="@array/fft_overlap_percent"
+            android:key="fft_overlap_percent"
+            android:summary="@string/preference_windowOverlap_1"
+            android:title="@string/preference_windowOverlap_2" />
     </PreferenceCategory>
 
     <PreferenceCategory

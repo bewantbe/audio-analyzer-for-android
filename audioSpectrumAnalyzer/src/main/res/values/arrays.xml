@@ -61,6 +61,19 @@
         <item>Kaiser, a=3.0</item>
         <item>Kaiser, a=4.0</item>
     </string-array>
+    <string-array name="fft_overlap_percent_describe" translatable="false">
+        <item>0%</item>
+        <item>50%</item>
+        <item>75%</item>
+        <item>87.5%</item>
+    </string-array>
+    <string-array name="fft_overlap_percent" translatable="false">
+        <item>0.0</item>
+        <item>50.0</item>
+        <item>75.0</item>
+        <item>87.5</item>
+    </string-array>
+    <string name="fft_overlap_percent_default" translatable="false">50.0</string>
     <string-array name="audio_source" translatable="false">
         <item>VOICE_RECOGNITION</item>
         <item>DEFAULT</item>
