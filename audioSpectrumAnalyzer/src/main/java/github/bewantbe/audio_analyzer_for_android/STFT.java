@@ -106,6 +106,71 @@ class STFT {
                 }
                 break;
             }
+            // 7 more window functions (by james34602, https://github.com/bewantbe/audio-analyzer-for-android/issues/14 )
+            case "Flat-top": {
+                for (int i=0; i<wnd.length; i++) {
+                    double f = 2 * Math.PI * i / (wnd.length - 1);
+                    wnd[i] = 1 - 1.93 * Math.cos(f) + 1.29 * Math.cos(2 * f) - 0.388 * Math.cos(3 * f) + 0.028 * Math.cos(4 * f);
+                }
+                break;
+            }
+            case "Nuttall": {
+                double a0 = 0.355768;
+                double a1 = 0.487396;
+                double a2 = 0.144232;
+                double a3 = 0.012604;
+                for (int i=0; i<wnd.length; i++)
+                {
+                    double scale = 3.141592653589793 * i / (wnd.length - 1);
+                    wnd[i] = a0 - a1 * Math.cos(2.0 * scale) + a2 * Math.cos(4.0 * scale) - a3 * Math.cos(6.0 * scale);
+                }
+                break;
+            }
+            case "Gaussian, b=3.0": {
+                double Beta = 3.0;
+                double Arg;
+                for (int i=0; i<wnd.length; i++) {
+                    Arg = (Beta * (1.0 - ((double)i / (double)wnd.length) * 2.0));
+                    wnd[i] = Math.exp(-0.5 * (Arg * Arg));
+                }
+                break;
+            }
+            case "Gaussian, b=5.0": {
+                double Beta = 5.0;
+                double Arg;
+                for (int i=0; i<wnd.length; i++) {
+                    Arg = (Beta * (1.0 - ((double)i / (double)wnd.length) * 2.0));
+                    wnd[i] = Math.exp(-0.5 * (Arg * Arg));
+                }
+                break;
+            }
+            case "Gaussian, b=6.0": {
+                double Beta = 6.0;
+                double Arg;
+                for (int i=0; i<wnd.length; i++) {
+                    Arg = (Beta * (1.0 - ((double)i / (double)wnd.length) * 2.0));
+                    wnd[i] = Math.exp(-0.5 * (Arg * Arg));
+                }
+                break;
+            }
+            case "Gaussian, b=7.0": {
+                double Beta = 7.0;
+                double Arg;
+                for (int i=0; i<wnd.length; i++) {
+                    Arg = (Beta * (1.0 - ((double)i / (double)wnd.length) * 2.0));
+                    wnd[i] = Math.exp(-0.5 * (Arg * Arg));
+                }
+                break;
+            }
+            case "Gaussian, b=8.0": {
+                double Beta = 8.0;
+                double Arg;
+                for (int i=0; i<wnd.length; i++) {
+                    Arg = (Beta * (1.0 - ((double)i / (double)wnd.length) * 2.0));
+                    wnd[i] = Math.exp(-0.5 * (Arg * Arg));
+                }
+                break;
+            }
             default:
                 for (int i=0; i<wnd.length; i++) {
                     wnd[i] = 1;

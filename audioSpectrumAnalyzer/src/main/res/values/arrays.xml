@@ -60,6 +60,13 @@
         <item>Kaiser, a=2.0</item>
         <item>Kaiser, a=3.0</item>
         <item>Kaiser, a=4.0</item>
+        <item>Flat-top</item>
+        <item>Nuttall</item>
+        <item>Gaussian, b=3.0</item>
+        <item>Gaussian, b=5.0</item>
+        <item>Gaussian, b=6.0</item>
+        <item>Gaussian, b=7.0</item>
+        <item>Gaussian, b=8.0</item>
     </string-array>
     <string-array name="fft_overlap_percent_describe" translatable="false">
         <item>0%</item>
