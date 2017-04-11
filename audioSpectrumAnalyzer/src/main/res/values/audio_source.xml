@@ -79,5 +79,6 @@
         <item>44100</item>
         <item>48000</item>
         <item>96000</item>
+        <item>192000</item>
     </string-array>
 </resources>
