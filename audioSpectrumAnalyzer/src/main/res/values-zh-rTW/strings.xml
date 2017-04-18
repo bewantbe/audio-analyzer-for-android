@@ -83,6 +83,8 @@
     <string name="preference_audioSource_2">音頻源</string>
     <string name="preference_windowFunction_1">用於短時傅立葉變換(STFT)的窗函數</string>
     <string name="preference_windowFunction_2">窗函數</string>
+    <string name="preference_windowOverlap_1">高重疊比例則時間分辨率高，低重疊比例則節省計算資源</string>
+    <string name="preference_windowOverlap_2">時窗重疊比例</string>
     <string name="preference_spectrumAppearance">頻譜設定</string>
     <string name="preference_showLines_1">頻譜顯示為線條（而不是柱狀圖）</string>
     <string name="preference_showLines_2">僅顯示頻譜輪廓線條</string>

@@ -111,13 +111,14 @@ class SpectrogramPlot {
     void setupSpectrogram(AnalyzerParameters analyzerParam) {
         int sampleRate       = analyzerParam.sampleRate;
         int fftLen           = analyzerParam.fftLen;
+        int hopLen           = analyzerParam.hopLen;
         int nAve             = analyzerParam.nFFTAverage;
         double timeDurationE = analyzerParam.spectrogramDuration;
 
         timeWatch = timeDurationE;
         timeMultiplier = nAve;
-        timeInc     = fftLen / 2.0 / sampleRate;  // time of each slice. /2.0 due to overlap window
-        nFreqPoints = fftLen / 2;                 // no direct current term
+        timeInc     = (double)hopLen / sampleRate;  // time of each slice
+        nFreqPoints = fftLen / 2;           // no direct current term
         nTimePoints = (int)Math.ceil(timeWatch / timeInc);
         spectrogramBMP.init(nFreqPoints, nTimePoints, axisFreq);
         Log.i(TAG, "setupSpectrogram() done" +

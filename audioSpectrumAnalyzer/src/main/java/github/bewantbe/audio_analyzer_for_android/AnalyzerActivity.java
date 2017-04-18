@@ -265,6 +265,7 @@ public class AnalyzerActivity extends Activity
             case R.id.button_fftlen:
                 analyzerViews.popupMenuFFTLen.dismiss();
                 analyzerParam.fftLen = Integer.parseInt(selectedItemTag);
+                analyzerParam.hopLen = (int)(analyzerParam.fftLen*(1 - analyzerParam.overlapPercent/100) + 0.5);
                 b_need_restart_audio = true;
                 editor.putInt("button_fftlen", analyzerParam.fftLen);
                 break;
@@ -335,6 +336,8 @@ public class AnalyzerActivity extends Activity
         analyzerParam.wndFuncName = sharedPref.getString("windowFunction", "Hanning");
         analyzerParam.spectrogramDuration = Double.parseDouble(sharedPref.getString("spectrogramDuration",
                 Double.toString(6.0)));
+        analyzerParam.overlapPercent = Double.parseDouble(sharedPref.getString("fft_overlap_percent", "50.0"));
+        analyzerParam.hopLen = (int)(analyzerParam.fftLen*(1 - analyzerParam.overlapPercent/100) + 0.5);
 
         // Settings of graph view
         // spectrum

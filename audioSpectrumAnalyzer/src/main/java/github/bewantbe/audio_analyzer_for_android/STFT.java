@@ -34,9 +34,10 @@ class STFT {
     private double wndEnergyFactor = 1;           // used to keep energy invariant under different window
     private int sampleRate;
     private int fftLen;
+    private int hopLen;                           // control overlap of FFTs = (1 - lopLen/fftLen)*100%
     private int spectrumAmpPt;
-    private double[][] spectrumAmpOutArray;
-    private int spectrumAmpOutArrayPt = 0;        // Pointer for spectrumAmpOutArray
+//    private double[][] spectrumAmpOutArray;
+//    private int spectrumAmpOutArrayPt = 0;        // Pointer for spectrumAmpOutArray
     private int nAnalysed = 0;
     private RealDoubleFFT spectrumAmpFFT;
     private boolean boolAWeighting = false;
@@ -128,11 +129,11 @@ class STFT {
         boolAWeighting = e_isAWeighting;
     }
 
-    public boolean getAWeighting() {
+    boolean getAWeighting() {
         return boolAWeighting;
     }
 
-    private void init(int fftlen, int sampleRate, int minFeedSize, String wndName) {
+    private void init(int fftlen, int _hopLen, int sampleRate, int minFeedSize, String wndName) {
         if (minFeedSize <= 0) {
             throw new IllegalArgumentException("STFT::init(): should minFeedSize >= 1.");
         }
@@ -142,6 +143,7 @@ class STFT {
         }
         this.sampleRate = sampleRate;
         fftLen = fftlen;
+        hopLen = _hopLen;                          // 50% overlap by default
         spectrumAmpOutCum= new double[fftlen/2+1];
         spectrumAmpOutTmp= new double[fftlen/2+1];
         spectrumAmpOut   = new double[fftlen/2+1];
@@ -149,22 +151,19 @@ class STFT {
         spectrumAmpIn    = new double[fftlen];
         spectrumAmpInTmp = new double[fftlen];
         spectrumAmpFFT   = new RealDoubleFFT(spectrumAmpIn.length);
-        spectrumAmpOutArray = new double[(int)Math.ceil((double)minFeedSize / (fftlen/2))][]; // /2 since half overlap
-        for (int i = 0; i < spectrumAmpOutArray.length; i++) {
-            spectrumAmpOutArray[i] = new double[fftlen/2+1];
-        }
+//        spectrumAmpOutArray = new double[(int)Math.ceil((double)minFeedSize / (fftlen/2))][]; // /2 since half overlap
+//        for (int i = 0; i < spectrumAmpOutArray.length; i++) {
+//            spectrumAmpOutArray[i] = new double[fftlen/2+1];
+//        }
 
         initWindowFunction(fftlen, wndName);
         initDBAFactor(fftlen, sampleRate);
+        clear();
         boolAWeighting = false;
     }
 
-    STFT(int fftlen, int sampleRate, int minFeedSize, String wndName) {
-        init(fftlen, sampleRate, minFeedSize, wndName);
-    }
-
-    STFT(int fftlen, int sampleRate, String wndName) {
-      init(fftlen, sampleRate, 1, wndName);
+    STFT(AnalyzerParameters analyzerParam) {
+        init(analyzerParam.fftLen, analyzerParam.hopLen, analyzerParam.sampleRate, analyzerParam.nFFTAverage, analyzerParam.wndFuncName);
     }
 
     public void feedData(short[] ds) {
@@ -180,6 +179,12 @@ class STFT {
         int outLen = spectrumAmpOut.length;
         int dsPt = 0;           // input data point to be read
         while (dsPt < dsLen) {
+            while (spectrumAmpPt < 0 && dsPt < dsLen) {  // skip data when hopLen > fftLen
+                double s = ds[dsPt++] / 32768.0;
+                spectrumAmpPt++;
+                cumRMS += s*s;
+                cntRMS++;
+            }
             while (spectrumAmpPt < inLen && dsPt < dsLen) {
                 double s = ds[dsPt++] / 32768.0;
                 spectrumAmpIn[spectrumAmpPt++] = s;
@@ -192,23 +197,24 @@ class STFT {
                 }
                 spectrumAmpFFT.ft(spectrumAmpInTmp);
                 fftToAmp(spectrumAmpOutTmp, spectrumAmpInTmp);
-                System.arraycopy(spectrumAmpOutTmp, 0, spectrumAmpOutArray[spectrumAmpOutArrayPt], 0,
-                                 spectrumAmpOutTmp.length);
-                spectrumAmpOutArrayPt = (spectrumAmpOutArrayPt+1) % spectrumAmpOutArray.length;
+//                System.arraycopy(spectrumAmpOutTmp, 0, spectrumAmpOutArray[spectrumAmpOutArrayPt], 0,
+//                                 spectrumAmpOutTmp.length);
+//                spectrumAmpOutArrayPt = (spectrumAmpOutArrayPt+1) % spectrumAmpOutArray.length;
                 for (int i = 0; i < outLen; i++) {
                     spectrumAmpOutCum[i] += spectrumAmpOutTmp[i];
                 }
                 nAnalysed++;
-                // half overlap  (set spectrumAmpPt = 0 for no overlap)
-                int n2 = spectrumAmpIn.length / 2;
-                System.arraycopy(spectrumAmpIn, n2, spectrumAmpIn, 0, n2);
-                spectrumAmpPt = n2;
+                if (hopLen < fftLen) {
+                    System.arraycopy(spectrumAmpIn, hopLen, spectrumAmpIn, 0, fftLen - hopLen);
+                }
+                spectrumAmpPt = fftLen - hopLen;  // can be positive and negative
             }
         }
     }
 
+    // Convert complex amplitudes to absolute amplitudes.
     private void fftToAmp(double[] dataOut, double[] data) {
-        // data.length should be even number
+        // data.length should be a even number
         double scaler = 2.0*2.0 / (data.length * data.length);  // *2 since there are positive and negative frequency part
         dataOut[0] = data[0]*data[0] * scaler / 4.0;
         int j = 1;
@@ -306,14 +312,14 @@ class STFT {
         }
     }
 
-    public void clear() {
+    void clear() {
         spectrumAmpPt = 0;
         Arrays.fill(spectrumAmpOut, 0.0);
         Arrays.fill(spectrumAmpOutDB, Math.log10(0));
         Arrays.fill(spectrumAmpOutCum, 0.0);
-        for (int i = 0; i < spectrumAmpOutArray.length; i++) {
-            Arrays.fill(spectrumAmpOutArray[i], 0.0);
-        }
+//        for (int i = 0; i < spectrumAmpOutArray.length; i++) {
+//            Arrays.fill(spectrumAmpOutArray[i], 0.0);
+//        }
     }
 
 }

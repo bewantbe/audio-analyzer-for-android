@@ -153,7 +153,7 @@ class SamplingLoop extends Thread {
              inferior to the total recording buffer size.
          */
         // Determine size of buffers for AudioRecord and AudioRecord::read()
-        int readChunkSize    = analyzerParam.fftLen/2;  // /2 due to overlapped analyze window
+        int readChunkSize    = analyzerParam.hopLen;  // Every hopLen one fft result (overlapped analyze window)
         readChunkSize        = Math.min(readChunkSize, 2048);  // read in a smaller chunk, hopefully smaller delay
         int bufferSampleSize = Math.max(minBytes / analyzerParam.BYTE_OF_SAMPLE, analyzerParam.fftLen/2) * 2;
         // tolerate up to about 1 sec.
@@ -195,7 +195,7 @@ class SamplingLoop extends Thread {
         short[] audioSamples = new short[readChunkSize];
         int numOfReadShort;
 
-        stft = new STFT(analyzerParam.fftLen, analyzerParam.sampleRate, analyzerParam.wndFuncName);
+        stft = new STFT(analyzerParam);
         stft.setAWeighting(analyzerParam.isAWeighting);
         if (spectrumDBcopy == null || spectrumDBcopy.length != analyzerParam.fftLen/2+1) {
             spectrumDBcopy = new double[analyzerParam.fftLen/2+1];
