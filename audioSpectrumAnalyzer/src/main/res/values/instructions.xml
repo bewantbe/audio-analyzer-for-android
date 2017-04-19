@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="instructions_title">      Instructions</string>
-    <string name="dismiss">      Dismiss</string>
+    <string name="instructions_title">      User Manual</string>
+    <string name="dismiss">      Close</string>
     <string name="instructions_text"><![CDATA[<h2>Button operation</h2>
 <font color="green">spum/spam</font>
 <br/><b>spum</b>: Show the real time <b>sp</b>ectr<b>um</b>.

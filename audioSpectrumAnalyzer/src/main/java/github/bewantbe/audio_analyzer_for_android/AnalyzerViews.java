@@ -17,6 +17,8 @@ package github.bewantbe.audio_analyzer_for_android;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -201,6 +203,15 @@ class AnalyzerViews {
         tv.setMovementMethod(LinkMovementMethod.getInstance());
         tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         tv.setText(fromHtml(activity.getString(R.string.instructions_text)));
+        PackageInfo pInfo = null;
+        String version = "\n" + activity.getString(R.string.app_name) + "  Version: ";
+        try {
+            pInfo = activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0);
+            version += pInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            version += "(Unknown)";
+        }
+        tv.append(version);
         new AlertDialog.Builder(activity)
                 .setTitle(R.string.instructions_title)
                 .setView(tv)
