@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -47,6 +48,7 @@ import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView;
@@ -80,6 +82,8 @@ public class AnalyzerActivity extends Activity
     private boolean isMeasure = false;
     private boolean isLockViewRange = false;
     volatile boolean bSaveWav = false;
+
+    CalibrationLoad calibLoad = new CalibrationLoad();  // data for calibration of spectrum
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -184,6 +188,64 @@ public class AnalyzerActivity extends Activity
         return true;
     }
 
+    static final int REQUEST_AUDIO_GET = 1;
+    static final int REQUEST_CALIB_LOAD = 2;
+
+    public void selectFile(int requestType) {
+        // https://developer.android.com/guide/components/intents-common.html#Storage
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        if (requestType == REQUEST_AUDIO_GET) {
+            intent.setType("audio/*");
+        } else {
+            intent.setType("*/*");
+        }
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(intent, requestType);
+        } else {
+            Log.e(TAG, "No file chooser found!.");
+
+            // Potentially direct the user to the Market with a Dialog
+            Toast.makeText(this, "Please install a File Manager.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public static String getMimeType(String url) {
+        String type = null;
+        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+        if (extension != null) {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        }
+        return type;
+    }
+
+    void fillFftCalibration(AnalyzerParameters _analyzerParam, CalibrationLoad _calibLoad) {
+        if (_calibLoad.freq == null || _calibLoad.freq.length == 0 || _analyzerParam == null) {
+            return;
+        }
+        double[] freqTick = new double[_analyzerParam.fftLen/2];
+        for (int i = 0; i < freqTick.length; i++) {
+            freqTick[i] = (i+1.0)/_analyzerParam.fftLen * _analyzerParam.sampleRate;
+        }
+        _analyzerParam.micGainDB = AnalyzerUtil.interpLinear(_calibLoad.freq, _calibLoad.gain, freqTick);
+//        for (int i = 0; i < _analyzerParam.micGainDB.length; i++) {
+//            Log.i(TAG, "calib: " + freqTick[i] + "Hz : " + _analyzerParam.micGainDB[i]);
+//        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CALIB_LOAD && resultCode == RESULT_OK) {
+            final Uri uri = data.getData();
+            calibLoad.loadFile(uri, this);
+            Log.w(TAG, "mime:" + getContentResolver().getType(uri));
+            fillFftCalibration(analyzerParam, calibLoad);
+        } else if (requestCode == REQUEST_AUDIO_GET) {
+            Log.w(TAG, "requestCode == REQUEST_AUDIO_GET");
+        }
+    }
+
     // for pass audioSourceIDs and audioSourceNames to MyPreferences
     public final static String MYPREFERENCES_MSG_SOURCE_ID = "AnalyzerActivity.SOURCE_ID";
     public final static String MYPREFERENCES_MSG_SOURCE_NAME = "AnalyzerActivity.SOURCE_NAME";
@@ -192,22 +254,24 @@ public class AnalyzerActivity extends Activity
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.i(TAG, "onOptionsItemSelected(): " + item.toString());
         switch (item.getItemId()) {
-            case R.id.info:
+            case R.id.menu_manual:
                 analyzerViews.showInstructions();
                 return true;
-            case R.id.settings:
+            case R.id.menu_settings:
                 Intent settings = new Intent(getBaseContext(), MyPreferences.class);
                 settings.putExtra(MYPREFERENCES_MSG_SOURCE_ID, analyzerParam.audioSourceIDs);
                 settings.putExtra(MYPREFERENCES_MSG_SOURCE_NAME, analyzerParam.audioSourceNames);
                 startActivity(settings);
                 return true;
-            case R.id.info_recorder:
+            case R.id.menu_test_recorder:
                 Intent int_info_rec = new Intent(this, InfoRecActivity.class);
                 startActivity(int_info_rec);
                 return true;
-            case R.id.view_range_setting:
+            case R.id.menu_view_range:
                 rangeViewDialogC.ShowRangeViewDialog();
                 return true;
+            case R.id.menu_calibration:
+                selectFile(REQUEST_CALIB_LOAD);
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -268,6 +332,7 @@ public class AnalyzerActivity extends Activity
                 analyzerParam.hopLen = (int)(analyzerParam.fftLen*(1 - analyzerParam.overlapPercent/100) + 0.5);
                 b_need_restart_audio = true;
                 editor.putInt("button_fftlen", analyzerParam.fftLen);
+                fillFftCalibration(analyzerParam, calibLoad);
                 break;
             case R.id.button_average:
                 analyzerViews.popupMenuAverage.dismiss();

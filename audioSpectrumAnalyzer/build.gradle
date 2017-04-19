@@ -5,7 +5,7 @@ android {
     buildToolsVersion '25.0.2'
     defaultConfig {
         applicationId "github.bewantbe.audio_analyzer_for_android"
-        minSdkVersion 8
+        minSdkVersion 9
         targetSdkVersion 25
     }
     buildTypes {
@@ -20,6 +20,6 @@ android {
 
 dependencies {
     compile project(':FFTLibrary')
-    compile 'com.android.support:support-v4:25.2.0'
-    compile 'com.android.support:appcompat-v7:25.2.0'
+    compile 'com.android.support:support-v4:25.3.0'
+    compile 'com.android.support:appcompat-v7:25.3.0'
 }

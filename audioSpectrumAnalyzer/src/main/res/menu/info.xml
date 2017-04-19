@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <item
-        android:id="@+id/info"
+        android:id="@+id/menu_manual"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_info_details"
         android:menuCategory="container"
@@ -10,7 +10,7 @@
         android:titleCondensed="@string/menu_manual_condensed"/>
 
     <item
-        android:id="@+id/settings"
+        android:id="@+id/menu_settings"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
@@ -18,7 +18,7 @@
         android:titleCondensed="@string/menu_preferences_condensed"/>
 
     <item
-        android:id="@+id/info_recorder"
+        android:id="@+id/menu_test_recorder"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
@@ -26,11 +26,19 @@
         android:titleCondensed="@string/menu_test_condensed"/>
 
     <item
-        android:id="@+id/view_range_setting"
+        android:id="@+id/menu_view_range"
         android:enabled="true"
         android:icon="@android:drawable/ic_menu_manage"
         android:menuCategory="container"
         android:title="@string/menu_set_view"
         android:titleCondensed="@string/menu_set_view_condensed"/>
+
+    <item
+        android:id="@+id/menu_calibration"
+        android:enabled="true"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:menuCategory="container"
+        android:title="Load calibration"
+        android:titleCondensed="calib"/>
 
 </menu>

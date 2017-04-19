@@ -30,6 +30,7 @@ import java.util.Iterator;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.round;
+import static java.util.Arrays.sort;
 
 /**
  * Utility functions for audio analyzer.
@@ -252,6 +253,62 @@ class AnalyzerUtil {
             if (arr[i].equals(v)) return i;
         }
         return -1;
+    }
+
+    static boolean isSorted(double[] a) {
+        if (a == null || a.length <= 1) {
+            return true;
+        }
+        double d = a[0];
+        for (int i = 1; i < a.length; i++) {
+            if (d > a[i]) {
+                return false;
+            }
+            d = a[i];
+        }
+        return true;
+    }
+
+    static double[] interpLinear(double[] xFixed, double[] yFixed, double[] xInterp) {
+        if (xFixed == null || yFixed == null || xInterp == null) {
+            return null;
+        }
+        if (xFixed.length == 0 || yFixed.length == 0 || xInterp.length == 0) {
+            return new double[0];
+        }
+        if (xFixed.length != yFixed.length) {
+            Log.e(TAG, "Input data length mismatch");
+        }
+
+//        if (!isSorted(xFixed)) {
+//            sort(xFixed);
+//            yFixed = yFixed(x_id);
+//        }
+        if (!isSorted(xInterp)) {
+            sort(xInterp);
+        }
+        double[] yInterp = new double[xInterp.length];
+
+        int xiId = 0;
+        while (xiId < xInterp.length && xInterp[xiId] < xFixed[0]) {
+            yInterp[xiId] = yFixed[0];
+            xiId++;
+        }
+
+        for (int xfId = 1; xfId < xFixed.length; xfId++) {
+            while (xiId < xInterp.length && xInterp[xiId] < xFixed[xfId]) {
+                // interpolation using (xFixed(x_id - 1), yFixed(xfId - 1)) and (xFixed(x_id), yFixed(xfId))
+                yInterp[xiId] = (yFixed[xfId] - yFixed[xfId - 1]) / (xFixed[xfId] - xFixed[xfId - 1]) * (xInterp[xiId] - xFixed[xfId - 1]) + yFixed[xfId - 1];
+                xiId++;
+            }
+        }
+
+        while (xiId < xInterp.length) {
+            yInterp[xiId] = yFixed[yFixed.length - 1];
+            xiId++;
+        }
+
+        return yInterp;
     }
 
 }

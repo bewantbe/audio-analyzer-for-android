@@ -10,17 +10,6 @@
         <!--android:minSdkVersion="8"-->
         <!--android:targetSdkVersion="25" />-->
 
-    <!-- For supporting sdkversion 8 ~ 25, instead of 9 ~ 25 -->
-    <uses-sdk tools:overrideLibrary="
-    android.support.v7.appcompat,
-    android.support.v4,
-    android.support.fragment,
-    android.support.mediacompat,
-    android.support.coreui,
-    android.support.coreutils,
-    android.support.graphics.drawable,
-    android.support.compat"/>
-
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
