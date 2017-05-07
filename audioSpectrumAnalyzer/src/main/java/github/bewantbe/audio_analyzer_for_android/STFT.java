@@ -323,7 +323,7 @@ class STFT {
                 // no correction to phase
                 // no correction to DC
                 for (int j = 1; j < outLen; j++) {
-                    sAOC[j] *= micGain[j-1];
+                    sAOC[j] /= micGain[j-1];
                 }
             }
             if (boolAWeighting) {
