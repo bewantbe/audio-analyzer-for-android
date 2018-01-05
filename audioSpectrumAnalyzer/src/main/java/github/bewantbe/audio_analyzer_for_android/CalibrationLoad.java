@@ -99,7 +99,7 @@ class CalibrationLoad {
             Iterator itr  = freqList.iterator();
             Iterator itr2 = amplitudeDBList.iterator();
             for (int j=0; itr.hasNext(); j++ ) {
-                freq[j]        = (double)itr.next();
+                freq[j] = (double)itr.next();
                 gain[j] = (double)itr2.next();
             }
         } catch (IOException e) {
