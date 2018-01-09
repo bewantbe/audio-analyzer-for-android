@@ -143,7 +143,8 @@ class SpectrogramBMP {
     }
 
     private int colorFromDB(double d) {
-        return cma[levelFromDB(d, dBLowerBound, dBUpperBound, cma.length)];
+        // Assume in ARGB format. Always set alpha=0xff for drawBitmap to work correctly.
+        return cma[levelFromDB(d, dBLowerBound, dBUpperBound, cma.length)] + 0xff000000;
     }
 
     void fill(double[] db) {
