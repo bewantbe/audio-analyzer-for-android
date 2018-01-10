@@ -292,15 +292,17 @@ class AnalyzerViews {
         // set the item click listener
         listView.setOnItemClickListener(activity);
 
-        listView.setTag(resId);  // button res ID, so we can trace back which button is pressed
+        // button resource ID, so we can trace back which button is pressed
+        listView.setTag(resId);
 
         // get max text width
         Paint mTestPaint = new Paint();
         mTestPaint.setTextSize(listItemTextSize);
-        float w = 0;
-        float wi;      // max text width in pixel
+        float w = 0;  // max text width in pixel
+        float wi;
         for (String popUpContent : popUpContents) {
             String sts[] = popUpContent.split("::");
+            if (sts.length == 0) continue;
             String st = sts[0];
             if (sts.length == 2 && sts[1].equals("0")) {
                 mTestPaint.setTextSize(listItemTitleTextSize);
@@ -315,9 +317,9 @@ class AnalyzerViews {
         }
 
         // left and right padding, at least +7, or the whole app will stop respond, don't know why
-        w = w + 20 * DPRatio;
-        if (w < 60) {
-            w = 60;
+        w = w + 23 * DPRatio;
+        if (w < 40 * DPRatio) {
+            w = 40 * DPRatio;
         }
 
         // some other visual settings
@@ -326,7 +328,7 @@ class AnalyzerViews {
         // Set window width according to max text width
         popupWindow.setWidth((int)w);
         // also set button width
-        ((Button) activity.findViewById(resId)).setWidth((int)(w + 4 * DPRatio));
+        ((Button) activity.findViewById(resId)).setWidth((int)(w + 5 * DPRatio));
         // Set the text on button in loadPreferenceForView()
 
         // set the list view as pop up window content

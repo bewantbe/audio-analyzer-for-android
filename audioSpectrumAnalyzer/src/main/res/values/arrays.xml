@@ -134,6 +134,7 @@
         <item>4::4</item>
         <item>8::8</item>
         <item>16::16</item>
+        <item>32::32</item>
     </string-array>
 
 </resources>
