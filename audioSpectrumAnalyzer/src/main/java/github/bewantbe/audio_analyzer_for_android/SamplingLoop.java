@@ -17,6 +17,8 @@ package github.bewantbe.audio_analyzer_for_android;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
+import android.media.audiofx.AutomaticGainControl;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -26,6 +28,14 @@ import java.util.Arrays;
  * Read a snapshot of audio data at a regular interval, and compute the FFT
  * @author suhler@google.com
  *         bewantbe@gmail.com
+ * Ref:
+ *   https://developer.android.com/guide/topics/media/mediarecorder.html#example
+ *   https://developer.android.com/reference/android/media/audiofx/AutomaticGainControl.html
+ *
+ * TODO:
+ *   See also: High-Performance Audio
+ *   https://developer.android.com/ndk/guides/audio/index.html
+ *   https://developer.android.com/ndk/guides/audio/aaudio/aaudio.html
  */
 
 class SamplingLoop extends Thread {
@@ -175,6 +185,21 @@ class SamplingLoop extends Thread {
             activity.analyzerViews.notifyToast("Illegal recorder argument. (change source)");
             return;
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            // Check Auto-Gain-Control status.
+            if (AutomaticGainControl.isAvailable()) {
+                AutomaticGainControl agc = AutomaticGainControl.create(
+                        record.getAudioSessionId());
+                if (agc.getEnabled())
+                    Log.i(TAG, "SamplingLoop::Run(): AGC: enabled.");
+                else
+                    Log.i(TAG, "SamplingLoop::Run(): AGC: disabled.");
+            } else {
+                Log.i(TAG, "SamplingLoop::Run(): AGC: not available.");
+            }
+        }
+
         Log.i(TAG, "SamplingLoop::Run(): Starting recorder... \n" +
                 "  source          : " + analyzerParam.getAudioSourceName() + "\n" +
                 String.format("  sample rate     : %d Hz (request %d Hz)\n", record.getSampleRate(), analyzerParam.sampleRate) +

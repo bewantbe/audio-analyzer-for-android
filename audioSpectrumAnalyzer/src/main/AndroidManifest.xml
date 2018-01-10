@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="github.bewantbe.audio_analyzer_for_android"
-    android:versionCode="20170420"
+    android:versionCode="20180111"
     android:versionName="1.7.0alpha"
     android:installLocation="auto">
 
