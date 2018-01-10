@@ -105,8 +105,9 @@
             android:paddingLeft="15dp"
             android:paddingStart="15dp"
             android:tag="select"
-            android:text="spum"
+            android:text="1D"
             android:textSize="20sp"
+            custom:itemsDisplay="@string/button_spectrum_spectrogram_mode"
             custom:items="spum spam" />
 
         <github.bewantbe.audio_analyzer_for_android.SelectorText

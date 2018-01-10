@@ -57,7 +57,6 @@ class STFT {
     private double outRMS = 0;
 
     private double[] dBAFactor;    // multiply to power spectrum to get A-weighting
-    private double[] micGain;
 
     private double sqr(double x) { return x*x; }
   
@@ -241,17 +240,6 @@ class STFT {
 
     STFT(AnalyzerParameters analyzerParam) {
         init(analyzerParam.fftLen, analyzerParam.hopLen, analyzerParam.sampleRate, analyzerParam.nFFTAverage, analyzerParam.wndFuncName);
-        micGain = analyzerParam.micGainDB;
-        if (micGain != null) {
-            Log.w("STFT:", "calib loaded.");
-            for (int i = 0; i < micGain.length; i++) {
-                micGain[i] = pow(10, micGain[i] / 10.0);
-            }
-//            Log.w("STFT:", "micGain.length = " + micGain.length);
-//            Log.w("STFT:", "micGain.length = " + micGain.length);
-        } else {
-            Log.w("STFT:", "no calib");
-        }
     }
 
     public void feedData(short[] ds) {
@@ -318,13 +306,6 @@ class STFT {
             double[] sAOC = spectrumAmpOutCum;
             for (int j = 0; j < outLen; j++) {
                 sAOC[j] /= nAnalysed;
-            }
-            if (micGain != null && micGain.length+1 == sAOC.length) {
-                // no correction to phase
-                // no correction to DC
-                for (int j = 1; j < outLen; j++) {
-                    sAOC[j] /= micGain[j-1];
-                }
             }
             if (boolAWeighting) {
                 for (int j = 0; j < outLen; j++) {

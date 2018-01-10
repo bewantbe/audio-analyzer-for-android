@@ -12,7 +12,7 @@
         <item>plasma (Matplotlib)</item>
         <item>viridis (Matplotlib)</item>
     </string-array>
-    <string name="dbColorMap_default" translatable="false">hot</string>
+    <string name="dbColorMap_default" translatable="false">viridis</string>
     <string-array name="dbColorMap" translatable="false">
         <item>hot</item>
         <item>blackbody_uniform</item>

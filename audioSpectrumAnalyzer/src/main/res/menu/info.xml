@@ -33,12 +33,4 @@
         android:title="@string/menu_set_view"
         android:titleCondensed="@string/menu_set_view_condensed"/>
 
-    <item
-        android:id="@+id/menu_calibration"
-        android:enabled="true"
-        android:icon="@android:drawable/ic_menu_manage"
-        android:menuCategory="container"
-        android:title="Load calibration"
-        android:titleCondensed="calib"/>
-
 </menu>

@@ -2,13 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="github.bewantbe.audio_analyzer_for_android"
-    android:versionCode="20170420"
-    android:versionName="1.7.0alpha"
+    android:versionCode="20180110"
+    android:versionName="1.6.9"
     android:installLocation="auto">
-
-    <!--<uses-sdk-->
-        <!--android:minSdkVersion="8"-->
-        <!--android:targetSdkVersion="25" />-->
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
