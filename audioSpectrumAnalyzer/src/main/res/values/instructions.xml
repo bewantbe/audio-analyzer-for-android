@@ -3,19 +3,19 @@
     <string name="instructions_title">      User Manual</string>
     <string name="dismiss">      Close</string>
     <string name="instructions_text"><![CDATA[<h2>Button operation</h2>
-<font color="green">spum/spam</font>
-<br/><b>spum</b>: Show the real time <b>sp</b>ectr<b>um</b>.
-<br/><b>spam</b>: Show the <b>sp</b>ectrogr<b>am</b> in a duration. The color represents strength of the sound at a certain frequency and time.
+<font color="green">1D/2D</font>
+<br/><b>1D</b>: Show the real time <b>sp</b>ectr<b>um</b>.
+<br/><b>2D</b>: Show the <b>sp</b>ectrogr<b>am</b> in a duration. The color represents strength of the sound at a certain frequency and time.
 <p/>
 <font color="green">dB/dBA</font>
 <br/>Switch between dBFS and A-weighting dBFS. dBA is widely used in environmental noise measurement. But here, dBA is only for reference, see notes below.
 <p/>
-<font color="green">linear/log</font>
-<br/>Switch between linear or log frequency axis. In log mode, the lowest frequency is determined by sampling rate divided by Fourier transform length.
+<font color="green">linear/log/note</font>
+<br/>Switch between <b>linear</b>, <b>log</b>arithmic or musical <b>note</b> frequency axis. In log and note mode, the lowest frequency is determined by sampling rate divided by Fourier transform length.
 <p/>
 <font color="green">run/stop</font>
-<br/><b>stop</b> freezes/pauses the display, making it easier to inspect the waveform. However, the recorder is still working when paused.
-<br/><b>run</b> resumes real-time analysis of samples and unfreezes the display.
+<br/><b>stop</b> Pauses the display, so that it is easier to inspect the spectrum/spectrogram. However, the recorder will keep recording.
+<br/><b>run</b> Real time monitoring of the audio samples.
 <p/>
 <font color="green">SAMPLE/S</font>
 <br/>Sampling rate selection. Higher sampling rate can see higher frequency information.
