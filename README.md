@@ -29,10 +29,10 @@ Installation Requirements
 -------------------------
 
 * Android version (API level)
- - >= Android 2.2 (API level 8), up-to app version v1.6.8. 
- - >= Android 2.3 (API level 9), master branch, up-to year 2017.
- - >= Android 4.0 (API level 14), since year 2018.
- - These minimum version requirement is due to the "targetSdkVersion" and corresponding supported version range for library "com.android.support:support-v4".
+  - \>= Android 2.2 (API level 8), up-to app version v1.6.8. 
+  - \>= Android 2.3 (API level 9), master branch, up-to year 2017.
+  - \>= Android 4.0 (API level 14), since year 2018.
+  - These minimum version requirement is due to the "targetSdkVersion" and corresponding supported version range for library "com.android.support:support-v4".
 
 Permissions:
 * Microphone, of course.
