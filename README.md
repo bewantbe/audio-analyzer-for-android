@@ -28,7 +28,14 @@ Features
 Installation Requirements
 -------------------------
 
-* >= Android 2.2 (API Level 8). The recent version need Android 2.3 (API Level 9).
+* Android version (API level)
+ - >= Android 2.2 (API level 8), up-to app version v1.6.8. 
+ - >= Android 2.3 (API level 9), master branch, up-to year 2017.
+ - >= Android 4.0 (API level 14), since year 2018.
+ - These minimum version requirement is due to the "targetSdkVersion" and corresponding supported version range for library "com.android.support:support-v4".
+
+Permissions:
+* Microphone, of course.
 * External storage (e.g MicroSD card), if you want to record the sound.
 
 
@@ -36,6 +43,8 @@ Development
 -----------
 
 `git clone` then open it use Android Studio. Install the SDK platform if requested (e.g. rev 116 needs API level 20), or tune the `compileSdkVersion` to the value that fits your needs.
+
+([Notes on project import for old revision (rev <= 115)](doc/Notes-on-project-import-for-old-revision.txt))
 
 ### Code structure
 
@@ -65,39 +74,6 @@ which calculates RMS and FFT whenever enough data is collected. The view is then
     activity.analyzerViews.update(spectrumDBcopy);
 
 which ultimately calls `invalidate()` of the graphic view to request an update, then the `AnalyzerGraphic.onDraw(Canvas c)` will be called automatically.
-
-
-### Notes on project import for old revision (rev <= 115)
-
-Import eclipse project to Android Studio (tested in Android Studio 1.1.0 with OpenJDK-7 v2.5.4)
-
-* As Gradle-based projects (recommended)
-
-  1. git clone *repo-path* audio-analyzer-for-android
-  2. Copy the standard library project "android-support-v7-appcompat" to "audio-analyzer-for-android/android-support-v7-appcompat".
-  3. Modify "audio-analyzer-for-android/audioAnalyzer/project.properties", change "android.library.reference.2=../../../workspace/android-support-v7-appcompat" to "android.library.reference.2=../android-support-v7-appcompat".
-  4. Click "Import project" in the welcome dialog box of Android Studio.
-  5. Choose the sub-directory "audio-analyzer-for-android/audioAnalyzer".
-  6. Choose a name for Destination Directory. Next.
-  7. (check the two "Replace ... when possible") Finish. Then import-summary.txt will be generated.
-
-    You should have a workable copy now.
-
-* Or, as IntelliJ "classic" projects
-
-  1. git clone *repo-path* audio-analyzer-for-android
-  2. Click "Import project" in the welcome dialog box of Android Studio.
-  3. Choose the directory "audio-analyzer-for-android".
-  4. Select "Create project from existing sources", Next.
-  5. Next.
-  6. Uncheck the directories that end with "gen", codes there are auto generated. Next.
-  7. (review libraries found) Next.
-  8. (review suggested module structure) Next.
-  9. (select project SDK) Next.
- 10. (review frameworks) Finish.
-
-    Now if you build the project, you will get an error "Cannot resolve symbol '@style/Theme.AppCompat'". This theme is in "android.support.v7.appcompat", I don't know how to import these values yet. Just choose another built-in theme will make it work. e.g. change to android:theme="@android:style/Theme.Black".
-
 
 Thanks
 ------

@@ -10,8 +10,14 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            // See https://developer.android.com/studio/build/shrink-code.html
+            // Remember to check <module-name>/build/outputs/mapping/release/
+            //   usage.txt   : code that was removed
+            //   mapping.txt : the translation between the original and obfuscated class, method, and field names
+            shrinkResources true
+            minifyEnabled true
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.txt'
         }
     }
     productFlavors {
