@@ -22,6 +22,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
+import android.os.SystemClock;
 import android.util.Log;
 
 import static java.lang.Math.abs;
@@ -36,7 +37,7 @@ import static java.lang.Math.round;
 class SpectrumPlot {
     private static final String TAG = "SpectrumPlot:";
     boolean showLines;
-    private Paint linePaint, linePaintLight;
+    private Paint linePaint, linePaintLight, linePeakPaint;
     private Paint cursorPaint;
     private Paint gridPaint;
     private Paint labelPaint;
@@ -63,6 +64,9 @@ class SpectrumPlot {
 
         linePaintLight = new Paint(linePaint);
         linePaintLight.setColor(Color.parseColor("#3AB3E2"));
+
+        linePeakPaint = new Paint(linePaint);
+        linePeakPaint.setColor(0xFF00A0A0);
 
         gridPaint = new Paint();
         gridPaint.setColor(Color.DKGRAY);
@@ -141,6 +145,8 @@ class SpectrumPlot {
     int[] index_range_cache = new int[2];
     // index_range_cache[0] == beginFreqPt
     // index_range_cache[1] == endFreqPt
+    AnalyzerUtil.PeakHoldAndFall peakHold = new AnalyzerUtil.PeakHoldAndFall();
+    long timeLastCall;
 
     // Find the index range that the plot will appear inside view.
     // index_range[1] must never be reached.
@@ -324,6 +330,13 @@ class SpectrumPlot {
             }
             System.arraycopy(_db, 0, db_cache, 0, _db.length);
         }
+
+        long timeNow = SystemClock.uptimeMillis();
+        peakHold.addCurrentValue(db_cache, (timeNow - timeLastCall)/1000.0);
+        timeLastCall = timeNow;
+
+        // Spectrum peak hold
+        plotLineBar(c, peakHold.v_peak, null, false, linePeakPaint, null);
 
         // Spectrum line and bar
         plotLineBar(c, db_cache, null, !showLines, linePaintLight, linePaint);

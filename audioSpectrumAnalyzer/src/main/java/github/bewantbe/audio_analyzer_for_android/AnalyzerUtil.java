@@ -21,6 +21,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.lang.reflect.Field;
@@ -357,6 +358,47 @@ class AnalyzerUtil {
             return l;
         } else {
             return h;
+        }
+    }
+
+    static class PeakHoldAndFall {
+        double[] v_peak = new double[0];
+        double[] t_peak = new double[0];
+        double t_hold = 2.0;
+        double drop_speed = 20.0;
+
+        PeakHoldAndFall() {}
+
+        PeakHoldAndFall(double hold_time, double _drop_speed) {
+            t_hold = hold_time;
+            drop_speed = _drop_speed;
+        }
+
+        void addCurrentValue(@NonNull double[] v_curr, double dt) {
+            if (v_curr.length != v_peak.length) {
+                v_peak = new double[v_curr.length];
+                System.arraycopy(v_curr, 0, v_peak, 0, v_curr.length);
+                t_peak = new double[v_curr.length];
+                // t_peak initialized to 0.0 by default (Java).
+            } else {
+                for (int k = 0; k < v_peak.length; k++) {
+                    double t_now = t_peak[k] + dt;
+                    double v_drop = 0;
+                    // v_peak falling in quadratic speed.
+                    if (t_peak[k] > t_hold) {
+                        v_drop = (t_peak[k] - t_hold + t_now - t_hold) / 2 * dt;
+                    } else if (t_now > t_hold) {
+                        v_drop = (t_now - t_hold) / 2 * dt;
+                    }
+                    t_peak[k] = t_now;
+                    v_peak[k] -= drop_speed * v_drop;
+                    // New peak arrived.
+                    if (v_peak[k] < v_curr[k]) {
+                        v_peak[k] = v_curr[k];
+                        t_peak[k] = 0;
+                    }
+                }
+            }
         }
     }
 }
