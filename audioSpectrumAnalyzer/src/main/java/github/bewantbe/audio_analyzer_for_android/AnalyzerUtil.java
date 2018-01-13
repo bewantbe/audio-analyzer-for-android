@@ -311,4 +311,52 @@ class AnalyzerUtil {
         return yInterp;
     }
 
+    // Binary search for nearest element.
+    // bLower == true : return lower  index if no exact match.
+    // bLower == false: return higher index if no exact match.
+    // x must be sorted (ascending).
+    static int binarySearchElem(double[] x, double v, boolean bLower) {
+        if (x == null || x.length == 0) return -1;
+        int l = 0;
+        int h = x.length - 1;
+        if (v == x[l]) {
+            return l;
+        }
+        if (v < x[l]) {
+            if (bLower) {
+                return l;  // or? -1;
+            } else {
+                return l;
+            }
+        }
+        if (v == x[h]) {
+            return h;
+        }
+        if (v > x[h]) {
+            if (bLower) {
+                return h;
+            } else {
+                return h;  // or? -1;
+            }
+        }
+        // x[0] < v < x[len-1]
+        int m;
+        while (l+1 < h) {
+            m = (l + h) / 2;
+            if (v == x[m]) {
+                return m;
+            }
+            if (v < x[m]) {
+                h = m;
+            } else {
+                l = m;
+            }
+        }
+        // Now we must have l+1 == h, and no exact match was found.
+        if (bLower) {
+            return l;
+        } else {
+            return h;
+        }
+    }
 }

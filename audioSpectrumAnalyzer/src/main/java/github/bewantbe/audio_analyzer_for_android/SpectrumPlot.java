@@ -131,6 +131,177 @@ class SpectrumPlot {
     private Matrix matrix = new Matrix();
     private float[] tmpLineXY = new float[0];  // cache line data for drawing
     private double[] db_cache = null;
+    int[] index_range_cache = new int[2];
+    // index_range_cache[0] == beginFreqPt
+    // index_range_cache[1] == endFreqPt
+
+    // Find the index range that the plot will appear inside view.
+    // index_range[1] must never be reached.
+    private void indexRangeFinder(double[] x_values, double x_step, int[] index_range) {
+        if (index_range == null || index_range.length != 2) {
+            // You are joking
+            return ;
+        }
+        double viewMinX = axisX.vMinInView();
+        double viewMaxX = axisX.vMaxInView();
+        if (x_values == null) {
+            index_range[0] = (int)floor(viewMinX / x_step);    // pointer to tmpLineXY
+            index_range[1] = (int)ceil (viewMaxX / x_step)+1;
+        } else {
+            if (x_values.length == 0) {
+                // mada joking
+                return ;
+            }
+            // Assume x_values is in ascending order
+            index_range[0] = AnalyzerUtil.binarySearchElem(x_values, viewMinX, true);
+            index_range[1] = AnalyzerUtil.binarySearchElem(x_values, viewMaxX, false) + 1;
+        }
+        // Avoid log(0)
+        if (((x_values == null && index_range[0] == 0)
+                || (x_values != null && x_values[index_range[0]] <= 0))
+                && axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
+            index_range[0]++;
+        }
+        // Avoid out-of-range access
+        if (index_range[1] > db_cache.length) {
+            // just in case canvasMaxFreq / freqDelta > nFreqPointsTotal
+            index_range[1] = db_cache.length;
+        }
+    }
+
+    private void plotBarThin(Canvas c, double[] y_value, double[] x_values, int i_begin, int i_end, double x_inc, Paint linePainter) {
+        if (tmpLineXY.length < 4*(y_value.length)) {
+            Log.d(TAG, "plotBar(): new tmpLineXY");
+            tmpLineXY = new float[4*(y_value.length)];
+        }
+
+        final double minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
+        c.save();
+        matrix.reset();
+        matrix.setTranslate(0, (float)(-axisY.getShift() * canvasHeight));
+        matrix.postScale(1, (float)axisY.getZoom());
+        c.concat(matrix);
+        //      float barWidthInPixel = 0.5f * freqDelta / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
+        //      if (barWidthInPixel > 2) {
+        //        linePaint.setStrokeWidth(barWidthInPixel);
+        //      } else {
+        //        linePaint.setStrokeWidth(0);
+        //      }
+        // plot directly to the canvas
+        for (int i = i_begin; i < i_end; i++) {
+            float x = (float)axisX.pixelFromV(x_values == null ? i * x_inc : x_values[i]);
+            float y = (float)axisY.pixelNoZoomFromV(clampDB(y_value[i]));
+            tmpLineXY[4 * i] = x;
+            tmpLineXY[4 * i + 1] = (float)minYCanvas;
+            tmpLineXY[4 * i + 2] = x;
+            tmpLineXY[4 * i + 3] = y;
+        }
+        c.drawLines(tmpLineXY, 4*i_begin, 4*(i_end-i_begin), linePainter);
+        c.restore();
+    }
+
+    private void plotBarThick(Canvas c, double[] y_value, double[] x_values, int i_begin, int i_end, double x_inc, Paint linePainter) {
+        if (tmpLineXY.length < 4*(y_value.length)) {
+            Log.d(TAG, "plotBar(): new tmpLineXY");
+            tmpLineXY = new float[4*(y_value.length)];
+        }
+
+        final double minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
+        int pixelStep = 2;  // each bar occupy this virtual pixel
+        c.save();
+        matrix.reset();
+        double extraPixelAlignOffset = 0.0f;
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//          // There is an shift for Android 4.4, while no shift for Android 2.3
+//          // I guess that is relate to GL ES acceleration
+//          if (c.isHardwareAccelerated()) {
+//            extraPixelAlignOffset = 0.5f;
+//          }
+//        }
+        matrix.setTranslate((float)(-axisX.getShift() * (y_value.length - 1) * pixelStep - extraPixelAlignOffset),
+                (float)(-axisY.getShift() * canvasHeight));
+        matrix.postScale((float)(canvasWidth / ((axisX.vMaxInView() - axisX.vMinInView()) / x_inc * pixelStep)), (float)axisY.getZoom());
+        c.concat(matrix);
+        // fill interval same as canvas pixel width.
+        for (int i = i_begin; i < i_end; i++) {
+            float x = x_values == null ? i * pixelStep : (float)(x_values[i] / x_inc * pixelStep);
+            float y = (float)axisY.pixelNoZoomFromV(clampDB(y_value[i]));
+            tmpLineXY[4*i  ] = x;
+            tmpLineXY[4*i+1] = (float)minYCanvas;
+            tmpLineXY[4*i+2] = x;
+            tmpLineXY[4*i+3] = y;
+        }
+        c.drawLines(tmpLineXY, 4*i_begin, 4*(i_end-i_begin), linePainter);
+        c.restore();
+    }
+
+    private void plotBar(Canvas c, double[] y_value, double[] x_values, int i_begin, int i_end, double x_inc, Paint linePainter) {
+        // If bars are very close to each other, draw bars as lines
+        // Otherwise, zoom in so that lines look like bars.
+        if (i_end - i_begin >= axisX.nCanvasPixel / 2
+                || axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
+            plotBarThin(c, y_value, x_values, i_begin, i_end, x_inc, linePainter);
+        } else {
+            // for zoomed linear scale
+            plotBarThick(c, y_value, x_values, i_begin, i_end, x_inc, linePainter);
+        }
+    }
+
+    private void plotLine(Canvas c, double[] y_value, double[] x_values, int i_begin, int i_end, double x_inc, Paint linePainter) {
+        if (tmpLineXY.length < 4*(y_value.length)) {
+            Log.d(TAG, "plotLine(): new tmpLineXY");
+            tmpLineXY = new float[4*(y_value.length)];
+        }
+        c.save();
+        matrix.reset();
+        matrix.setTranslate(0, (float)(-axisY.getShift()*canvasHeight));
+        matrix.postScale(1, (float)axisY.getZoom());
+        c.concat(matrix);
+        if (x_values == null) {
+            float o_x = (float)axisX.pixelFromV(i_begin * x_inc);
+            float o_y = (float)axisY.pixelNoZoomFromV(clampDB(y_value[i_begin]));
+            for (int i = i_begin+1; i < i_end; i++) {
+                float x = (float)axisX.pixelFromV(i * x_inc);
+                float y = (float)axisY.pixelNoZoomFromV(clampDB(y_value[i]));
+                tmpLineXY[4*i  ] = o_x;
+                tmpLineXY[4*i+1] = o_y;
+                tmpLineXY[4*i+2] = x;
+                tmpLineXY[4*i+3] = y;
+                o_x = x;
+                o_y = y;
+            }
+        } else {
+            float o_x = (float)axisX.pixelFromV(x_values[i_begin]);
+            float o_y = (float)axisY.pixelNoZoomFromV(clampDB(y_value[i_begin]));
+            for (int i = i_begin+1; i < i_end; i++) {
+                float x = (float)axisX.pixelFromV(x_values[i]);
+                float y = (float)axisY.pixelNoZoomFromV(clampDB(y_value[i]));
+                tmpLineXY[4*i  ] = o_x;
+                tmpLineXY[4*i+1] = o_y;
+                tmpLineXY[4*i+2] = x;
+                tmpLineXY[4*i+3] = y;
+                o_x = x;
+                o_y = y;
+            }
+        }
+        c.drawLines(tmpLineXY, 4*(i_begin+1), 4*(i_end-i_begin-1), linePainter);
+        c.restore();
+    }
+
+    private void plotLineBar(Canvas c, double[] db_cache, double[] x_values, boolean drawBar) {
+        if (db_cache == null || db_cache.length == 0) return;
+
+        // There are db.length frequency points, including DC component
+        int nFreqPointsTotal = db_cache.length - 1;
+        double freqDelta = axisX.vUpperBound / nFreqPointsTotal;
+
+        indexRangeFinder(x_values, freqDelta, index_range_cache);
+
+        if (drawBar) {
+            plotBar(c, db_cache, x_values, index_range_cache[0], index_range_cache[1], freqDelta, linePaint);
+        }
+        plotLine(c, db_cache, x_values, index_range_cache[0], index_range_cache[1], freqDelta, linePaintLight);
+    }
 
     // Plot the spectrum into the Canvas c
     private void drawSpectrumOnCanvas(Canvas c, final double[] _db) {
@@ -147,111 +318,20 @@ class SpectrumPlot {
             System.arraycopy(_db, 0, db_cache, 0, _db.length);
         }
 
-        double canvasMinFreq = axisX.vMinInView();
-        double canvasMaxFreq = axisX.vMaxInView();
-        // There are db.length frequency points, including DC component
-        int nFreqPointsTotal = db_cache.length - 1;
-        double freqDelta = axisX.vUpperBound / nFreqPointsTotal;
-        int beginFreqPt = (int)floor(canvasMinFreq / freqDelta);    // pointer to tmpLineXY
-        int endFreqPt   = (int)ceil (canvasMaxFreq / freqDelta)+1;
-        final double minYCanvas = axisY.pixelNoZoomFromV(AnalyzerGraphic.minDB);
+        // Spectrum line and bar
+        plotLineBar(c, db_cache, null, !showLines);
 
-        // add one more boundary points
-        if (beginFreqPt == 0 && axisX.mapType == ScreenPhysicalMapping.Type.LOG) {
-            beginFreqPt++;
-        }
-        if (endFreqPt > db_cache.length) {
-            endFreqPt = db_cache.length;  // just in case canvasMaxFreq / freqDelta > nFreqPointsTotal
-        }
-
-        if (tmpLineXY.length != 4*(db_cache.length)) {
-            Log.d(TAG, "drawSpectrumOnCanvas(): new tmpLineXY");
-            tmpLineXY = new float[4*(db_cache.length)];
-        }
-
-        // spectrum bar
-        if (showLines == false) {
-            c.save();
-            // If bars are very close to each other, draw bars as lines
-            // Otherwise, zoom in so that lines look like bars.
-            if (endFreqPt - beginFreqPt >= axisX.nCanvasPixel / 2
-                    || axisX.mapType != ScreenPhysicalMapping.Type.LINEAR) {
-                matrix.reset();
-                matrix.setTranslate(0, (float)(-axisY.getShift() * canvasHeight));
-                matrix.postScale(1, (float)axisY.getZoom());
-                c.concat(matrix);
-                //      float barWidthInPixel = 0.5f * freqDelta / (canvasMaxFreq - canvasMinFreq) * canvasWidth;
-                //      if (barWidthInPixel > 2) {
-                //        linePaint.setStrokeWidth(barWidthInPixel);
-                //      } else {
-                //        linePaint.setStrokeWidth(0);
-                //      }
-                // plot directly to the canvas
-                for (int i = beginFreqPt; i < endFreqPt; i++) {
-                    float x = (float)axisX.pixelFromV(i * freqDelta);
-                    float y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[i]));
-                    if (y != canvasHeight) { // ...forgot why
-                        tmpLineXY[4 * i] = x;
-                        tmpLineXY[4 * i + 1] = (float)minYCanvas;
-                        tmpLineXY[4 * i + 2] = x;
-                        tmpLineXY[4 * i + 3] = y;
-                    }
-                }
-                c.drawLines(tmpLineXY, 4*beginFreqPt, 4*(endFreqPt-beginFreqPt), linePaint);
-            } else {
-                // for zoomed linear scale
-                int pixelStep = 2;  // each bar occupy this virtual pixel
-                matrix.reset();
-                double extraPixelAlignOffset = 0.0f;
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-//          // There is an shift for Android 4.4, while no shift for Android 2.3
-//          // I guess that is relate to GL ES acceleration
-//          if (c.isHardwareAccelerated()) {
-//            extraPixelAlignOffset = 0.5f;
-//          }
-//        }
-                matrix.setTranslate((float)(-axisX.getShift() * nFreqPointsTotal * pixelStep - extraPixelAlignOffset),
-                                    (float)(-axisY.getShift() * canvasHeight));
-                matrix.postScale((float)(canvasWidth / ((canvasMaxFreq - canvasMinFreq) / freqDelta * pixelStep)), (float)axisY.getZoom());
-                c.concat(matrix);
-                // fill interval same as canvas pixel width.
-                for (int i = beginFreqPt; i < endFreqPt; i++) {
-                    float x = i * pixelStep;
-                    float y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[i]));
-                    if (y != canvasHeight) {
-                        tmpLineXY[4*i  ] = x;
-                        tmpLineXY[4*i+1] = (float)minYCanvas;
-                        tmpLineXY[4*i+2] = x;
-                        tmpLineXY[4*i+3] = y;
-                    }
-                }
-                c.drawLines(tmpLineXY, 4*beginFreqPt, 4*(endFreqPt-beginFreqPt), linePaint);
-            }
-            c.restore();
-        }
-
-        // spectrum line
-        c.save();
-        matrix.reset();
-        matrix.setTranslate(0, (float)(-axisY.getShift()*canvasHeight));
-        matrix.postScale(1, (float)axisY.getZoom());
-        c.concat(matrix);
-        float o_x = (float)axisX.pixelFromV(beginFreqPt * freqDelta);
-        float o_y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[beginFreqPt]));
-        for (int i = beginFreqPt+1; i < endFreqPt; i++) {
-            float x = (float)axisX.pixelFromV(i * freqDelta);
-            float y = (float)axisY.pixelNoZoomFromV(clampDB(db_cache[i]));
-            tmpLineXY[4*i  ] = o_x;
-            tmpLineXY[4*i+1] = o_y;
-            tmpLineXY[4*i+2] = x;
-            tmpLineXY[4*i+3] = y;
-            o_x = x;
-            o_y = y;
-        }
-        c.drawLines(tmpLineXY, 4*(beginFreqPt+1), 4*(endFreqPt-beginFreqPt-1), linePaintLight);
-        c.restore();
+        plotLineBar(c, y_calib, x_calib, false);
 
         AnalyzerGraphic.setIsBusy(false);
+    }
+
+    double[] y_calib = null;
+    double[] x_calib = null;
+
+    void addCalibCurve(double[] y, double[] x) {
+        y_calib = y;
+        x_calib = x;
     }
 
     // x, y is in pixel unit

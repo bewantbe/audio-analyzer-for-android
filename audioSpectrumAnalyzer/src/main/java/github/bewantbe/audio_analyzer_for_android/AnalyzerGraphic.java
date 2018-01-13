@@ -109,6 +109,8 @@ public class AnalyzerGraphic extends View {
         spectrumPlot.axisY.vLowerBound = Float.parseFloat(res.getString(R.string.max_DB_range));
     }
 
+    AnalyzerParameters analyzerParamCache;
+
     void setupAxes(AnalyzerParameters analyzerParam) {
         int sampleRate       = analyzerParam.sampleRate;
         int fftLen           = analyzerParam.fftLen;
@@ -136,6 +138,8 @@ public class AnalyzerGraphic extends View {
             axisBounds = new double[]{0.0, sampleRate/2.0, timeDurationE * nAve, freq_lower_bound_local};
         }
         spectrogramPlot.setCanvas(canvasWidth, canvasHeight, axisBounds);
+
+        analyzerParamCache = analyzerParam;
     }
 
     // Call this when settings changed.
@@ -362,6 +366,7 @@ public class AnalyzerGraphic extends View {
         fpsCounter.inc();
         isBusy = true;
         if (showMode == PlotMode.SPECTRUM) {
+            spectrumPlot.addCalibCurve(analyzerParamCache.micGainDB, null);
             spectrumPlot.drawSpectrumPlot(c, savedDBSpectrum);
         } else {
             spectrogramPlot.drawSpectrogramPlot(c);
