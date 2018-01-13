@@ -366,7 +366,7 @@ public class AnalyzerGraphic extends View {
         fpsCounter.inc();
         isBusy = true;
         if (showMode == PlotMode.SPECTRUM) {
-            spectrumPlot.addCalibCurve(analyzerParamCache.micGainDB, null);
+            spectrumPlot.addCalibCurve(analyzerParamCache.micGainDB, null, analyzerParamCache.calibName);
             spectrumPlot.drawSpectrumPlot(c, savedDBSpectrum);
         } else {
             spectrogramPlot.drawSpectrogramPlot(c);

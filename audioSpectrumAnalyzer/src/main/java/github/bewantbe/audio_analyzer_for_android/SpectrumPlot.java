@@ -40,6 +40,8 @@ class SpectrumPlot {
     private Paint cursorPaint;
     private Paint gridPaint;
     private Paint labelPaint;
+    private Paint calibNamePaint;
+    private Paint calibLinePaint;
     private int canvasHeight=0, canvasWidth=0;
 
     private GridLabel fqGridLabel;
@@ -74,6 +76,11 @@ class SpectrumPlot {
         labelPaint.setColor(Color.GRAY);
         labelPaint.setTextSize(14.0f * DPRatio);
         labelPaint.setTypeface(Typeface.MONOSPACE);  // or Typeface.SANS_SERIF
+
+        calibNamePaint = new Paint(labelPaint);
+        calibNamePaint.setColor(Color.YELLOW & 0x66ffffff);
+        calibLinePaint = new Paint(linePaint);
+        calibLinePaint.setColor(Color.YELLOW);
 
         cursorFreq = cursorDB = 0f;
 
@@ -288,7 +295,7 @@ class SpectrumPlot {
         c.restore();
     }
 
-    private void plotLineBar(Canvas c, double[] db_cache, double[] x_values, boolean drawBar) {
+    private void plotLineBar(Canvas c, double[] db_cache, double[] x_values, boolean drawBar, Paint linePaint, Paint barPaint) {
         if (db_cache == null || db_cache.length == 0) return;
 
         // There are db.length frequency points, including DC component
@@ -298,9 +305,9 @@ class SpectrumPlot {
         indexRangeFinder(x_values, freqDelta, index_range_cache);
 
         if (drawBar) {
-            plotBar(c, db_cache, x_values, index_range_cache[0], index_range_cache[1], freqDelta, linePaint);
+            plotBar(c, db_cache, x_values, index_range_cache[0], index_range_cache[1], freqDelta, barPaint);
         }
-        plotLine(c, db_cache, x_values, index_range_cache[0], index_range_cache[1], freqDelta, linePaintLight);
+        plotLine(c, db_cache, x_values, index_range_cache[0], index_range_cache[1], freqDelta, linePaint);
     }
 
     // Plot the spectrum into the Canvas c
@@ -319,19 +326,27 @@ class SpectrumPlot {
         }
 
         // Spectrum line and bar
-        plotLineBar(c, db_cache, null, !showLines);
+        plotLineBar(c, db_cache, null, !showLines, linePaintLight, linePaint);
 
-        plotLineBar(c, y_calib, x_calib, false);
+        if (name_calib != null) {
+            c.save();
+            c.translate(30*DPRatio, (float)axisY.pixelFromV(0));
+            c.drawText(name_calib, 0, 0, calibNamePaint);
+            c.restore();
+        }
+        plotLineBar(c, y_calib, x_calib, false, calibLinePaint, null);
 
         AnalyzerGraphic.setIsBusy(false);
     }
 
     double[] y_calib = null;
     double[] x_calib = null;
+    String name_calib = null;
 
-    void addCalibCurve(double[] y, double[] x) {
+    void addCalibCurve(double[] y, double[] x, String name) {
         y_calib = y;
         x_calib = x;
+        name_calib = name;
     }
 
     // x, y is in pixel unit

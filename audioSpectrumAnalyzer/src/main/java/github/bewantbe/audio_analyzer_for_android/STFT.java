@@ -241,14 +241,14 @@ class STFT {
 
     STFT(AnalyzerParameters analyzerParam) {
         init(analyzerParam.fftLen, analyzerParam.hopLen, analyzerParam.sampleRate, analyzerParam.nFFTAverage, analyzerParam.wndFuncName);
-        micGain = analyzerParam.micGainDB;
-        if (micGain != null) {
-            Log.w("STFT:", "calib loaded.");
-            for (int i = 0; i < micGain.length; i++) {
-                micGain[i] = pow(10, micGain[i] / 10.0);
+        if (analyzerParam.micGainDB != null) {
+            if (micGain == null || micGain.length != analyzerParam.micGainDB.length) {
+                micGain = new double[analyzerParam.micGainDB.length];
             }
-//            Log.w("STFT:", "micGain.length = " + micGain.length);
-//            Log.w("STFT:", "micGain.length = " + micGain.length);
+            Log.w("STFT:", "calib loaded. micGain.length = " + micGain.length);
+            for (int i = 0; i < micGain.length; i++) {
+                micGain[i] = pow(10, analyzerParam.micGainDB[i] / 10.0);
+            }
         } else {
             Log.w("STFT:", "no calib");
         }
@@ -319,11 +319,11 @@ class STFT {
             for (int j = 0; j < outLen; j++) {
                 sAOC[j] /= nAnalysed;
             }
-            if (micGain != null && micGain.length+1 == sAOC.length) {
-                // no correction to phase
-                // no correction to DC
-                for (int j = 1; j < outLen; j++) {
-                    sAOC[j] /= micGain[j-1];
+            if (micGain != null && micGain.length == sAOC.length) {
+                // No correction to phase.
+                // Correction to DC is fake.
+                for (int j = 0; j < outLen; j++) {
+                    sAOC[j] /= micGain[j];
                 }
             }
             if (boolAWeighting) {

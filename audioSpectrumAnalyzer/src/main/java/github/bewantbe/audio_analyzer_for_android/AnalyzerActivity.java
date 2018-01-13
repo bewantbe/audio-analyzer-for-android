@@ -224,11 +224,12 @@ public class AnalyzerActivity extends Activity
         if (_calibLoad.freq == null || _calibLoad.freq.length == 0 || _analyzerParam == null) {
             return;
         }
-        double[] freqTick = new double[_analyzerParam.fftLen/2];
+        double[] freqTick = new double[_analyzerParam.fftLen/2 + 1];
         for (int i = 0; i < freqTick.length; i++) {
-            freqTick[i] = (i+1.0)/_analyzerParam.fftLen * _analyzerParam.sampleRate;
+            freqTick[i] = (double)i / _analyzerParam.fftLen * _analyzerParam.sampleRate;
         }
         _analyzerParam.micGainDB = AnalyzerUtil.interpLinear(_calibLoad.freq, _calibLoad.gain, freqTick);
+        _analyzerParam.calibName = _calibLoad.name;
 //        for (int i = 0; i < _analyzerParam.micGainDB.length; i++) {
 //            Log.i(TAG, "calib: " + freqTick[i] + "Hz : " + _analyzerParam.micGainDB[i]);
 //        }

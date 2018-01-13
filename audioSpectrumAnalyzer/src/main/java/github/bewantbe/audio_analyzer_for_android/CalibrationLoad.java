@@ -23,6 +23,7 @@ class CalibrationLoad {
     double[] gain = new double[0];
     double centralFreq = 1000;
     double centralGain = -37.4;
+    String name = null;
 
     void loadFile(Uri calibUri, Context context) {
         String calibPath = calibUri.getPath();
@@ -105,5 +106,6 @@ class CalibrationLoad {
         } catch (IOException e) {
             Log.e(TAG, "Fail to read file: " + calibPath);
         }
+        name = calibPath.substring(calibPath.lastIndexOf("/")+1);
     }
 }

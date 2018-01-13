@@ -37,7 +37,8 @@ class AnalyzerParameters {
     final double SAMPLE_VALUE_MAX = 32767.0;   // Maximum signal value
     double spectrogramDuration = 4.0;
 
-    double[] micGainDB = null;  // should have fftLen/2 elements
+    double[] micGainDB = null;  // should have fftLen/2+1 elements, i.e. include DC.
+    String calibName = null;
 
     AnalyzerParameters(Resources res) {
         getAudioSourceNameFromIdPrepare(res);
