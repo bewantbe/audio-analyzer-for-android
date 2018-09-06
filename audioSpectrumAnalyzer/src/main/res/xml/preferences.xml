@@ -52,11 +52,11 @@
 
         <ListPreference
             android:defaultValue="Default"
-            android:entries="@array/appearance_1d_names"
-            android:entryValues="@array/appearance_1d_names"
-            android:key="appearance_1d"
-            android:summary="@string/set_spectrum_1d_graph_appearance_description"
-            android:title="@string/set_spectrum_1d_graph_appearance_title" />
+            android:entries="@array/color_scheme_names"
+            android:entryValues="@array/color_scheme_names"
+            android:key="color_scheme"
+            android:summary="@string/set_spectrum_color_scheme_description"
+            android:title="@string/set_spectrum_color_scheme_title" />
     </PreferenceCategory>
 
     <PreferenceCategory

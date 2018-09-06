@@ -193,7 +193,7 @@ class SpectrumPlot {
         plot2D.drawAxisLabels(c, labelPaint, gridPaint, gridPaint);
     }
 
-    void setAppearance(String line_color, String line_light_color, String cursor_color, Integer line_light_width) {
+    void setColorScheme(String line_color, String line_light_color, String cursor_color, Integer line_light_width) {
 
         linePaint.setColor(Color.parseColor(line_color));
         linePaintLight.setColor(Color.parseColor(line_light_color));
