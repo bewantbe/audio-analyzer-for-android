@@ -49,6 +49,14 @@
             android:key="spectrumRange"
             android:summary="@string/preference_spectrumRange_1"
             android:title="@string/preference_spectrumRange_2" />
+
+        <ListPreference
+            android:defaultValue="Default"
+            android:entries="@array/appearance_1d_line_colors"
+            android:entryValues="@array/appearance_1d_line_colors"
+            android:key="appearance_1d"
+            android:summary="Color scheme for 1D spectrum plot"
+            android:title="Colors" />
     </PreferenceCategory>
 
     <PreferenceCategory

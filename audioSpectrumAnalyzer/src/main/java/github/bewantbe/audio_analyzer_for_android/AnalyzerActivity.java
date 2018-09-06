@@ -413,6 +413,19 @@ public class AnalyzerActivity extends Activity
                 Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(AnalyzerGraphic.minDB)))
         );
 
+        String appearance_1d_name = sharedPref.getString("appearance_1d",null);
+        String[] appearance_1d_names = getResources().getStringArray(R.array.appearance_1d_names);
+        int appearance_index = 0;
+        while (appearance_index<=appearance_1d_names.length) {
+            if (appearance_1d_names[appearance_index].matches(appearance_1d_name)) {
+                break; // appearance_index contains now the right index and can be used to look up items in the related, equally sorted arrays for lineWidth, colors etc.
+            }
+        }
+        String[] appearance_1d_line_colors = getResources().getStringArray(R.array.appearance_1d_line_colors);
+        String lineColor = appearance_1d_line_colors[appearance_index];
+
+        analyzerViews.graphView.spectrumPlot.setAppearance(lineColor);
+
         // spectrogram
         analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
         analyzerViews.graphView.setShowTimeAxis           (sharedPref.getBoolean("spectrogramTimeAxis", true));
