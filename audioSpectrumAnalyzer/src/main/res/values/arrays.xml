@@ -143,24 +143,34 @@
         <item>Default</item>
         <item>Colorful 1</item>
         <item>Colorful 2</item>
+        <item>Colorful 1 (trans.)</item>
+        <item>Colorful 2 (trans.)</item>
     </string-array>
     <string-array name="appearance_1d_line_colors" translateble="false">
         <item>#0D2C6D</item>
         <item>#0FFC6D</item>
         <item>#FF106D</item>
+        <item>#800FFC6D</item>
+        <item>#80FF106D</item>
     </string-array>
     <string-array name="appearance_1d_line_light_colors" translateble="false">
         <item>#3AB3E2</item>
+        <item>#FFB3E2</item>
+        <item>#00B3E2</item>
         <item>#FFB3E2</item>
         <item>#00B3E2</item>
     </string-array>
     <string-array name="appearance_1d_line_light_widths" translateble="false">
         <item>1</item>
         <item>3</item>
-        <item>5</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
     </string-array>
     <string-array name="appearance_1d_cursor_colors" translatable="false">
         <item>#00CD00</item>
+        <item>#FFFF00</item>
+        <item>#FFFF00</item>
         <item>#FFFF00</item>
         <item>#FFFF00</item>
     </string-array>
