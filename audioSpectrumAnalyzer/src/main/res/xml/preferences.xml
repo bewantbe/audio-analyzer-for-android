@@ -55,8 +55,8 @@
             android:entries="@array/appearance_1d_names"
             android:entryValues="@array/appearance_1d_names"
             android:key="appearance_1d"
-            android:summary="Color scheme for 1D spectrum plot"
-            android:title="Colors" />
+            android:summary="@string/set_spectrum_1d_graph_appearance_description"
+            android:title="@string/set_spectrum_1d_graph_appearance_title" />
     </PreferenceCategory>
 
     <PreferenceCategory

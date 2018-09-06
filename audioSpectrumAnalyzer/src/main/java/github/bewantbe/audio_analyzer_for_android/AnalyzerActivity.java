@@ -423,9 +423,15 @@ public class AnalyzerActivity extends Activity
             appearance_index++;
         }
         String[] appearance_1d_line_colors = getResources().getStringArray(R.array.appearance_1d_line_colors);
-        String lineColor = appearance_1d_line_colors[appearance_index];
+        String line_color = appearance_1d_line_colors[appearance_index];
+        String[] appearance_1d_line_light_colors = getResources().getStringArray(R.array.appearance_1d_line_light_colors);
+        String line_light_color = appearance_1d_line_light_colors[appearance_index];
+        String[] appearance_1d_cursor_colors = getResources().getStringArray(R.array.appearance_1d_cursor_colors);
+        String cursor_color = appearance_1d_cursor_colors[appearance_index];
+        String[] appearance_1d_line_light_widths = getResources().getStringArray(R.array.appearance_1d_line_light_widths);
+        Integer line_light_width = Integer.parseInt(appearance_1d_line_light_widths[appearance_index]);
 
-        analyzerViews.graphView.spectrumPlot.setAppearance(lineColor);
+        analyzerViews.graphView.spectrumPlot.setAppearance(line_color,line_light_color,cursor_color,line_light_width);
 
         // spectrogram
         analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));

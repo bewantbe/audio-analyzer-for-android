@@ -43,6 +43,10 @@
     <string name="show_range_lock">Lock Range</string>
     <string name="show_range_button_lock">Load Previous</string>
 
+    <!-- spectrum 1D graph appearance dialog -->
+    <string name="set_spectrum_1d_graph_appearance_title">Spectrum appearance</string>
+    <string name="set_spectrum_1d_graph_appearance_description">Colors, line widths etc. for the 1D spectrum plot</string>
+
     <!-- Pop-up menu -->
     <string name="menu_manual">User Manual</string>
     <string name="menu_preferences">Preferences</string>
