@@ -420,6 +420,7 @@ public class AnalyzerActivity extends Activity
             if (appearance_1d_names[appearance_index].matches(appearance_1d_name)) {
                 break; // appearance_index contains now the right index and can be used to look up items in the related, equally sorted arrays for lineWidth, colors etc.
             }
+            appearance_index++;
         }
         String[] appearance_1d_line_colors = getResources().getStringArray(R.array.appearance_1d_line_colors);
         String lineColor = appearance_1d_line_colors[appearance_index];

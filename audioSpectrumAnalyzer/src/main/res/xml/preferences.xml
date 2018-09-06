@@ -52,8 +52,8 @@
 
         <ListPreference
             android:defaultValue="Default"
-            android:entries="@array/appearance_1d_line_colors"
-            android:entryValues="@array/appearance_1d_line_colors"
+            android:entries="@array/appearance_1d_names"
+            android:entryValues="@array/appearance_1d_names"
             android:key="appearance_1d"
             android:summary="Color scheme for 1D spectrum plot"
             android:title="Colors" />
