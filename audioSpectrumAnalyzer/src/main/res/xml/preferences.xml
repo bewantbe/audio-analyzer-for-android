@@ -49,6 +49,14 @@
             android:key="spectrumRange"
             android:summary="@string/preference_spectrumRange_1"
             android:title="@string/preference_spectrumRange_2" />
+
+        <ListPreference
+            android:defaultValue="Default"
+            android:entries="@array/color_scheme_names"
+            android:entryValues="@array/color_scheme_names"
+            android:key="color_scheme"
+            android:summary="@string/set_spectrum_color_scheme_description"
+            android:title="@string/set_spectrum_color_scheme_title" />
     </PreferenceCategory>
 
     <PreferenceCategory

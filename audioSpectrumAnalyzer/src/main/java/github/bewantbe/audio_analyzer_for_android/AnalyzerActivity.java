@@ -413,6 +413,26 @@ public class AnalyzerActivity extends Activity
                 Float.parseFloat(sharedPref.getString("spectrumRange", Double.toString(AnalyzerGraphic.minDB)))
         );
 
+        String color_scheme_name = sharedPref.getString("color_scheme",null);
+        String[] color_scheme_names = getResources().getStringArray(R.array.color_scheme_names);
+        int color_scheme_index = 0;
+        while (color_scheme_index<=color_scheme_names.length) {
+            if (color_scheme_names[color_scheme_index].equals(color_scheme_name)) {
+                break; // appearance_index contains now the right index and can be used to look up items in the related, equally sorted arrays for lineWidth, colors etc.
+            }
+            color_scheme_index++;
+        }
+        String[] color_scheme_line_colors = getResources().getStringArray(R.array.color_scheme_line_colors);
+        String line_color = color_scheme_line_colors[color_scheme_index];
+        String[] color_scheme_line_light_colors = getResources().getStringArray(R.array.color_scheme_line_light_colors);
+        String line_light_color = color_scheme_line_light_colors[color_scheme_index];
+        String[] color_scheme_cursor_colors = getResources().getStringArray(R.array.color_scheme_cursor_colors);
+        String cursor_color = color_scheme_cursor_colors[color_scheme_index];
+        String[] color_scheme_line_light_widths = getResources().getStringArray(R.array.color_scheme_line_light_widths);
+        Integer line_light_width = Integer.parseInt(color_scheme_line_light_widths[color_scheme_index]);
+
+        analyzerViews.graphView.spectrumPlot.setColorScheme(line_color,line_light_color,cursor_color,line_light_width);
+
         // spectrogram
         analyzerViews.graphView.setSpectrogramModeShifting(sharedPref.getBoolean("spectrogramShifting", false));
         analyzerViews.graphView.setShowTimeAxis           (sharedPref.getBoolean("spectrogramTimeAxis", true));
